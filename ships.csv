@@ -1,0 +1,4 @@
+id,class_name,location,status,fuel,travel_time,departure_time,destination,cargo
+Ship1,Scout,Rhylanor,traveling,50,12,0,Porozlo,5
+Ship2,Freighter,Rhylanor,docked,20,0,5,Porozlo,50
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10

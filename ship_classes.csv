@@ -1,0 +1,5 @@
+class_name,jump_rating,maneuver_rating,cargo_capacity
+Scout,2,1,10
+Freighter,1,0.5,100
+Corvette,3,2,20
+Liner,1,1,200
