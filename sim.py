@@ -1,7 +1,9 @@
 import simpy
 import csv
 import math
-from datetime import datetime
+import os
+from datetime import datetime, timedelta
+
 
 # Constants
 LOG_FILE = "simulation_log.txt"
@@ -9,6 +11,49 @@ SHIP_CLASSES_CSV = "ship_classes.csv"
 INPUT_CSV = "ships.csv"
 OUTPUT_CSV = "ships_output.csv"
 MAP_FILE = "t5_map.txt"
+START_YEAR = 1107
+START_DAY = 1
+SIM_INTERVAL = 1  # 1 hour in simulation time
+
+
+# Function to remove the log file if it exists
+def initialize_log_file(log_file):
+    """
+    Removes the log file if it exists to ensure a fresh start.
+    """
+    if os.path.exists(log_file):
+        os.remove(log_file)
+
+
+# Helper: Initialize start time
+def initialize_simulation_start(year, day):
+    """
+    Returns the datetime object representing the start of the simulation.
+    """
+    base_date = datetime(year=year, month=1, day=1)  # Yearly start
+    sim_start = base_date + timedelta(days=day - 1)
+    return sim_start
+
+# Helper: Convert SimPy time to timestamp
+def simpy_time_to_timestamp(env, start_time):
+    """
+    Converts SimPy's current time (in hours) to a human-readable timestamp.
+    """
+    elapsed_time = timedelta(hours=env.now)
+    current_time = start_time + elapsed_time
+    return current_time.strftime("%Y-%j %H:%M")  # Year-Day Hour:Minute
+
+# Process: Custom clock
+def clock(env, start_time, interval=SIM_INTERVAL):
+    """
+    Simulates a clock that prints the current simulation time.
+    """
+    while True:
+        timestamp = simpy_time_to_timestamp(env, start_time)
+        print(f"Simulation Time: {timestamp}")
+        yield env.timeout(interval)
+
+
 
 # Load ship classes
 def load_ship_classes(file_path):
@@ -109,6 +154,8 @@ def get_valid_destinations(current_system, jump_rating, systems):
     for hex_code, data in systems.items():
         if data["zone"] in ["A", "R"]:
             continue  # Skip Amber/Red zones
+        if hex_code == current_hex:
+            continue # Don't come back to where we are
         distance = calculate_hex_distance(
             systems[current_hex]["coordinates"], data["coordinates"]
         )
@@ -117,24 +164,24 @@ def get_valid_destinations(current_system, jump_rating, systems):
     return valid
 
 # Log events
-def log_event(message):
+def log_event(message, env, start_time):
     with open(LOG_FILE, mode="a") as logfile:
-        logfile.write(f"{datetime.now()}: {message}\n")
+        logfile.write(f"{simpy_time_to_timestamp(env, start_time)}: {message}\n")
 
 # Ship process
-def ship_process(env, ship, ship_classes, systems, event_queue):
+def ship_process(env, ship, ship_classes, systems, event_queue, start_time):
     while True:
         ship_class = ship_classes[ship["class_name"]]
         current_system = ship["location"]
 
-        log_event(f"Ship {ship['id']} ({ship['class_name']}) is at {current_system} with status {ship['status']} and fuel {ship['fuel']}.")
+        log_event(f"Ship {ship['id']} ({ship['class_name']}) is at {current_system} with status {ship['status']} and fuel {ship['fuel']}.", env, start_time)
 
         if ship["status"] == "traveling":
             # Simulate travel
             yield env.timeout(ship["travel_time"])
             ship["location"] = ship["destination"]
             ship["status"] = "docked"
-            log_event(f"Ship {ship['id']} has arrived at {ship['location']} and is now docked.")
+            log_event(f"Ship {ship['id']} has arrived at {ship['location']} and is now docked.", env, start_time)
 
         elif ship["status"] == "docked":
             # Choose next destination
@@ -146,27 +193,33 @@ def ship_process(env, ship, ship_classes, systems, event_queue):
                 ship["travel_time"] =  168  # Jump travel time (1 week of jumpspace time)
 
                 ship["status"] = "traveling"
-                log_event(f"Ship {ship['id']} has departed for {ship['destination']}.")
+                log_event(f"Ship {ship['id']} has departed for {ship['destination']}.", env, start_time)
             else:
-                log_event(f"Ship {ship['id']} has no valid destinations and is idle.")
+                log_event(f"Ship {ship['id']} has no valid destinations and is idle.", env, start_time)
                 yield env.timeout(1)
         else:
-            log_event(f"Ship {ship['id']} is idle.")
+            log_event(f"Ship {ship['id']} is idle.", env, start_time)
             yield env.timeout(1)
 
         # Update state for export
         event_queue.append(dict(ship))
 
 # Main simulation
-def run_simulation(ship_classes_csv, input_csv, map_file, output_csv, duration=1000):
+def run_simulation(ship_classes_csv, input_csv, map_file, output_csv, start_year, start_day, duration=4*24*7):
+    # Initialize log file
+    initialize_log_file(LOG_FILE)
     env = simpy.Environment()
+    start_time = initialize_simulation_start(start_year, start_day)
     ship_classes = load_ship_classes(ship_classes_csv)
     ships = load_ships_from_csv(input_csv)
     systems = parse_t5_map(map_file)
     event_queue = []
 
+    # Add clock process
+    env.process(clock(env, start_time, SIM_INTERVAL))
+
     for ship in ships:
-        env.process(ship_process(env, ship, ship_classes, systems, event_queue))
+        env.process(ship_process(env, ship, ship_classes, systems, event_queue, start_time))
 
     # Run the simulation
     env.run(until=duration)
@@ -175,4 +228,4 @@ def run_simulation(ship_classes_csv, input_csv, map_file, output_csv, duration=1
     save_ships_to_csv(event_queue, output_csv)
 
 # Run the simulator
-run_simulation(SHIP_CLASSES_CSV, INPUT_CSV, MAP_FILE, OUTPUT_CSV)
+run_simulation(SHIP_CLASSES_CSV, INPUT_CSV, MAP_FILE, OUTPUT_CSV, START_YEAR, START_DAY, )
