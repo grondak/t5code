@@ -236,12 +236,11 @@ def ship_process(env, ship, ship_classes, systems, event_queue, start_time):
         else:
             ship_log_event(f"is huh.", ship, env, start_time)
             exit
-
         # Update state for export
         event_queue.append(dict(ship))
 
 # Main simulation
-def run_simulation(ship_classes_csv, input_csv, map_file, output_csv, start_year, start_day, duration=5*24*7):
+def run_simulation(ship_classes_csv, input_csv, map_file, output_csv, start_year, start_day, duration=50): #5*24*7):
     # Initialize log file
     initialize_log_file(LOG_FILE)
     env = simpy.Environment()
@@ -263,7 +262,7 @@ def run_simulation(ship_classes_csv, input_csv, map_file, output_csv, start_year
     log_event("Simulation complete.", env, start_time)
 
     # Save final state
-    save_ships_to_csv(event_queue, output_csv)
+    save_ships_to_csv(ships, output_csv)
 
 # Run the simulator
 run_simulation(SHIP_CLASSES_CSV, INPUT_CSV, MAP_FILE, OUTPUT_CSV, START_YEAR, START_DAY, )

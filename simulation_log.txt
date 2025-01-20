@@ -5,136 +5,26 @@
 1107-001 00:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
 1107-001 01:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
 1107-001 01:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
+1107-001 01:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 10)has new orders.
 1107-001 02:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel: 20 Cargo: 50)has completed ship's business before cargo handling.
-1107-001 02:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
-1107-001 02:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
-1107-001 03:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
-1107-001 03:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
-1107-001 04:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
-1107-001 04:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
-1107-001 05:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
-1107-001 05:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
-1107-001 06:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
-1107-001 06:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
-1107-001 07:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
-1107-001 07:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
-1107-001 08:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
-1107-001 08:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
-1107-001 09:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
-1107-001 09:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
-1107-001 10:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
-1107-001 10:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
-1107-001 11:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
-1107-001 11:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
+1107-001 02:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 10).
+1107-001 04:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 10)has completed ship's business before cargo handling.
+1107-001 08:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 0)has unloaded its cargo.
 1107-001 12:00: Ship Ship1 (Scout docked at Porozlo. Fuel: 50 Cargo: 5)has arrived at Porozlo and is now docked.
 1107-001 12:00: Ship Ship1 (Scout docked at Porozlo. Fuel: 50 Cargo: 5).
-1107-001 12:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10).
-1107-001 12:00: Ship Ship3 (Corvette idle at Porozlo. Fuel: 80 Cargo: 10)is idle.
-1107-001 12:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 10)has new orders.
-1107-001 13:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 10).
+1107-001 14:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 20)has loaded new cargo to full capacity.
 1107-001 14:00: Ship Ship1 (Scout docked at Porozlo. Fuel: 50 Cargo: 5)has completed ship's business before cargo handling.
-1107-001 15:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 10)has completed ship's business before cargo handling.
 1107-001 16:00: Ship Ship1 (Scout docked at Porozlo. Fuel: 50 Cargo: 0)has unloaded its cargo.
+1107-001 17:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 20)has completed ship's business after cargo handling.
+1107-001 17:00: Ship Ship3 (Corvette traveling at Porozlo bound for Tureded. Fuel: 80 Cargo: 20)has departed for Tureded.
+1107-001 17:00: Ship Ship3 (Corvette traveling at Porozlo bound for Tureded. Fuel: 80 Cargo: 20).
 1107-001 19:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel: 20 Cargo: 0)has unloaded its cargo.
-1107-001 19:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 0)has unloaded its cargo.
 1107-001 19:00: Ship Ship1 (Scout docked at Porozlo. Fuel: 50 Cargo: 10)has loaded new cargo to full capacity.
 1107-001 22:00: Ship Ship1 (Scout docked at Porozlo. Fuel: 50 Cargo: 10)has completed ship's business after cargo handling.
 1107-001 22:00: Ship Ship1 (Scout traveling at Porozlo bound for Gileden. Fuel: 50 Cargo: 10)has departed for Gileden.
 1107-001 22:00: Ship Ship1 (Scout traveling at Porozlo bound for Gileden. Fuel: 50 Cargo: 10).
-1107-002 01:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 20)has loaded new cargo to full capacity.
-1107-002 04:00: Ship Ship3 (Corvette docked at Porozlo. Fuel: 80 Cargo: 20)has completed ship's business after cargo handling.
-1107-002 04:00: Ship Ship3 (Corvette traveling at Porozlo bound for Tureded. Fuel: 80 Cargo: 20)has departed for Tureded.
-1107-002 04:00: Ship Ship3 (Corvette traveling at Porozlo bound for Tureded. Fuel: 80 Cargo: 20).
 1107-002 21:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel: 20 Cargo: 100)has loaded new cargo to full capacity.
 1107-003 00:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel: 20 Cargo: 100)has completed ship's business after cargo handling.
 1107-003 00:00: Ship Ship2 (Freighter traveling at Rhylanor bound for Porozlo. Fuel: 20 Cargo: 100)has departed for Porozlo.
 1107-003 00:00: Ship Ship2 (Freighter traveling at Rhylanor bound for Porozlo. Fuel: 20 Cargo: 100).
-1107-008 22:00: Ship Ship1 (Scout docked at Gileden. Fuel: 50 Cargo: 10)has arrived at Gileden and is now docked.
-1107-008 22:00: Ship Ship1 (Scout docked at Gileden. Fuel: 50 Cargo: 10).
-1107-009 00:00: Ship Ship1 (Scout docked at Gileden. Fuel: 50 Cargo: 10)has completed ship's business before cargo handling.
-1107-009 04:00: Ship Ship3 (Corvette docked at Tureded. Fuel: 80 Cargo: 20)has arrived at Tureded and is now docked.
-1107-009 04:00: Ship Ship3 (Corvette docked at Tureded. Fuel: 80 Cargo: 20).
-1107-009 04:00: Ship Ship1 (Scout docked at Gileden. Fuel: 50 Cargo: 0)has unloaded its cargo.
-1107-009 06:00: Ship Ship3 (Corvette docked at Tureded. Fuel: 80 Cargo: 20)has completed ship's business before cargo handling.
-1107-009 07:00: Ship Ship1 (Scout docked at Gileden. Fuel: 50 Cargo: 10)has loaded new cargo to full capacity.
-1107-009 10:00: Ship Ship1 (Scout docked at Gileden. Fuel: 50 Cargo: 10)has completed ship's business after cargo handling.
-1107-009 10:00: Ship Ship1 (Scout traveling at Gileden bound for Echiste. Fuel: 50 Cargo: 10)has departed for Echiste.
-1107-009 10:00: Ship Ship1 (Scout traveling at Gileden bound for Echiste. Fuel: 50 Cargo: 10).
-1107-009 13:00: Ship Ship3 (Corvette docked at Tureded. Fuel: 80 Cargo: 0)has unloaded its cargo.
-1107-009 19:00: Ship Ship3 (Corvette docked at Tureded. Fuel: 80 Cargo: 20)has loaded new cargo to full capacity.
-1107-009 22:00: Ship Ship3 (Corvette docked at Tureded. Fuel: 80 Cargo: 20)has completed ship's business after cargo handling.
-1107-009 22:00: Ship Ship3 (Corvette traveling at Tureded bound for K'Kirka. Fuel: 80 Cargo: 20)has departed for K'Kirka.
-1107-009 22:00: Ship Ship3 (Corvette traveling at Tureded bound for K'Kirka. Fuel: 80 Cargo: 20).
-1107-010 00:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 100)has arrived at Porozlo and is now docked.
-1107-010 00:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 100).
-1107-010 02:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 100)has completed ship's business before cargo handling.
-1107-011 12:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 0)has unloaded its cargo.
-1107-012 14:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 100)has loaded new cargo to full capacity.
-1107-012 17:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 100)has completed ship's business after cargo handling.
-1107-012 17:00: Ship Ship2 (Freighter traveling at Porozlo bound for Rhylanor. Fuel: 20 Cargo: 100)has departed for Rhylanor.
-1107-012 17:00: Ship Ship2 (Freighter traveling at Porozlo bound for Rhylanor. Fuel: 20 Cargo: 100).
-1107-016 10:00: Ship Ship1 (Scout docked at Echiste. Fuel: 50 Cargo: 10)has arrived at Echiste and is now docked.
-1107-016 10:00: Ship Ship1 (Scout docked at Echiste. Fuel: 50 Cargo: 10).
-1107-016 12:00: Ship Ship1 (Scout docked at Echiste. Fuel: 50 Cargo: 10)has completed ship's business before cargo handling.
-1107-016 16:00: Ship Ship1 (Scout docked at Echiste. Fuel: 50 Cargo: 0)has unloaded its cargo.
-1107-016 19:00: Ship Ship1 (Scout docked at Echiste. Fuel: 50 Cargo: 10)has loaded new cargo to full capacity.
-1107-016 22:00: Ship Ship3 (Corvette docked at K'Kirka. Fuel: 80 Cargo: 20)has arrived at K'Kirka and is now docked.
-1107-016 22:00: Ship Ship3 (Corvette docked at K'Kirka. Fuel: 80 Cargo: 20).
-1107-016 22:00: Ship Ship1 (Scout docked at Echiste. Fuel: 50 Cargo: 10)has completed ship's business after cargo handling.
-1107-016 22:00: Ship Ship1 (Scout traveling at Echiste bound for K'Kirka. Fuel: 50 Cargo: 10)has departed for K'Kirka.
-1107-016 22:00: Ship Ship1 (Scout traveling at Echiste bound for K'Kirka. Fuel: 50 Cargo: 10).
-1107-017 00:00: Ship Ship3 (Corvette docked at K'Kirka. Fuel: 80 Cargo: 20)has completed ship's business before cargo handling.
-1107-017 07:00: Ship Ship3 (Corvette docked at K'Kirka. Fuel: 80 Cargo: 0)has unloaded its cargo.
-1107-017 13:00: Ship Ship3 (Corvette docked at K'Kirka. Fuel: 80 Cargo: 20)has loaded new cargo to full capacity.
-1107-017 16:00: Ship Ship3 (Corvette docked at K'Kirka. Fuel: 80 Cargo: 20)has completed ship's business after cargo handling.
-1107-017 16:00: Ship Ship3 (Corvette traveling at K'Kirka bound for Hefry. Fuel: 80 Cargo: 20)has departed for Hefry.
-1107-017 16:00: Ship Ship3 (Corvette traveling at K'Kirka bound for Hefry. Fuel: 80 Cargo: 20).
-1107-019 17:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel: 20 Cargo: 100)has arrived at Rhylanor and is now docked.
-1107-019 17:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel: 20 Cargo: 100).
-1107-019 19:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel: 20 Cargo: 100)has completed ship's business before cargo handling.
-1107-021 05:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel: 20 Cargo: 0)has unloaded its cargo.
-1107-022 07:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel: 20 Cargo: 100)has loaded new cargo to full capacity.
-1107-022 10:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel: 20 Cargo: 100)has completed ship's business after cargo handling.
-1107-022 10:00: Ship Ship2 (Freighter traveling at Rhylanor bound for Porozlo. Fuel: 20 Cargo: 100)has departed for Porozlo.
-1107-022 10:00: Ship Ship2 (Freighter traveling at Rhylanor bound for Porozlo. Fuel: 20 Cargo: 100).
-1107-023 22:00: Ship Ship1 (Scout docked at K'Kirka. Fuel: 50 Cargo: 10)has arrived at K'Kirka and is now docked.
-1107-023 22:00: Ship Ship1 (Scout docked at K'Kirka. Fuel: 50 Cargo: 10).
-1107-024 00:00: Ship Ship1 (Scout docked at K'Kirka. Fuel: 50 Cargo: 10)has completed ship's business before cargo handling.
-1107-024 04:00: Ship Ship1 (Scout docked at K'Kirka. Fuel: 50 Cargo: 0)has unloaded its cargo.
-1107-024 07:00: Ship Ship1 (Scout docked at K'Kirka. Fuel: 50 Cargo: 10)has loaded new cargo to full capacity.
-1107-024 10:00: Ship Ship1 (Scout docked at K'Kirka. Fuel: 50 Cargo: 10)has completed ship's business after cargo handling.
-1107-024 10:00: Ship Ship1 (Scout traveling at K'Kirka bound for Yori. Fuel: 50 Cargo: 10)has departed for Yori.
-1107-024 10:00: Ship Ship1 (Scout traveling at K'Kirka bound for Yori. Fuel: 50 Cargo: 10).
-1107-024 16:00: Ship Ship3 (Corvette docked at Hefry. Fuel: 80 Cargo: 20)has arrived at Hefry and is now docked.
-1107-024 16:00: Ship Ship3 (Corvette docked at Hefry. Fuel: 80 Cargo: 20).
-1107-024 18:00: Ship Ship3 (Corvette docked at Hefry. Fuel: 80 Cargo: 20)has completed ship's business before cargo handling.
-1107-025 01:00: Ship Ship3 (Corvette docked at Hefry. Fuel: 80 Cargo: 0)has unloaded its cargo.
-1107-025 07:00: Ship Ship3 (Corvette docked at Hefry. Fuel: 80 Cargo: 20)has loaded new cargo to full capacity.
-1107-025 10:00: Ship Ship3 (Corvette docked at Hefry. Fuel: 80 Cargo: 20)has completed ship's business after cargo handling.
-1107-025 10:00: Ship Ship3 (Corvette traveling at Hefry bound for Whanga. Fuel: 80 Cargo: 20)has departed for Whanga.
-1107-025 10:00: Ship Ship3 (Corvette traveling at Hefry bound for Whanga. Fuel: 80 Cargo: 20).
-1107-029 10:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 100)has arrived at Porozlo and is now docked.
-1107-029 10:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 100).
-1107-029 12:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 100)has completed ship's business before cargo handling.
-1107-030 22:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 0)has unloaded its cargo.
-1107-031 10:00: Ship Ship1 (Scout docked at Yori. Fuel: 50 Cargo: 10)has arrived at Yori and is now docked.
-1107-031 10:00: Ship Ship1 (Scout docked at Yori. Fuel: 50 Cargo: 10).
-1107-031 12:00: Ship Ship1 (Scout docked at Yori. Fuel: 50 Cargo: 10)has completed ship's business before cargo handling.
-1107-031 16:00: Ship Ship1 (Scout docked at Yori. Fuel: 50 Cargo: 0)has unloaded its cargo.
-1107-031 19:00: Ship Ship1 (Scout docked at Yori. Fuel: 50 Cargo: 10)has loaded new cargo to full capacity.
-1107-031 22:00: Ship Ship1 (Scout docked at Yori. Fuel: 50 Cargo: 10)has completed ship's business after cargo handling.
-1107-031 22:00: Ship Ship1 (Scout traveling at Yori bound for Hefry. Fuel: 50 Cargo: 10)has departed for Hefry.
-1107-031 22:00: Ship Ship1 (Scout traveling at Yori bound for Hefry. Fuel: 50 Cargo: 10).
-1107-032 00:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 100)has loaded new cargo to full capacity.
-1107-032 03:00: Ship Ship2 (Freighter docked at Porozlo. Fuel: 20 Cargo: 100)has completed ship's business after cargo handling.
-1107-032 03:00: Ship Ship2 (Freighter traveling at Porozlo bound for Rhylanor. Fuel: 20 Cargo: 100)has departed for Rhylanor.
-1107-032 03:00: Ship Ship2 (Freighter traveling at Porozlo bound for Rhylanor. Fuel: 20 Cargo: 100).
-1107-032 10:00: Ship Ship3 (Corvette docked at Whanga. Fuel: 80 Cargo: 20)has arrived at Whanga and is now docked.
-1107-032 10:00: Ship Ship3 (Corvette docked at Whanga. Fuel: 80 Cargo: 20).
-1107-032 12:00: Ship Ship3 (Corvette docked at Whanga. Fuel: 80 Cargo: 20)has completed ship's business before cargo handling.
-1107-032 19:00: Ship Ship3 (Corvette docked at Whanga. Fuel: 80 Cargo: 0)has unloaded its cargo.
-1107-033 01:00: Ship Ship3 (Corvette docked at Whanga. Fuel: 80 Cargo: 20)has loaded new cargo to full capacity.
-1107-033 04:00: Ship Ship3 (Corvette docked at Whanga. Fuel: 80 Cargo: 20)has completed ship's business after cargo handling.
-1107-033 04:00: Ship Ship3 (Corvette traveling at Whanga bound for Louzy. Fuel: 80 Cargo: 20)has departed for Louzy.
-1107-033 04:00: Ship Ship3 (Corvette traveling at Whanga bound for Louzy. Fuel: 80 Cargo: 20).
-1107-036 00:00: Simulation complete.
+1107-003 02:00: Simulation complete.
