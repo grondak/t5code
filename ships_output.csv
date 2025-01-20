@@ -1,16 +1,40 @@
 id,class_name,location,status,fuel,travel_time,departure_time,destination,cargo
-Ship2,Freighter,Rhylanor,traveling,20,168,5,Porozlo,50
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
 Ship1,Scout,Porozlo,docked,50,12,0,Porozlo,5
-Ship1,Scout,Porozlo,traveling,50,168,0,Gileden,5
-Ship2,Freighter,Porozlo,docked,20,168,5,Porozlo,50
-Ship2,Freighter,Porozlo,traveling,20,168,5,Rhylanor,50
-Ship1,Scout,Gileden,docked,50,168,0,Gileden,5
-Ship1,Scout,Gileden,traveling,50,168,0,Echiste,5
-Ship2,Freighter,Rhylanor,docked,20,168,5,Rhylanor,50
-Ship2,Freighter,Rhylanor,traveling,20,168,5,Porozlo,50
-Ship1,Scout,Echiste,docked,50,168,0,Echiste,5
-Ship1,Scout,Echiste,traveling,50,168,0,K'Kirka,5
-Ship2,Freighter,Porozlo,docked,20,168,5,Porozlo,50
-Ship2,Freighter,Porozlo,traveling,20,168,5,Rhylanor,50
-Ship1,Scout,K'Kirka,docked,50,168,0,K'Kirka,5
-Ship1,Scout,K'Kirka,traveling,50,168,0,Yori,5
+Ship3,Corvette,Porozlo,idle,80,0,0,Jae Tellona,10
+Ship3,Corvette,Porozlo,docked,80,0,0,Jae Tellona,10
+Ship1,Scout,Porozlo,traveling,50,168,0,Gileden,10
+Ship3,Corvette,Porozlo,traveling,80,168,0,Tureded,20
+Ship2,Freighter,Rhylanor,traveling,20,168,5,Porozlo,100
+Ship1,Scout,Gileden,docked,50,168,0,Gileden,10
+Ship3,Corvette,Tureded,docked,80,168,0,Tureded,20
+Ship1,Scout,Gileden,traveling,50,168,0,Echiste,10
+Ship3,Corvette,Tureded,traveling,80,168,0,K'Kirka,20
+Ship2,Freighter,Porozlo,docked,20,168,5,Porozlo,100
+Ship2,Freighter,Porozlo,traveling,20,168,5,Rhylanor,100
+Ship1,Scout,Echiste,docked,50,168,0,Echiste,10
+Ship3,Corvette,K'Kirka,docked,80,168,0,K'Kirka,20
+Ship1,Scout,Echiste,traveling,50,168,0,K'Kirka,10
+Ship3,Corvette,K'Kirka,traveling,80,168,0,Hefry,20
+Ship2,Freighter,Rhylanor,docked,20,168,5,Rhylanor,100
+Ship2,Freighter,Rhylanor,traveling,20,168,5,Porozlo,100
+Ship1,Scout,K'Kirka,docked,50,168,0,K'Kirka,10
+Ship1,Scout,K'Kirka,traveling,50,168,0,Yori,10
+Ship3,Corvette,Hefry,docked,80,168,0,Hefry,20
+Ship3,Corvette,Hefry,traveling,80,168,0,Whanga,20
+Ship2,Freighter,Porozlo,docked,20,168,5,Porozlo,100
+Ship1,Scout,Yori,docked,50,168,0,Yori,10
+Ship1,Scout,Yori,traveling,50,168,0,Hefry,10
+Ship2,Freighter,Porozlo,traveling,20,168,5,Rhylanor,100
+Ship3,Corvette,Whanga,docked,80,168,0,Whanga,20
+Ship3,Corvette,Whanga,traveling,80,168,0,Louzy,20

@@ -1,7 +1,5 @@
-import simpy
-import csv
-import math
-import os
+import simpy, csv, math, os, random
+
 from datetime import datetime, timedelta
 
 
@@ -50,7 +48,6 @@ def clock(env, start_time, interval=SIM_INTERVAL):
     """
     while True:
         timestamp = simpy_time_to_timestamp(env, start_time)
-        print(f"Simulation Time: {timestamp}")
         yield env.timeout(interval)
 
 
@@ -89,6 +86,8 @@ def load_ships_from_csv(file_path):
 
 # Write output CSV
 def save_ships_to_csv(ships, file_path):
+    if os.path.exists(file_path):
+        os.remove(file_path)
     with open(file_path, mode="w", newline="") as csvfile:
         fieldnames = ["id", "class_name", "location", "status", "fuel", "travel_time", "departure_time", "destination", "cargo"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -150,7 +149,6 @@ def get_name_from_hex(hex_code, systems):
 def get_valid_destinations(current_system, jump_rating, systems):
     current_hex = get_hex_from_name(current_system, systems)
     valid = []
-    print(f"Current hex {current_hex}")
     for hex_code, data in systems.items():
         if data["zone"] in ["A", "R"]:
             continue  # Skip Amber/Red zones
@@ -168,44 +166,82 @@ def log_event(message, env, start_time):
     with open(LOG_FILE, mode="a") as logfile:
         logfile.write(f"{simpy_time_to_timestamp(env, start_time)}: {message}\n")
 
+# Log ship event
+def ship_log_event(message, ship, env, start_time):
+    log_event(f"Ship {ship['id']} ({ship['class_name']} {ship['status']} at {ship['location']}{" bound for " + ship['destination'] if ship['status']=="traveling" else ""}. Fuel: {ship['fuel']} Cargo: {ship['cargo']}){message}", env, start_time)
+
+
 # Ship process
 def ship_process(env, ship, ship_classes, systems, event_queue, start_time):
     while True:
         ship_class = ship_classes[ship["class_name"]]
         current_system = ship["location"]
 
-        log_event(f"Ship {ship['id']} ({ship['class_name']}) is at {current_system} with status {ship['status']} and fuel {ship['fuel']}.", env, start_time)
+        ship_log_event(f".", ship, env, start_time)
 
         if ship["status"] == "traveling":
             # Simulate travel
             yield env.timeout(ship["travel_time"])
             ship["location"] = ship["destination"]
             ship["status"] = "docked"
-            log_event(f"Ship {ship['id']} has arrived at {ship['location']} and is now docked.", env, start_time)
+            ship_log_event(f"has arrived at {ship['location']} and is now docked.", ship, env, start_time)
 
         elif ship["status"] == "docked":
+            # Simulate ship's business before cargo handling
+            preunload_business_time = 2  # Example: 2 hours for ship's business
+            yield env.timeout(preunload_business_time)
+            ship_log_event(f"has completed ship's business before cargo handling.", ship, env, start_time)
+
+            unload_divisor = 3
+            # Unload cargo
+            if ship["cargo"] > 0:
+                unloading_time = (ship["cargo"]// unload_divisor) + 1
+                yield env.timeout(unloading_time)
+                ship["cargo"] = 0
+                ship_log_event(f"has unloaded its cargo.", ship, env, start_time)
+
+            load_divisor = 4
+            # Load cargo
+            if ship["cargo"] < ship_class["cargo_capacity"]:
+                loading_time = ((ship_class["cargo_capacity"] - ship["cargo"]) // load_divisor) + 1
+                yield env.timeout(loading_time)
+                ship["cargo"] = ship_class["cargo_capacity"]
+                ship_log_event(f"has loaded new cargo to full capacity.", ship, env, start_time)
+
+            # Simulate ship's business after cargo handling
+            post_unload_business_time = 3
+            yield env.timeout(post_unload_business_time)
+            ship_log_event(f"has completed ship's business after cargo handling.", ship, env, start_time)
+
             # Choose next destination
             jump_rating = ship_class["jump_rating"]
             valid_destinations = get_valid_destinations(current_system, jump_rating, systems)
-            print(valid_destinations, ship["id"])
             if valid_destinations:
                 ship["destination"] = valid_destinations[0]  # Example: Choose the first valid destination
                 ship["travel_time"] =  168  # Jump travel time (1 week of jumpspace time)
 
                 ship["status"] = "traveling"
-                log_event(f"Ship {ship['id']} has departed for {ship['destination']}.", env, start_time)
+                ship_log_event(f"has departed for {ship['destination']}.", ship, env, start_time)
             else:
-                log_event(f"Ship {ship['id']} has no valid destinations and is idle.", env, start_time)
+                ship_log_event(f"has no valid destinations and is idle.", ship, env, start_time)
+                ship["status"] = "idle"
                 yield env.timeout(1)
+        elif ship["status"] == "idle":
+            ship_log_event(f"is idle.", ship, env, start_time)
+            might_move = random.randint(1, 10)
+            if might_move == 1 :
+                ship["status"] = "docked"
+                ship_log_event(f"has new orders.", ship, env, start_time)
+            yield env.timeout(1)            
         else:
-            log_event(f"Ship {ship['id']} is idle.", env, start_time)
-            yield env.timeout(1)
+            ship_log_event(f"is huh.", ship, env, start_time)
+            exit
 
         # Update state for export
         event_queue.append(dict(ship))
 
 # Main simulation
-def run_simulation(ship_classes_csv, input_csv, map_file, output_csv, start_year, start_day, duration=4*24*7):
+def run_simulation(ship_classes_csv, input_csv, map_file, output_csv, start_year, start_day, duration=5*24*7):
     # Initialize log file
     initialize_log_file(LOG_FILE)
     env = simpy.Environment()
@@ -215,6 +251,7 @@ def run_simulation(ship_classes_csv, input_csv, map_file, output_csv, start_year
     systems = parse_t5_map(map_file)
     event_queue = []
 
+    log_event("Simulation starting.", env, start_time)
     # Add clock process
     env.process(clock(env, start_time, SIM_INTERVAL))
 
@@ -223,6 +260,7 @@ def run_simulation(ship_classes_csv, input_csv, map_file, output_csv, start_year
 
     # Run the simulation
     env.run(until=duration)
+    log_event("Simulation complete.", env, start_time)
 
     # Save final state
     save_ships_to_csv(event_queue, output_csv)
