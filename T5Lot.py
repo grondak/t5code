@@ -1,4 +1,4 @@
-"""A class that represents one module from Traveller 5."""
+"""A class that represents one lot from Traveller 5."""
 from T5Tables import *
 from T5Basics import letter_to_tech_level, tech_level_to_letter
 import numpy as np
@@ -6,8 +6,8 @@ import uuid
 
 
     
-class T5Load:
-    """100% RAW T5 Load, see Book 2 p209."""
+class T5Lot:
+    """100% RAW T5 Lot, see T5Book 2 p209."""
     
     def __init__(self, origin_name, GameState):
         self.size = 10
@@ -16,12 +16,12 @@ class T5Load:
             raise ValueError('GameState.world_data has not been initialized!')
         self.origin_UWP = GameState.world_data[origin_name].UWP()
         self.origin_tech_level = letter_to_tech_level(self.origin_UWP[8:])
-        self.origin_trade_classifications = T5Load.filter_trade_classifications(
+        self.origin_trade_classifications = T5Lot.filter_trade_classifications(
             GameState.world_data[origin_name].trade_classifications(),
             " ".join(T5Tables.buying_goods_trade_classifications_table.keys()))
-        self.origin_value = T5Load.determine_load_cost(self.origin_trade_classifications, T5Tables.buying_goods_trade_classifications_table, self.origin_tech_level)
-        self.load_id = self.generate_load_id()
-        self.mass = self.generate_load_mass()
+        self.origin_value = T5Lot.determine_lot_cost(self.origin_trade_classifications, T5Tables.buying_goods_trade_classifications_table, self.origin_tech_level)
+        self.lot_id = self.generate_lot_id()
+        self.mass = self.generate_lot_mass()
         self.serial = str(uuid.uuid4())
         
     
@@ -29,33 +29,33 @@ class T5Load:
         """10% x Source TL minus Market TL + table effects"""
         TL_adjustment = 0.1 * (self.origin_tech_level - letter_to_tech_level(GameState.world_data[marketWorld].UWP()[8:]))    
         result = round(max((1 + TL_adjustment),0) * 
-                       (5000 + T5Load.determine_selling_trade_classifications_effects(GameState.world_data[marketWorld], 
+                       (5000 + T5Lot.determine_selling_trade_classifications_effects(GameState.world_data[marketWorld], 
                                                                         self.origin_trade_classifications, 
                                                                         T5Tables.selling_goods_trade_classifications_table)))
         return result
     
-    def generate_load_id(self):
+    def generate_lot_id(self):
         result = tech_level_to_letter(self.origin_tech_level) + (('-' + self.origin_trade_classifications) if self.origin_trade_classifications else '' ) + ' ' + str(self.origin_value)
         return result
     
-    def generate_load_mass(self):
+    def generate_lot_mass(self):
         # Parameters for the log-normal distribution
         mu = 2.6  # Mean of the log (adjust to center around 15-20 tons)
         sigma = 0.7  # Standard deviation of the log (adjust for tail weight)
 
-        # Generate random cargo loads
-        loads = np.random.lognormal(mean=mu, sigma=sigma, size=1)
+        # Generate random cargo lots
+        lots = np.random.lognormal(mean=mu, sigma=sigma, size=1)
 
-        # Filter loads to a minimum of 1 ton and max of 100 tons
-        loads = loads[loads >= 1]
-        loads = loads[loads <=100]
-        # Truncate the loads to ensure a minimum of 1 ton and clip to integers
-        loads = np.clip(loads, a_min=1, a_max=None)  # Ensure minimum of 1 ton
-        loads = np.rint(loads).astype(int)  # Round to nearest integer
-        return int(loads[0])
+        # Filter lots to a minimum of 1 ton and max of 100 tons
+        lots = lots[lots >= 1]
+        lots = lots[lots <=100]
+        # Truncate the lots to ensure a minimum of 1 ton and clip to integers
+        lots = np.clip(lots, a_min=1, a_max=None)  # Ensure minimum of 1 ton
+        lots = np.rint(lots).astype(int)  # Round to nearest integer
+        return int(lots[0])
 
-    def determine_load_cost(trade_classifications, trade_classifictions_table, tech_level):
-        result = 3000 + T5Load.determine_buying_trade_classifications_effects(trade_classifications, trade_classifictions_table) + tech_level * 100
+    def determine_lot_cost(trade_classifications, trade_classifictions_table, tech_level):
+        result = 3000 + T5Lot.determine_buying_trade_classifications_effects(trade_classifications, trade_classifictions_table) + tech_level * 100
         return result
      
     def determine_buying_trade_classifications_effects(trade_classifications, trade_classifictions_table):
