@@ -1,0 +1,3 @@
+Sector	SS	Hex	Name	UWP	Bases	Remarks	Zone	PBG	Allegiance	Stars	{Ix}	(Ex)	[Cx]	Nobility	W	RU
+Spin	H	2716	Rhylanor	A434934-F	NS	Hi Cp Llel4 Ht		810	ImDd	M2 V	{ 4 }	(C8G+2)	[7D3D]	BEF	12	3072
+Spin	H	2814	Jae Tellona	A560565-8	N	In De Ni Pr Mr		913	ImDd	F9 V	{ -1 }	(B43-3)	[3436]	Bc	9	-396
