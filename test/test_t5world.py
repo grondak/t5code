@@ -7,11 +7,13 @@ class TestT5Load(unittest.TestCase):
     test_world_data = {
         'Earth' : {
             'UWP': 'A111111-A',
-            'TradeClassifications': 'Ag As'
+            'TradeClassifications': 'Ag As',
+            'Importance' : 4,
         },
         'Mars': {
             'UWP': 'B222222-B',
-            'TradeClassifications': 'Ba De'
+            'TradeClassifications': 'Ba De',
+            'Importance' : -1,
         }
     }
     
@@ -26,7 +28,13 @@ class TestT5Load(unittest.TestCase):
         test_world = T5World('Earth', self.test_world_data)
         self.assertEqual('Ag As', test_world.trade_classifications())
         
-    
+    def test_importance(self):
+        test_world = T5World('Earth', self.test_world_data)
+        self.assertEqual(4, test_world.importance())
+        
     def test_load_all_worlds(self):
         test_worlds = T5World.load_all_worlds(self.test_world_data)
         self.assertEqual(2, len(test_worlds))
+        
+if __name__ == '__main__':
+    unittest.main()
