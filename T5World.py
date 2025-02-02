@@ -15,6 +15,9 @@ class T5World:
     def trade_classifications(self):
         return self.world_data['TradeClassifications']
     
+    def importance(self):
+        return self.world_data['Importance']
+    
     def load_all_worlds(world_data):
         return {name: T5World(name, world_data) for name, data in world_data.items()}
 
