@@ -23,3 +23,20 @@ class TestT5NPC(unittest.TestCase):
         self.assertEqual(npc.location, None)
         npc.update_location('A new place')
         self.assertEqual(npc.location, 'A new place')
+        
+    def test_set_and_get_skill(self):
+        npc = T5NPC('Doug')
+        self.assertEqual(npc.skills, {})
+        npc.set_skill('medic', 5)
+        self.assertEqual(npc.get_skill('medic'), 5)
+        
+    def test_get_state(self):
+        npc = T5NPC('Doug')
+        self.assertEqual(npc.get_state(), 'Alive')
+        
+    def test_kill(self):
+        npc = T5NPC('Doug')
+        npc.kill()
+        self.assertEqual(npc.get_state(), 'Dead')
+        
+       

@@ -11,37 +11,76 @@ class TestT5Starship(unittest.TestCase):
     def test_create_starship_with_name(self): # Make and Name a starship
         starship = T5Starship('Your mom', 'Home')
         self.assertEqual(starship.shipName, 'Your mom')
-        self.assertEqual(starship.highPassengers, set())
+        self.assertEqual(starship.passengers, {'all': set(), 'high': set(), 'low': set(), 'mid': set()})
         self.assertEqual(starship.mail, {})
         self.assertEqual(starship.location, 'Home')
-    
-    def test_onload_high_passenger(self): # Add a passenger to a starship
-        starship = T5Starship('Titanic', 'Southampton')
+        self.assertEqual(starship.crew, {})
+        
+    def test_hire_crew(self): # Add crew to the ship
+        starship = T5Starship('Your mom', 'Home')
         npc1 = T5NPC('Bob')
-        starship.onload_high_passenger(npc1)
-        self.assertSetEqual({npc1}, starship.highPassengers)
+        with self.assertRaises(ValueError) as context:
+            starship.hire_crew('a string', npc1)
+        self.assertTrue('Invalid crew position.' in str(context.exception))
+        with self.assertRaises(TypeError) as context:
+            starship.hire_crew('medic', 'a something')
+        self.assertTrue('Invalid NPC.' in str(context.exception))
+        starship.hire_crew('medic', npc1)
+        self.assertEqual(starship.crew, {'medic': npc1})
+    
+    def test_onload_passenger(self): # Add a passenger to a starship
+        starship = T5Starship('Titanic', 'Southampton')
+        with self.assertRaises(TypeError) as context:
+            starship.onload_passenger('a string', 'high')
+        self.assertTrue('Invalid passenger type.' in str(context.exception))
+        npc1 = T5NPC('Bob')
+        with self.assertRaises(ValueError) as context:
+            starship.onload_passenger(npc1, 'yourmom')
+        self.assertTrue('Invalid passenger class.' in str(context.exception))
+        starship.onload_passenger(npc1, 'high')
+        self.assertSetEqual({npc1}, starship.passengers['high'])
         npc2 = T5NPC('Doug')
-        starship.onload_high_passenger(npc2)
-        self.assertSetEqual({npc1, npc2}, starship.highPassengers)
+        starship.onload_passenger(npc2, 'high')
+        self.assertSetEqual({npc1, npc2}, starship.passengers['high'])
         with self.assertRaises(DuplicateItemError) as context:
-            starship.onload_high_passenger(npc1)
+            starship.onload_passenger(npc1, 'high')
         self.assertTrue('Cannot load same passenger Bob twice.' in str(context.exception))
-        self.assertSetEqual({npc1, npc2}, starship.highPassengers)
+        self.assertSetEqual({npc1, npc2}, starship.passengers['high'])
         self.assertEqual(npc1.location, starship.shipName)
         self.assertEqual(npc2.location, starship.shipName)
     
-    def test_offload_high_passengers(self): # Priority Offload High Passengers
+    def test_offload_passengers(self): # Priority Offload High Passengers
         starship = T5Starship('Pequod', 'Nantucket')
         npc1 = T5NPC('Bob')
-        starship.onload_high_passenger(npc1)
+        starship.onload_passenger(npc1, 'high')
         npc2 = T5NPC('Doug')
-        starship.onload_high_passenger(npc2)
-        self.assertSetEqual(starship.highPassengers, {npc1, npc2})
-        offloadedPassengers = starship.offload_high_passengers()
+        starship.onload_passenger(npc2, 'high')
+        npc3 = T5NPC('Bill')
+        starship.onload_passenger(npc3, 'mid')
+        npc4 = T5NPC('Ted')
+        starship.onload_passenger(npc4, 'low')
+        self.assertSetEqual(starship.passengers['high'], {npc1, npc2})
+        self.assertSetEqual(starship.passengers['mid'], {npc3})
+        self.assertSetEqual(starship.passengers['low'], {npc4})
+        offloadedPassengers = starship.offload_passengers('high')
         self.assertSetEqual(offloadedPassengers, {npc1, npc2})
-        self.assertSetEqual(set(), starship.highPassengers)
+        self.assertSetEqual(set(), starship.passengers['high'])
         self.assertEqual(npc1.location, starship.location)
-        self.assertEqual(npc2.location, starship.location)    
+        self.assertEqual(npc2.location, starship.location)
+        with self.assertRaises(ValueError) as context:
+            starship.offload_passengers('a something')
+        self.assertTrue('Invalid passenger class.' in str(context.exception))
+        offloadedPassengers = starship.offload_passengers('mid')
+        self.assertSetEqual(offloadedPassengers, {npc3})
+        self.assertSetEqual(set(), starship.passengers['mid'])
+        self.assertEqual(npc3.location, starship.location)
+        npc5 = T5NPC('Bones')
+        npc5.set_skill('medic', 45)
+        starship.hire_crew('medic', npc5)
+        offloadedPassengers = starship.offload_passengers('low')
+        self.assertSetEqual(offloadedPassengers, {npc4})
+        self.assertSetEqual(set(), starship.passengers['low'])
+        self.assertEqual(npc4.location, starship.location)
     
     def test_set_course_for(self):
         MAP_FILE = 'test/t5_test_map.txt'
@@ -74,6 +113,19 @@ class TestT5Starship(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             starship.offload_mail()
         self.assertTrue('Starship has no mail to offload.')
+    
+    def test_awaken_passenger(self):
+        starship = T5Starship('Steamboat', 'Rhylanor')
+        npc1 = T5NPC('Bones')
+        npc1.set_skill('medic', 3)
+        starship.hire_crew('medic', npc1)
+        npc2 = T5NPC('Ted')
+        starship.onload_passenger(npc2, 'low')
+        self.assertEqual(starship.awakenLowPassenger(npc2, npc1, roll_override_in = 20), True)
+        self.assertEqual(npc2.get_state(), 'Alive')
+        self.assertEqual(starship.awakenLowPassenger(npc2, npc1, roll_override_in = -20), False)
+        self.assertEqual(npc2.get_state(), 'Dead')
+        
         
 if __name__ == '__main__':
     unittest.main()

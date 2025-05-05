@@ -1,3 +1,4 @@
+import random
 """A Traveller Swiss Army Knife. Most of this will get refactored into modules later-but for now, the code needs a home"""
 
 def letter_to_tech_level(char):
@@ -36,6 +37,10 @@ def tech_level_to_letter(value):
     else:
         raise ValueError('Invalid Tech Level value. Must be an integer between 0 and 35.')
 
+def check_success(roll_override: int = None, skills_override: dict = None) -> bool:
+    modifier = sum(skills_override.values()) if skills_override is not None else 0
+    roll = roll_override if roll_override is not None else random.randint(1, 6) + random.randint(1, 6)
+    return (roll + modifier) >= 8
 
 # Example usage:
 if __name__ == '__main__':

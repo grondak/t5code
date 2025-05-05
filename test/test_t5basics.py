@@ -1,5 +1,5 @@
 import unittest
-from T5Basics import letter_to_tech_level, tech_level_to_letter
+from T5Basics import letter_to_tech_level, tech_level_to_letter, check_success
 
 class TestT5Basics(unittest.TestCase):
     """Tests for the Swiss Army Knife Tech Debt Monster"""
@@ -32,6 +32,11 @@ class TestT5Basics(unittest.TestCase):
             encoded_value = tech_level_to_letter(tech_level)
         self.assertTrue('Invalid Tech Level value. Must be an integer between 0 and 35.' in str(context.exception))
 
+    def test_check_success(self):
+        assert check_success(roll_override=9) is True
+        assert check_success(roll_override=7) is False
+        skills = dict([('medic', 3)])
+        assert check_success(roll_override=8, skills_override = skills)
 
 if __name__ == '__main__':
     unittest.main()

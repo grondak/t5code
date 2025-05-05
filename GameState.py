@@ -47,17 +47,28 @@ if __name__ == '__main__':
           f'tech level: {letter_to_tech_level(GameState.world_data[world].UWP()[8:])} // lot value: {test_lot.determine_sale_value_on(world, GameState)}')
     npc1 = T5NPC('Admiral Miller')
     npc2 = T5NPC('General Sprange')
+    npc3 = T5NPC('Colonel Mustard')
+    npc4 = T5NPC('Colonel Sanders')
+    npc5 = T5NPC('Bones')
+    npc5.set_skill('medic', 5)
     starship = T5Starship('Paprika', 'Rhylanor')
     starship.set_course_for('Jae Tellona')
     mail1 = T5Mail('Rhylanor', 'Jae Tellona', GameState)
     mail2 = T5Mail('Rhylanor', 'Jae Tellona', GameState)
-    starship.onload_high_passenger(npc1)
-    starship.onload_high_passenger(npc2)
+    starship.onload_passenger(npc1, 'high')
+    starship.onload_passenger(npc2, 'high')
+    starship.onload_passenger(npc3, 'mid')
+    starship.onload_passenger(npc4, 'low')
+    starship.hire_crew('medic', npc5)
     starship.onload_mail(mail1)
     starship.onload_mail(mail2)
     print(f'\n\n\nStarship {starship.shipName} bound for {starship.destination()}. Contents:')
-    for passenger in starship.highPassengers:
-        print(f'\tPassenger {passenger.characterName}.')
+    for passenger in starship.passengers['high']:
+        print(f'\tHigh Passenger {passenger.characterName}.')
+    for passenger in starship.passengers['mid']:
+        print(f'\tMid Passenger {passenger.characterName}.')
+    for passenger in starship.passengers['low']:
+        print(f'\tLow Passenger {passenger.characterName}.')
     for mailItem in starship.get_mail():
         print(f'\tMail bundle with serial number {starship.get_mail()[mailItem].serial}.')
     print(f'Starship {starship.shipName} arriving at {starship.destination()}.')
@@ -65,11 +76,23 @@ if __name__ == '__main__':
     starship.set_course_for('Rhylanor')
     print(f'Starship {starship.shipName} now bound for {starship.destination()}.')    
     print('Priority Offload High Passengers!')
-    starship.offload_high_passengers()
-    print(f'\t{starship.shipName} has {len(starship.highPassengers)} high passengers aboard.')
+    for passenger in starship.offload_passengers('high'):
+        print(f'\tOffloaded high passenger {passenger.characterName}')
+    print(f'\t{starship.shipName} has {len(starship.passengers['high'])} high passengers aboard.')
     print('Priority Offload Mail!')
     starship.offload_mail()
     print(f'\t{starship.shipName} has {len(starship.get_mail())} mail bundles in the mail locker.')
+    print('Offload Mid Passengers!')
+    for passenger in starship.offload_passengers('mid'):
+        print(f'\tOffloaded mid passenger {passenger.characterName}')
+    print(f'\t{starship.shipName} has {len(starship.passengers['mid'])} mid passengers aboard.')
     
-    
+    print('Hey should be offloading freight, this is a //TODO')
+    print('Offload Low Passengers!')
+    for passenger in starship.offload_passengers('low'):
+        if passenger.get_state() == 'Alive':
+            print(f'\tRevived low passenger {passenger.characterName}')
+        else:
+            print(f'\tThe medic killed low passenger {passenger.characterName}')
+    print(f'\t{starship.shipName} has {len(starship.passengers['high'])} low passengers aboard.')
     print("End simulation version 0.2")
