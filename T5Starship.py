@@ -1,6 +1,7 @@
 import T5Mail
 from T5NPC import T5NPC
 from T5Basics import check_success
+from T5ShipClass import T5ShipClass
 import uuid
 
 class DuplicateItemError(Exception):
@@ -10,9 +11,10 @@ class DuplicateItemError(Exception):
 class T5Starship:
     """A starship class intended to implement just enough of the T5 Starship concepts to function in the simulator"""
     
-    def __init__(self, ship_name, ship_location):
+    def __init__(self, ship_name, ship_location, ship_class:T5ShipClass):
         self.shipName = ship_name
         self.location = ship_location
+        self.holdSize = ship_class.cargoCapacity
         self.highPassengers = set()
         self.passengers = dict([('high', set()), ('mid', set()), ('low', set()), ('all', set())])
         self.mail = {}

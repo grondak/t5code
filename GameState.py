@@ -7,11 +7,13 @@ from T5Mail import *
 from T5NPC import *
 
 MAP_FILE = "t5_map.txt"
+SHIP_CLASSES_FILE = "t5_ship_classes.csv"
 
 
 class GameState:
     worlds = {}
     world_data = None
+    ship_data = None
 
     # Parse T5 map file
     @staticmethod
@@ -30,7 +32,22 @@ class GameState:
                 }
         return worlds
     
+    @staticmethod
+    def load_and_parse_t5_ship_classes(file_path):
+        ships = {}
+        with open(file_path, mode="r") as shipFile:
+            reader = csv.DictReader(shipFile)
+            for row in reader:
+                ships[row['class_name']] = {
+                    'class_name': row['class_name'],
+                    'jump_rating': int(row['jump_rating']),
+                    'maneuver_rating': int(row['maneuver_rating']),
+                    'cargo_capacity': float(row['cargo_capacity']),
+                }
+        return ships
+    
 if __name__ == '__main__':
+    GameState.ship_data = T5ShipClass.load_all_ship_classes(GameState.load_and_parse_t5_ship_classes(SHIP_CLASSES_FILE))
     GameState.world_data = T5World.load_all_worlds(GameState.load_and_parse_t5_map(MAP_FILE))
     print(f'Rhylanor is {GameState.world_data['Rhylanor'].UWP()} with Trade Classifications {GameState.world_data['Rhylanor'].trade_classifications()}')
     test_lot = T5Lot('Rhylanor', GameState)
@@ -51,7 +68,7 @@ if __name__ == '__main__':
     npc4 = T5NPC('Colonel Sanders')
     npc5 = T5NPC('Bones')
     npc5.set_skill('medic', 5)
-    starship = T5Starship('Paprika', 'Rhylanor')
+    starship = T5Starship('Paprika', 'Rhylanor', GameState.ship_data['Freighter'])
     starship.set_course_for('Jae Tellona')
     mail1 = T5Mail('Rhylanor', 'Jae Tellona', GameState)
     mail2 = T5Mail('Rhylanor', 'Jae Tellona', GameState)

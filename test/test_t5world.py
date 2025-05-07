@@ -1,7 +1,7 @@
 import unittest
 from T5World import T5World
 
-class TestT5Load(unittest.TestCase):
+class TestT5World(unittest.TestCase):
     """Tests for the class T5World"""
     
     test_world_data = {
@@ -17,7 +17,7 @@ class TestT5Load(unittest.TestCase):
         }
     }
     
-    def test_UPP(self):
+    def test_UWP(self):
         test_world = T5World('Earth', self.test_world_data)
         self.assertEqual('A111111-A', test_world.UWP())
         with self.assertRaises(Exception) as context:
