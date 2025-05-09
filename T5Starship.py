@@ -2,6 +2,7 @@ import T5Mail
 from T5NPC import T5NPC
 from T5Basics import check_success
 from T5ShipClass import T5ShipClass
+from T5Lot import T5Lot
 import uuid
 
 class DuplicateItemError(Exception):
@@ -19,6 +20,8 @@ class T5Starship:
         self.passengers = dict([('high', set()), ('mid', set()), ('low', set()), ('all', set())])
         self.mail = {}
         self.crew = {}
+        self.cargo = {'freight': [], 'cargo': []}
+        self.cargoSize = 0
         self.mailLockerSize = 5
         self.destinationWorld = None
         
@@ -55,7 +58,7 @@ class T5Starship:
             offloadedPassengers.add(npc)
         return offloadedPassengers
     
-    def awakenLowPassenger(self, npc, medic, roll_override_in: int = None):
+    def awakenLowPassenger(self, npc:T5NPC, medic, roll_override_in: int = None):
         if check_success(roll_override = roll_override_in, skills_override = medic.skills):
             return True
         else:
@@ -75,10 +78,41 @@ class T5Starship:
     def get_mail(self):
         return self.mail
     
-    def hire_crew(self, position, npc):
+    def hire_crew(self, position, npc: T5NPC):
         ALLOWED_CREW_POSITIONS = ['medic']
         if position not in ALLOWED_CREW_POSITIONS:
             raise ValueError('Invalid crew position.')
         if not(isinstance(npc, T5NPC)):
             raise TypeError('Invalid NPC.')     
         self.crew[position] = npc
+        
+    def onload_lot(self, inLot: T5Lot, lotType):
+        if not(isinstance(inLot, T5Lot)):
+            raise TypeError('Invalid lot type.')
+        if not((lotType == 'cargo') or (lotType == 'freight')):
+            raise ValueError('Invalid lot value.')
+        if (inLot.mass + self.cargoSize > self.holdSize): 
+            raise ValueError('Lot will not fit in remaining space.')
+        if (inLot in self.cargo['freight']) or (inLot in self.cargo['cargo']):
+            raise ValueError('Attempt to load same lot twice.')
+        self.cargo[lotType].append(inLot)
+        self.cargoSize += inLot.mass
+
+    def offload_lot(self, inSerial: uuid, lotType):
+        try:
+            uuid.UUID(inSerial)
+        except ValueError:
+            raise ValueError('Invalid lot serial number.')
+        if not((lotType == 'cargo') or (lotType == 'freight')):
+            raise ValueError('Invalid lot value.')
+        result = next((l for l in self.cargo[lotType] if l.serial == inSerial), None)
+        
+        if result is None:
+            raise ValueError('Lot not found as specified type.' )
+        else:
+            self.cargo[lotType].remove(result)
+            self.cargoSize -= result.mass
+            return result
+
+    def get_cargo(self):
+        return self.cargo

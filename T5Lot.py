@@ -9,6 +9,12 @@ import uuid
 class T5Lot:
     """100% RAW T5 Lot, see T5Book 2 p209."""
     
+    def __eq__(self, other):
+        return isinstance(other, T5Lot) and self.serial == other.serial
+
+    def __hash__(self):
+        return hash(self.id)
+    
     def __init__(self, origin_name, GameState):
         self.size = 10
         self.origin_name = origin_name

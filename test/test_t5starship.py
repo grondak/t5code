@@ -4,6 +4,7 @@ from T5ShipClass import *
 from T5NPC import *
 from GameState import *
 from T5Mail import *
+from T5Lot import *
 
 
 class TestT5Starship(unittest.TestCase):
@@ -145,6 +146,80 @@ class TestT5Starship(unittest.TestCase):
         self.assertEqual(starship.awakenLowPassenger(npc2, npc1, roll_override_in = -20), False)
         self.assertEqual(npc2.get_state(), 'Dead')
         
+    def test_onload_lot(self):
+        starship = self.get_me_a_starship('Steamboat', 'Rhylanor')
+        MAP_FILE = 'test/t5_test_map.txt'
+        GameState.world_data = T5World.load_all_worlds(GameState.load_and_parse_t5_map(MAP_FILE))
+        lot = T5Lot('Rhylanor', GameState)
+        lot.mass = 5000 # tons
+        # load something that isn't a lot
+        with self.assertRaises(TypeError) as context:
+            starship.onload_lot('a string', 'cargo')
+        self.assertTrue('Invalid lot type.' in str(context.exception))
+        # load something that isn't the right lotType specifier
+        with self.assertRaises(ValueError) as context:
+            starship.onload_lot(lot, 'your mom')
+        self.assertTrue('Invalid lot value.' in str(context.exception))
+        # load a lot that's too big
+        with self.assertRaises(ValueError) as context:
+            starship.onload_lot(lot, 'cargo')
+        self.assertTrue('Lot will not fit in remaining space.' in str(context.exception))        
+        # load the lot as freight
+        lot.mass = 5 # tons
+        starship.onload_lot(lot, 'freight')
+        # validate the lot is in the ship
+        self.assertTrue(lot in starship.get_cargo()['freight'])
+        # try to load the same lot again as freight
+        with self.assertRaises(ValueError) as context:
+            starship.onload_lot(lot, 'freight')
+        self.assertTrue('Attempt to load same lot twice.' in str(context.exception))
+        # try to load the same lot again as cargo
+        with self.assertRaises(ValueError) as context:
+            starship.onload_lot(lot, 'cargo')
+        self.assertTrue('Attempt to load same lot twice.' in str(context.exception))
+        # make a new lot and load it as cargo
+        lot2 = T5Lot('Rhylanor', GameState)
+        lot2.mass = 5 # tons
+        starship.onload_lot(lot2, 'cargo')        
+        self.assertTrue(lot2 in starship.get_cargo()['cargo'])
+        # make a lot to fill the space
+        lot3 = T5Lot('Rhylanor', GameState)
+        with self.assertRaises(ValueError) as context:
+            starship.onload_lot(lot3, 'cargo')
+        self.assertTrue('Lot will not fit in remaining space.' in str(context.exception))              
+        
+    def test_offload_lot(self):
+        # invalid serial number
+        starship = self.get_me_a_starship('Steamboat', 'Rhylanor')
+        MAP_FILE = 'test/t5_test_map.txt'
+        GameState.world_data = T5World.load_all_worlds(GameState.load_and_parse_t5_map(MAP_FILE))
+        lot = T5Lot('Rhylanor', GameState)
+        lot.mass = 5
+        starship.onload_lot(lot, 'cargo')
+        lot2 = T5Lot('Rhylanor', GameState)
+        lot2.mass = 5
+        starship.onload_lot(lot2, 'cargo')
+        self.assertTrue(lot in starship.get_cargo()['cargo'])
+        with self.assertRaises(ValueError) as context:
+            starship.offload_lot('your mom', 'cargo')
+        self.assertTrue('Invalid lot serial number.' in str(context.exception))        
+        # invalid lot specifier value
+        with self.assertRaises(ValueError) as context:
+            starship.offload_lot(lot.serial, 'your mom')
+        self.assertTrue('Invalid lot value.' in str(context.exception))                
+        # lot serial not found in specified lot specifier
+        with self.assertRaises(ValueError) as context:
+            starship.offload_lot(lot.serial, 'freight')
+        self.assertTrue('Lot not found as specified type.' in str(context.exception))
+        # lot removed properly        
+        lot3 = starship.offload_lot(lot.serial, 'cargo')
+        isStillThere = False
+        for lotIndex in starship.get_cargo()['cargo']:
+            if lotIndex.serial == lot3.serial:
+                isStillThere = True
+        self.assertEqual(lot.serial, lot3.serial)
+        self.assertFalse(isStillThere)
+        self.assertEqual(len(starship.get_cargo()['cargo']), 1)
         
 if __name__ == '__main__':
     unittest.main()
