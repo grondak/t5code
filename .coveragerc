@@ -3,3 +3,5 @@ source = T5Code
 omit =
     tests/*
     */__init__.py
+    T5Code/sim.py
+    T5Code/GameState.py
