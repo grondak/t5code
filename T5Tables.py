@@ -45,26 +45,26 @@ class T5Tables:
         "Tu": "Tundra",
         "Tz": "Twilight Zone",
         "Va": "Vacuum",
-        "Wa": "Water World"
+        "Wa": "Water World",
     }
 
     buying_goods_trade_classifications_table = {
-            "Ag": -1000,
-            "As": -1000,
-            "Ba": 1000,
-            "De": 1000,
-            "Fl": 1000,
-            "Hi": -1000,
-            "Ic": 0,
-            "In": -1000,
-            "Lo": 1000,
-            "Na": 0,
-            "Ni": 1000,
-            "Po": -1000,
-            "Ri": 1000,
-            "Va": 1000
-        }
-    
+        "Ag": -1000,
+        "As": -1000,
+        "Ba": 1000,
+        "De": 1000,
+        "Fl": 1000,
+        "Hi": -1000,
+        "Ic": 0,
+        "In": -1000,
+        "Lo": 1000,
+        "Na": 0,
+        "Ni": 1000,
+        "Po": -1000,
+        "Ri": 1000,
+        "Va": 1000,
+    }
+
     selling_goods_trade_classifications_table = {
         "Ag": "Ag As De Hi In Ri Va",
         "As": "As In Ri Va",
@@ -76,5 +76,5 @@ class T5Tables:
         "Na": "As De Va",
         "Po": "Ag Hi In Ri",
         "Ri": "Ag De Hi In Ri",
-        "Va": "As In Va"
+        "Va": "As In Va",
     }
