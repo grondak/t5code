@@ -1,8 +1,8 @@
 """A class that represents one mail shipment from T5, p220"""
 
-from T5Basics import *
-from GameState import *
-from T5World import *
+from T5Code.T5Basics import *
+from T5Code.GameState import *
+from T5Code.T5World import *
 import uuid
 
 

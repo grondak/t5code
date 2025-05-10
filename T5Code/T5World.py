@@ -1,6 +1,6 @@
 """A class that represents one World from Traveller 5."""
 
-import T5Basics
+import T5Code.T5Basics
 
 
 class T5World:

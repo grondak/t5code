@@ -1,5 +1,5 @@
 import unittest
-from T5Basics import letter_to_tech_level, tech_level_to_letter, check_success
+from T5Code.T5Basics import letter_to_tech_level, tech_level_to_letter, check_success
 
 
 class TestT5Basics(unittest.TestCase):

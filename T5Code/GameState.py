@@ -1,11 +1,11 @@
 """a class that represents the game state and hauls global variables around for all to play with"""
 
 import csv
-from T5World import T5World
-from T5Lot import *
-from T5Starship import *
-from T5Mail import *
-from T5NPC import *
+from T5Code.T5World import T5World
+from T5Code.T5Lot import *
+from T5Code.T5Starship import *
+from T5Code.T5Mail import *
+from T5Code.T5NPC import *
 
 MAP_FILE = "t5_map.txt"
 SHIP_CLASSES_FILE = "t5_ship_classes.csv"

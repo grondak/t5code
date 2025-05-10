@@ -1,10 +1,10 @@
 import unittest
-from T5Starship import *
-from T5ShipClass import *
-from T5NPC import *
-from GameState import *
-from T5Mail import *
-from T5Lot import *
+from T5Code.T5Starship import *
+from T5Code.T5ShipClass import *
+from T5Code.T5NPC import *
+from T5Code.GameState import *
+from T5Code.T5Mail import *
+from T5Code.T5Lot import *
 
 
 class TestT5Starship(unittest.TestCase):
@@ -108,7 +108,7 @@ class TestT5Starship(unittest.TestCase):
         self.assertEqual(npc4.location, starship.location)
 
     def test_set_course_for(self):
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )
@@ -117,7 +117,7 @@ class TestT5Starship(unittest.TestCase):
         self.assertEqual(starship.destination(), "Jae Tellona")
 
     def test_onload_mail(self):
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )
@@ -132,7 +132,7 @@ class TestT5Starship(unittest.TestCase):
         self.assertTrue("Starship mail locker size exceeded." in str(context.exception))
 
     def test_offload_mail(self):
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )
@@ -163,7 +163,7 @@ class TestT5Starship(unittest.TestCase):
 
     def test_onload_lot(self):
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )
@@ -212,7 +212,7 @@ class TestT5Starship(unittest.TestCase):
     def test_offload_lot(self):
         # invalid serial number
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )

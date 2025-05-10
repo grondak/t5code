@@ -1,7 +1,7 @@
 import unittest, uuid
-from T5Lot import T5Lot
-from GameState import GameState
-from T5World import T5World
+from T5Code.T5Lot import T5Lot
+from T5Code.GameState import GameState
+from T5Code.T5World import T5World
 
 
 class TestT5Lot(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestT5Lot(unittest.TestCase):
         self.assertTrue(
             "GameState.world_data has not been initialized!" in str(context.exception)
         )
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )
@@ -39,7 +39,7 @@ class TestT5Lot(unittest.TestCase):
         self.assertTrue(
             "GameState.world_data has not been initialized!" in str(context.exception)
         )
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )
@@ -47,7 +47,7 @@ class TestT5Lot(unittest.TestCase):
         self.assertEqual("F-Hi 3500", lot.lot_id)
 
     def test_lot_mass(self):
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )
@@ -55,7 +55,7 @@ class TestT5Lot(unittest.TestCase):
         self.assertGreater(lot.mass, 0)
 
     def test_lot_serial(self):
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )
@@ -63,7 +63,7 @@ class TestT5Lot(unittest.TestCase):
         self.assertTrue(self.is_guid(lot.serial))
 
     def test_determine_sale_value_on(self):
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )
@@ -85,7 +85,7 @@ class TestT5Lot(unittest.TestCase):
     def test_selling_trade_class_effect(self):
         origin_trade_classifications = "In"
         selling_goods_trade_classifications_table = {"In": "Ag In"}
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )
@@ -129,7 +129,7 @@ class TestT5Lot(unittest.TestCase):
         self.assertEqual({"I", "like", "kittens"}, set(answer.split()))
 
     def test_equality_and_hash(self):
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )

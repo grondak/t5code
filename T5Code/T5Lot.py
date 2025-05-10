@@ -1,7 +1,7 @@
 """A class that represents one lot from Traveller 5."""
 
-from T5Tables import *
-from T5Basics import *
+from T5Code.T5Tables import *
+from T5Code.T5Basics import *
 import numpy as np
 import uuid
 

@@ -21,6 +21,8 @@ then
 pip install -r requirements.txt
 ```
 
+The python package's code is in `T5Code` and the tests are in the `tests` directory.
+
 I use black to fix my quotes:
 ```bash
 pip install black
@@ -42,28 +44,21 @@ then open file:///htmlcov/index.html in a browser
 
 Looking for TDD'd code, look no further.
 ```
-t5starshipsim % coverage report                  
-Name                       Stmts   Miss  Cover
-----------------------------------------------
-GameState.py                 103     80    22%
-T5Basics.py                   18      0   100%
-T5Lot.py                      59      0   100%
-T5Mail.py                     15      0   100%
-T5NPC.py                      18      0   100%
-T5ShipClass.py                11      0   100%
-T5Starship.py                 98      0   100%
-T5Tables.py                    4      0   100%
-T5World.py                    15      0   100%
-test/__init__.py               0      0   100%
-test/test_t5NPC.py            31      2    94%
-test/test_t5basics.py         36      1    97%
-test/test_t5lot.py            96      5    95%
-test/test_t5mail.py           17      0   100%
-test/test_t5shipClass.py      14      1    93%
-test/test_t5starship.py      184      2    99%
-test/test_t5world.py          21      1    95%
-----------------------------------------------
-TOTAL                        740     92    88%
+t5starshipsim % coverage report
+Name                    Stmts   Miss  Cover
+-------------------------------------------
+T5Code/GameState.py       103     80    22%
+T5Code/T5Basics.py         18      0   100%
+T5Code/T5Lot.py            59      0   100%
+T5Code/T5Mail.py           15      0   100%
+T5Code/T5NPC.py            18      0   100%
+T5Code/T5ShipClass.py      11      0   100%
+T5Code/T5Starship.py       98      0   100%
+T5Code/T5Tables.py          4      0   100%
+T5Code/T5World.py          15      0   100%
+T5Code/sim.py             149    149     0%
+-------------------------------------------
+TOTAL                     490    229    53%
 ```
 There is a test simulator/Game called GameState.py.
 Run it like this:

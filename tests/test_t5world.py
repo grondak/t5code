@@ -1,5 +1,5 @@
 import unittest
-from T5World import T5World
+from T5Code.T5World import T5World
 
 
 class TestT5World(unittest.TestCase):

@@ -1,0 +1,5 @@
+[run]
+source = T5Code
+omit =
+    tests/*
+    */__init__.py

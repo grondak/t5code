@@ -1,5 +1,5 @@
 import unittest
-from T5ShipClass import T5ShipClass
+from T5Code.T5ShipClass import T5ShipClass
 
 
 class TestT5ShipClass(unittest.TestCase):

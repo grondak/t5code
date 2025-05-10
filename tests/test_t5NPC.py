@@ -1,5 +1,5 @@
 import unittest, uuid
-from T5NPC import *
+from T5Code.T5NPC import *
 
 
 class TestT5NPC(unittest.TestCase):

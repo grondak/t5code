@@ -1,7 +1,7 @@
 import unittest
-from T5Mail import *
-from GameState import *
-from T5World import *
+from T5Code.T5Mail import *
+from T5Code.GameState import *
+from T5Code.T5World import *
 
 
 class TestT5Mail(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestT5Mail(unittest.TestCase):
         self.assertTrue(
             "GameState.world_data has not been initialized!" in str(context.exception)
         )
-        MAP_FILE = "test/t5_test_map.txt"
+        MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
             GameState.load_and_parse_t5_map(MAP_FILE)
         )
