@@ -1,4 +1,5 @@
 """a class that represents the game state and hauls global variables around for all to play with"""
+
 import csv
 
 
@@ -8,10 +9,13 @@ class GameState:
     ship_data = None
 
     # Parse T5 map file
+
+
 def load_and_parse_t5_map(file_path):
     with open(file_path, mode="r") as mapfile:
         return load_and_parse_t5_map_filelike(mapfile)
- 
+
+
 def load_and_parse_t5_map_filelike(mapfile):
     worlds = {}
     reader = csv.DictReader(mapfile, delimiter="\t")
@@ -26,9 +30,11 @@ def load_and_parse_t5_map_filelike(mapfile):
         }
     return worlds
 
+
 def load_and_parse_t5_ship_classes(file_path):
     with open(file_path, mode="r") as shipFile:
         return load_and_parse_t5_ship_classes_filelike(shipFile)
+
 
 def load_and_parse_t5_ship_classes_filelike(shipFile):
     ships = {}

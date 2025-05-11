@@ -1,9 +1,15 @@
 """A class that represents one mail shipment from T5, p220"""
 
-from T5Code.T5Basics import *
-from T5Code.GameState import *
-from T5Code.T5World import *
 import uuid
+
+from T5Code.GameState import (
+    load_and_parse_t5_map,
+    load_and_parse_t5_map_filelike,
+    load_and_parse_t5_ship_classes,
+    load_and_parse_t5_ship_classes_filelike,
+)
+from T5Code.T5Basics import check_success, letter_to_tech_level, tech_level_to_letter
+from T5Code.T5World import T5World
 
 
 class T5Mail:

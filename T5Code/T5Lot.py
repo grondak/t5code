@@ -1,9 +1,14 @@
 """A class that represents one lot from Traveller 5."""
 
-from T5Code.T5Tables import *
-from T5Code.T5Basics import *
-import numpy as np
 import uuid
+
+import numpy as np
+
+from T5Code.T5Tables import (
+    BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
+    SELLING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
+)
+from T5Code.T5Basics import letter_to_tech_level, tech_level_to_letter
 
 
 class T5Lot:
@@ -24,11 +29,11 @@ class T5Lot:
         self.origin_tech_level = letter_to_tech_level(self.origin_UWP[8:])
         self.origin_trade_classifications = T5Lot.filter_trade_classifications(
             GameState.world_data[origin_name].trade_classifications(),
-            " ".join(T5Tables.buying_goods_trade_classifications_table.keys()),
+            " ".join(BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE.keys()),
         )
         self.origin_value = T5Lot.determine_lot_cost(
             self.origin_trade_classifications,
-            T5Tables.buying_goods_trade_classifications_table,
+            BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
             self.origin_tech_level,
         )
         self.lot_id = self.generate_lot_id()
@@ -48,7 +53,7 @@ class T5Lot:
                 + T5Lot.determine_selling_trade_classifications_effects(
                     GameState.world_data[marketWorld],
                     self.origin_trade_classifications,
-                    T5Tables.selling_goods_trade_classifications_table,
+                    SELLING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
                 )
             )
         )
