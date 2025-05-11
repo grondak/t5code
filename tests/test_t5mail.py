@@ -16,7 +16,7 @@ class TestT5Mail(unittest.TestCase):
         )
         MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
-            GameState.load_and_parse_t5_map(MAP_FILE)
+            load_and_parse_t5_map(MAP_FILE)
         )
         with self.assertRaises(Exception) as context:
             mail = T5Mail("Jae Tellona", "Rhylanor", GameState)

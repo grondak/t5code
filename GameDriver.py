@@ -2,7 +2,7 @@
 
 import csv
 from T5Code import T5Lot, T5Mail, T5NPC, T5ShipClass, T5Starship, T5World, letter_to_tech_level, tech_level_to_letter, check_success, GameState
-
+#import T5Code
 
 MAP_FILE = "t5_map.txt"
 SHIP_CLASSES_FILE = "t5_ship_classes.csv"

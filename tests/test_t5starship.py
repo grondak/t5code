@@ -5,6 +5,7 @@ from T5Code.T5NPC import *
 from T5Code.GameState import *
 from T5Code.T5Mail import *
 from T5Code.T5Lot import *
+from T5Code.GameState import *
 
 
 class TestT5Starship(unittest.TestCase):
@@ -110,7 +111,7 @@ class TestT5Starship(unittest.TestCase):
     def test_set_course_for(self):
         MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
-            GameState.load_and_parse_t5_map(MAP_FILE)
+            load_and_parse_t5_map(MAP_FILE)
         )
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
         starship.set_course_for("Jae Tellona")
@@ -119,7 +120,7 @@ class TestT5Starship(unittest.TestCase):
     def test_onload_mail(self):
         MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
-            GameState.load_and_parse_t5_map(MAP_FILE)
+            load_and_parse_t5_map(MAP_FILE)
         )
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
         mail = T5Mail("Rhylanor", "Jae Tellona", GameState)
@@ -134,7 +135,7 @@ class TestT5Starship(unittest.TestCase):
     def test_offload_mail(self):
         MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
-            GameState.load_and_parse_t5_map(MAP_FILE)
+            load_and_parse_t5_map(MAP_FILE)
         )
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
         mail = T5Mail("Rhylanor", "Jae Tellona", GameState)
@@ -165,7 +166,7 @@ class TestT5Starship(unittest.TestCase):
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
         MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
-            GameState.load_and_parse_t5_map(MAP_FILE)
+            load_and_parse_t5_map(MAP_FILE)
         )
         lot = T5Lot("Rhylanor", GameState)
         lot.mass = 5000  # tons
@@ -214,7 +215,7 @@ class TestT5Starship(unittest.TestCase):
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
         MAP_FILE = "tests/t5_test_map.txt"
         GameState.world_data = T5World.load_all_worlds(
-            GameState.load_and_parse_t5_map(MAP_FILE)
+            load_and_parse_t5_map(MAP_FILE)
         )
         lot = T5Lot("Rhylanor", GameState)
         lot.mass = 5
