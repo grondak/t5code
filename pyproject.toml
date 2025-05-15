@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "t5code"
+version = "0.1.0"
+description = "Your Traveller 5 engine"
+authors = [{name="Anthony Reynolds", email="grondak@gmail.com"}]
+dependencies = [  
+  "matplotlib==3.10.3",
+  "numpy==2.2.5",
+  "simpy==4.1.1"]
+
+[tool.setuptools]
+packages = ["T5Code"]
+package-dir = {"" = "src"}

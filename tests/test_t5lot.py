@@ -26,9 +26,7 @@ class TestT5Lot(unittest.TestCase):
             "GameState.world_data has not been initialized!" in str(context.exception)
         )
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         lot = T5Lot("Rhylanor", GameState)
         self.assertEqual(3500, lot.origin_value)
 
@@ -40,33 +38,25 @@ class TestT5Lot(unittest.TestCase):
             "GameState.world_data has not been initialized!" in str(context.exception)
         )
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         lot = T5Lot("Rhylanor", GameState)
         self.assertEqual("F-Hi 3500", lot.lot_id)
 
     def test_lot_mass(self):
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         lot = T5Lot("Rhylanor", GameState)
         self.assertGreater(lot.mass, 0)
 
     def test_lot_serial(self):
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         lot = T5Lot("Rhylanor", GameState)
         self.assertTrue(self.is_guid(lot.serial))
 
     def test_determine_sale_value_on(self):
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         lot = T5Lot("Rhylanor", GameState)
         sale_value = lot.determine_sale_value_on("Jae Tellona", GameState)
         self.assertEqual(8500, sale_value)
@@ -86,9 +76,7 @@ class TestT5Lot(unittest.TestCase):
         origin_trade_classifications = "In"
         selling_goods_trade_classifications_table = {"In": "Ag In"}
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         marketWorld = GameState.world_data["Jae Tellona"]
         adjustment = T5Lot.determine_selling_trade_classifications_effects(
             marketWorld,
@@ -130,9 +118,7 @@ class TestT5Lot(unittest.TestCase):
 
     def test_equality_and_hash(self):
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         lot1 = T5Lot("Rhylanor", GameState)
         lot2 = T5Lot("Rhylanor", GameState)
         lot2.serial = lot1.serial
@@ -145,7 +131,7 @@ class TestT5Lot(unittest.TestCase):
         # Test __hash__ consistency
         self.assertEqual(hash(lot1), hash(lot2))
         self.assertNotEqual(hash(lot1), hash(lot3))
-        
+
         # FORCE Coverage to notice this hash function
         lot1.__hash__()
 
@@ -161,7 +147,5 @@ class TestT5Lot(unittest.TestCase):
 
 if __name__ == "__main__":
     MAP_FILE = "t5_test_map.txt"
-    GameState.world_data = T5World.load_all_worlds(
-        load_and_parse_t5_map(MAP_FILE)
-    )
+    GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
     unittest.main()
