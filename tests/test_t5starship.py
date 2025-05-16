@@ -1,11 +1,11 @@
 import unittest
-from T5Code.T5Starship import *
-from T5Code.T5ShipClass import *
-from T5Code.T5NPC import *
+from T5Code.T5Starship import T5Starship, DuplicateItemError
+from T5Code.T5ShipClass import T5ShipClass
+from T5Code.T5NPC import T5NPC
 from T5Code.GameState import *
-from T5Code.T5Mail import *
-from T5Code.T5Lot import *
-from T5Code.GameState import *
+from T5Code.T5Mail import T5Mail
+from T5Code.T5Lot import T5Lot
+from T5Code.T5World import T5World
 
 
 class TestT5Starship(unittest.TestCase):
@@ -110,18 +110,14 @@ class TestT5Starship(unittest.TestCase):
 
     def test_set_course_for(self):
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
         starship.set_course_for("Jae Tellona")
         self.assertEqual(starship.destination(), "Jae Tellona")
 
     def test_onload_mail(self):
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
         mail = T5Mail("Rhylanor", "Jae Tellona", GameState)
         starship.onload_mail(mail)
@@ -134,9 +130,7 @@ class TestT5Starship(unittest.TestCase):
 
     def test_offload_mail(self):
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
         mail = T5Mail("Rhylanor", "Jae Tellona", GameState)
         starship.onload_mail(mail)
@@ -165,9 +159,7 @@ class TestT5Starship(unittest.TestCase):
     def test_onload_lot(self):
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         lot = T5Lot("Rhylanor", GameState)
         lot.mass = 5000  # tons
         # load something that isn't a lot
@@ -214,9 +206,7 @@ class TestT5Starship(unittest.TestCase):
         # invalid serial number
         starship = self.get_me_a_starship("Steamboat", "Rhylanor")
         MAP_FILE = "tests/t5_test_map.txt"
-        GameState.world_data = T5World.load_all_worlds(
-            load_and_parse_t5_map(MAP_FILE)
-        )
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
         lot = T5Lot("Rhylanor", GameState)
         lot.mass = 5
         starship.onload_lot(lot, "cargo")
