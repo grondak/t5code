@@ -31,20 +31,17 @@ black .
 
 To test this code, you can do 
 ```bash
-python -m unittest discover -s tests -t .  
+pip install pytest pytest-cov
+pytest --cov=src/T5Code tests/
+pytest --cov=src/T5Code --cov-report=html
 ```
-and then
-```bash
-coverage run --source=src/T5Code -m unittest discover
-coverage report
-```
-or
-`coverage html`
-then open file:///htmlcov/index.html in a browser
+then open `file:///htmlcov/index.html` in a browser
 
 Looking for TDD'd code, look no further.
 ```
-t5starshipsim % coverage report
+================================================================================= tests coverage =================================================================================
+________________________________________________________________ coverage: platform darwin, python 3.12.4-final-0 ________________________________________________________________
+
 Name                        Stmts   Miss  Cover
 -----------------------------------------------
 src/T5Code/GameState.py        23      2    91%
@@ -58,6 +55,7 @@ src/T5Code/T5Tables.py          3      0   100%
 src/T5Code/T5World.py          15      0   100%
 -----------------------------------------------
 TOTAL                         260      2    99%
+=============================================================================== 37 passed in 0.15s ===============================================================================
 ```
 There is a test simulator/Game called GameDriver.py.
 Run it like this:
