@@ -31,11 +31,11 @@ black .
 
 To test this code, you can do 
 ```bash
-python -m unittest
+python -m unittest discover -s tests -t .  
 ```
 and then
 ```bash
-coverage run -m unittest discover
+coverage run --source=src/T5Code -m unittest discover
 coverage report
 ```
 or
@@ -60,10 +60,10 @@ T5Code/sim.py             149    149     0%
 -------------------------------------------
 TOTAL                     490    229    53%
 ```
-There is a test simulator/Game called GameState.py.
+There is a test simulator/Game called GameDriver.py.
 Run it like this:
 ```bash
-python GameState.py
+python examples/GameDriver.py
 ```
 It outputs a journal of activities taken by one starship.
 
