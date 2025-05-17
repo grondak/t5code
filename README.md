@@ -45,20 +45,19 @@ then open file:///htmlcov/index.html in a browser
 Looking for TDD'd code, look no further.
 ```
 t5starshipsim % coverage report
-Name                    Stmts   Miss  Cover
--------------------------------------------
-T5Code/GameState.py       103     80    22%
-T5Code/T5Basics.py         18      0   100%
-T5Code/T5Lot.py            59      0   100%
-T5Code/T5Mail.py           15      0   100%
-T5Code/T5NPC.py            18      0   100%
-T5Code/T5ShipClass.py      11      0   100%
-T5Code/T5Starship.py       98      0   100%
-T5Code/T5Tables.py          4      0   100%
-T5Code/T5World.py          15      0   100%
-T5Code/sim.py             149    149     0%
--------------------------------------------
-TOTAL                     490    229    53%
+Name                        Stmts   Miss  Cover
+-----------------------------------------------
+src/T5Code/GameState.py        23      2    91%
+src/T5Code/T5Basics.py         18      0   100%
+src/T5Code/T5Lot.py            59      0   100%
+src/T5Code/T5Mail.py           15      0   100%
+src/T5Code/T5NPC.py            18      0   100%
+src/T5Code/T5ShipClass.py      11      0   100%
+src/T5Code/T5Starship.py       98      0   100%
+src/T5Code/T5Tables.py          3      0   100%
+src/T5Code/T5World.py          15      0   100%
+-----------------------------------------------
+TOTAL                         260      2    99%
 ```
 There is a test simulator/Game called GameDriver.py.
 Run it like this:
