@@ -97,14 +97,14 @@ if __name__ == "__main__":
             f"\tMail bundle with serial number {starship.get_mail()[mailItem].serial}."
         )
     for lot in starship.get_cargo()["freight"]:
-        print(f"\tLot {lot.serial} of {lot.mass} tons, lot id: {lot.lot_id}")
+        print(f"\tFreight Lot {lot.serial} of {lot.mass} tons, lot id: {lot.lot_id}")
     print(
-        f"Starship {starship.shipName} has {len(starship.get_cargo()['freight'])} freight items aboard."
+        f"\tStarship {starship.shipName} has {len(starship.get_cargo()['freight'])} freight items aboard."
     )
     for lot in starship.get_cargo()["cargo"]:
-        print(f"\tLot {lot.serial} of {lot.mass} tons, lot id: {lot.lot_id}")
+        print(f"\tCargo Lot {lot.serial} of {lot.mass} tons, lot id: {lot.lot_id}")
     print(
-        f"Starship {starship.shipName} has {len(starship.get_cargo()['freight'])} cargo items aboard."
+        f"\tStarship {starship.shipName} has {len(starship.get_cargo()['cargo'])} cargo items aboard."
     )
     print(
         f"\n\n\nStarship {starship.shipName} JUMPING to {starship.destination()}\n\n\n"
@@ -159,17 +159,19 @@ if __name__ == "__main__":
             starship.location, GameDriver
         )
         print(
-            f"\tSelling cargo lot id: {lot.lot_id} on {starship.location} for Cr{localCargoMarketPrice}."
+            f"\tSelling cargo lot id: {lot.serial} on {starship.location} for Cr{localCargoMarketPrice}."
         )
         value_modifier = lot.consult_actual_value_table(best_broker["mod"])
         actual_value = localCargoMarketPrice * value_modifier
         print(
-            f"\t\tPost-broker Actual Value of cargo lot id {lot.lot_id} is {actual_value}."
+            f"\t\tPost-broker Actual Value of cargo lot id {lot.lot_id} is Cr{actual_value}."
         )
         broker_fee = actual_value * best_broker["rate"]
         final_value = actual_value - broker_fee
         starship.credit(final_value)
-        print(f"\t\tCrediting {final_value} after subtracting {broker_fee}.")
+        print(
+            f"\t\tCrediting Cr{final_value} after subtracting broker fee of Cr{broker_fee}."
+        )
 
     print(f"Starship {starship.shipName} has Cr{starship.balance} at this point.")
     print("End simulation version 0.3")
