@@ -1,4 +1,5 @@
 import unittest, uuid
+from unittest.mock import patch
 from T5Code.T5Lot import T5Lot
 from T5Code.GameState import *
 from T5Code.T5World import T5World
@@ -143,6 +144,36 @@ class TestT5Lot(unittest.TestCase):
         # Test dict behavior
         lot_dict = {lot1: "Freight", lot3: "Cargo"}
         self.assertEqual(lot_dict[lot2], "Freight")
+
+    def setUp(self):
+        MAP_FILE = "tests/t5_test_map.txt"
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
+        self.lot = T5Lot("Rhylanor", GameState)
+
+    @patch("random.randint")
+    def test_flux_with_positive_mod(self, mock_randint):
+        mock_randint.side_effect = [6, 1]
+        self.assertEqual(self.lot.consult_actual_value_table(2), 3.0)
+
+    @patch("random.randint")
+    def test_flux_with_negative_mod_below_bounds(self, mock_randint):
+        mock_randint.side_effect = [1, 6]
+        self.assertEqual(self.lot.consult_actual_value_table(-2), 0.4)
+
+    @patch("random.randint")
+    def test_flux_with_zero_mod(self, mock_randint):
+        mock_randint.side_effect = [3, 3]
+        self.assertEqual(self.lot.consult_actual_value_table(0), 1.0)
+
+    @patch("random.randint")
+    def test_flux_middle_case(self, mock_randint):
+        mock_randint.side_effect = [4, 2]
+        self.assertEqual(self.lot.consult_actual_value_table(3), 1.7)
+
+    @patch("random.randint")
+    def test_flux_above_max_bounds(self, mock_randint):
+        mock_randint.side_effect = [6, 2]
+        self.assertEqual(self.lot.consult_actual_value_table(5), 4.0)
 
 
 if __name__ == "__main__":

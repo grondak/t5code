@@ -53,3 +53,9 @@ def check_success(roll_override: int = None, skills_override: dict = None) -> bo
         else random.randint(1, 6) + random.randint(1, 6)
     )
     return (roll + modifier) >= 8
+
+
+def roll_flux():
+    die1 = random.randint(1, 6)
+    die2 = random.randint(1, 6)
+    return die1 - die2

@@ -1,6 +1,28 @@
 """A class that represents one World from Traveller 5."""
 
 import T5Code.T5Basics
+from T5Code.T5Tables import BROKERS
+
+
+def find_best_broker(starport_tier: str):
+    if starport_tier not in {"A", "B", "C", "D"}:
+        raise ValueError("Tier must be one of: 'A', 'B', 'C', 'D'")
+
+    best_name = None
+    best_mod = -1
+    best_rate = None
+
+    for name, (tiers, mod, rate) in BROKERS.items():
+        if starport_tier in tiers and mod > best_mod:
+            best_name = name
+            best_mod = mod
+            best_rate = rate
+
+    return {
+        "name": best_name,
+        "mod": best_mod,
+        "rate": best_rate,
+    }
 
 
 class T5World:
@@ -22,3 +44,6 @@ class T5World:
 
     def load_all_worlds(world_data):
         return {name: T5World(name, world_data) for name, data in world_data.items()}
+
+    def get_starport(self):
+        return self.UWP()[0:1]

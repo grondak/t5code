@@ -77,3 +77,30 @@ SELLING_GOODS_TRADE_CLASSIFICATIONS_TABLE = {
     "Ri": "Ag De Hi In Ri",
     "Va": "As In Va",
 }
+
+BROKERS = {
+    "Broker-7+": ("A", 4, 0.2),
+    "Broker-6": ("AB", 3, 0.15),
+    "Broker-5": ("AB", 3, 0.15),
+    "Broker-4": ("ABC", 2, 0.1),
+    "Broker-3": ("ABC", 2, 0.1),
+    "Broker-2": ("ABCD", 1, 0.05),
+    "Broker-1": ("ABCD", 1, 0.05),
+}
+
+ACTUAL_VALUE = {
+    -5: 0.4,
+    -4: 0.5,
+    -3: 0.7,
+    -2: 0.8,
+    -1: 0.9,
+    0: 1.0,
+    1: 1.1,
+    2: 1.2,
+    3: 1.3,
+    4: 1.5,
+    5: 1.7,
+    6: 2.0,
+    7: 3.0,
+    8: 4.0,
+}

@@ -1,12 +1,13 @@
 """A class that represents one lot from Traveller 5."""
 
 import uuid
-
+import random
 import numpy as np
 
 from T5Code.T5Tables import (
     BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
     SELLING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
+    ACTUAL_VALUE,
 )
 from T5Code.T5Basics import letter_to_tech_level, tech_level_to_letter
 
@@ -152,3 +153,29 @@ class T5Lot:
 
         # Convert the result back to a space-separated string
         return " ".join(sorted(filtered_set))  # Sorting ensures consistent output order
+
+        def consult_actual_value_table(self, mod: int) -> float:
+            """
+            Roll Flux (1d6 - 1d6), apply modifier, clamp result [-5, 8],
+            and return the corresponding actual value from T5Tables.
+            """
+            die1 = random.randint(1, 6)
+            die2 = random.randint(1, 6)
+            raw_flux = die1 - die2
+            modded_flux = raw_flux + mod
+
+            clamped_flux = max(-5, min(8, modded_flux))
+            return T5Tables.ACTUAL_VALUE[clamped_flux]
+
+    def consult_actual_value_table(self, mod: int) -> float:
+        """
+        Roll Flux (1d6 - 1d6), apply modifier, clamp result [-5, 8],
+        and return the corresponding actual value from T5Tables.
+        """
+        die1 = random.randint(1, 6)
+        die2 = random.randint(1, 6)
+        raw_flux = die1 - die2
+        modded_flux = raw_flux + mod
+
+        clamped_flux = max(-5, min(8, modded_flux))
+        return ACTUAL_VALUE[clamped_flux]

@@ -30,6 +30,7 @@ class T5Starship:
         self.cargoSize = 0
         self.mailLockerSize = 5
         self.destinationWorld = None
+        self._balance = 0.0  # credits, in millions or however you're scaling
 
     def set_course_for(self, destination):
         self.destinationWorld = destination
@@ -122,3 +123,25 @@ class T5Starship:
 
     def get_cargo(self):
         return self.cargo
+
+    @property
+    def balance(self):
+        return self._balance
+
+    def credit(self, amount):
+        """Add money to the ship's balance."""
+        if not isinstance(amount, (int, float)):
+            raise TypeError("Amount must be a number")
+        if amount < 0:
+            raise ValueError("Cannot credit a negative amount")
+        self._balance += amount
+
+    def debit(self, amount):
+        """Subtract money from the ship's balance."""
+        if not isinstance(amount, (int, float)):
+            raise TypeError("Amount must be a number")
+        if amount < 0:
+            raise ValueError("Cannot debit a negative amount")
+        if amount > self._balance:
+            raise ValueError("Insufficient funds")
+        self._balance -= amount

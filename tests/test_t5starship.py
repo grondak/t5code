@@ -235,6 +235,42 @@ class TestT5Starship(unittest.TestCase):
         self.assertFalse(isStillThere)
         self.assertEqual(len(starship.get_cargo()["cargo"]), 1)
 
+    def setUp(self):
+        self.ship = self.get_me_a_starship("Steamboat", "Rhylanor")
+
+    def test_initial_balance(self):
+        self.assertEqual(self.ship.balance, 0.0)
+
+    def test_credit_valid_amount(self):
+        self.ship.credit(100)
+        self.assertEqual(self.ship.balance, 100.0)
+
+    def test_debit_valid_amount(self):
+        self.ship.credit(200)
+        self.ship.debit(50)
+        self.assertEqual(self.ship.balance, 150.0)
+
+    def test_credit_invalid_type(self):
+        with self.assertRaises(TypeError):
+            self.ship.credit("not money")
+
+    def test_debit_invalid_type(self):
+        with self.assertRaises(TypeError):
+            self.ship.debit(None)
+
+    def test_credit_negative_amount(self):
+        with self.assertRaises(ValueError):
+            self.ship.credit(-10)
+
+    def test_debit_negative_amount(self):
+        with self.assertRaises(ValueError):
+            self.ship.debit(-5)
+
+    def test_debit_insufficient_funds(self):
+        self.ship.credit(50)
+        with self.assertRaises(ValueError):
+            self.ship.debit(100)
+
 
 if __name__ == "__main__":
     unittest.main()

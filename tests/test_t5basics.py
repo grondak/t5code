@@ -1,5 +1,12 @@
 import unittest
-from T5Code.T5Basics import letter_to_tech_level, tech_level_to_letter, check_success
+from unittest.mock import patch
+import random
+from T5Code.T5Basics import (
+    letter_to_tech_level,
+    tech_level_to_letter,
+    check_success,
+    roll_flux,
+)
 
 
 class TestT5Basics(unittest.TestCase):
@@ -47,6 +54,33 @@ class TestT5Basics(unittest.TestCase):
         assert check_success(roll_override=7) is False
         skills = dict([("medic", 3)])
         assert check_success(roll_override=8, skills_override=skills)
+
+    @patch("random.randint")
+    def test_flux_max_positive(self, mock_randint):
+        mock_randint.side_effect = [6, 1]  # die1=6, die2=1
+        self.assertEqual(roll_flux(), 5)
+
+    @patch("random.randint")
+    def test_flux_zero(self, mock_randint):
+        mock_randint.side_effect = [3, 3]
+        self.assertEqual(roll_flux(), 0)
+
+    @patch("random.randint")
+    def test_flux_max_negative(self, mock_randint):
+        mock_randint.side_effect = [1, 6]
+        self.assertEqual(roll_flux(), -5)
+
+    @patch("random.randint")
+    def test_flux_edge_case(self, mock_randint):
+        mock_randint.side_effect = [2, 5]
+        self.assertEqual(roll_flux(), -3)
+
+    def test_flux_distribution_bounds(self):
+        """Run many rolls and ensure result is always between -5 and +5."""
+        for _ in range(1000):
+            result = roll_flux()
+            self.assertGreaterEqual(result, -5)
+            self.assertLessEqual(result, 5)
 
 
 if __name__ == "__main__":
