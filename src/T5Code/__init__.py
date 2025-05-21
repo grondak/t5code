@@ -21,6 +21,7 @@ from .T5Tables import (
     SELLING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
     BROKERS,
     ACTUAL_VALUE,
+    SKILLS_BY_GROUP,
 )
 from .T5World import T5World, find_best_broker
 
@@ -43,6 +44,7 @@ from .T5World import T5World, find_best_broker
     "SELLING_GOODS_TRADE_CLASSIFICATIONS_TABLE",
     "BROKERS",
     "ACTUAL_VAlUE",
+    "SKILLS_BY_GROUP",
     "find_best_broker"
 ] """
 """
@@ -65,6 +67,7 @@ from T5Code import (
     SELLING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
     BROKERS,
     ACTUAL_VALUE,
+    SKILLS_BY_GROUP,
     find_best_broker,
 )
 """

@@ -1,4 +1,11 @@
 import uuid
+from T5Code.T5Tables import SKILLS_BY_GROUP
+
+ALL_KNOWN_SKILLS = {
+    skill.lower(): group_name
+    for group_name, skills in SKILLS_BY_GROUP.items()
+    for skill in skills
+}
 
 
 class T5NPC:
@@ -17,11 +24,18 @@ class T5NPC:
     def update_location(self, location):
         self.location = location
 
-    def set_skill(self, skill, value):
-        self.skills[skill] = value
+    def set_skill(self, name, level):
+        key = name.lower()
+        if key not in ALL_KNOWN_SKILLS:
+            raise ValueError(f"Unknown skill: '{name}'")
+        self.skills[key] = level
 
-    def get_skill(self, skill):
-        return self.skills.get(skill, 0)
+    def get_skill(self, name):
+        return self.skills.get(name.lower(), 0)
+
+    def skill_group(self, name):
+        """Optional: Returns the group this skill belongs to, or None if unknown."""
+        return ALL_KNOWN_SKILLS.get(name.lower())
 
     def kill(self):
         self.state = "Dead"
