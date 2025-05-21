@@ -87,21 +87,11 @@ class T5Lot:
         )
         return result
 
-    def generate_lot_mass(self):
-        # Parameters for the log-normal distribution
-        mu = 2.6  # Mean of the log (adjust to center around 15-20 tons)
-        sigma = 0.7  # Standard deviation of the log (adjust for tail weight)
-
-        # Generate random cargo lots
-        lots = np.random.lognormal(mean=mu, sigma=sigma, size=1)
-
-        # Filter lots to a minimum of 1 ton and max of 100 tons
-        lots = lots[lots >= 1]
-        lots = lots[lots <= 100]
-        # Truncate the lots to ensure a minimum of 1 ton and clip to integers
-        lots = np.clip(lots, a_min=1, a_max=None)  # Ensure minimum of 1 ton
-        lots = np.rint(lots).astype(int)  # Round to nearest integer
-        return int(lots[0])
+    def generate_lot_mass(self, mu=2.6, sigma=0.7, min_mass=1, max_mass=100):
+        while True:
+            lot = np.random.lognormal(mean=mu, sigma=sigma)
+            if min_mass <= lot <= max_mass:
+                return int(round(lot))
 
     def determine_lot_cost(
         trade_classifications, trade_classifictions_table, tech_level
