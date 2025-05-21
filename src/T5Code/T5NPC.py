@@ -5,11 +5,14 @@ class T5NPC:
     """An NPC class intended to implement just enough of the T5 character concepts to function in the simulator"""
 
     def __init__(self, character_name):
+        # Core identity
         self.characterName = character_name
-        self.serial = str(uuid.uuid4())
-        self.location = None
-        self.skills = {}
-        self.state = "Alive"
+        self.serial = str(uuid.uuid4())  # Unique persistent ID
+
+        # Starting attributes
+        self.location = None  # Assigned when placed in a world or ship
+        self.skills = {}  # e.g. {"Broker": 2, "Gun Combat": 1}
+        self.state = "Alive"  # Could be "Alive", "Missing", "Dead", etc.
 
     def update_location(self, location):
         self.location = location

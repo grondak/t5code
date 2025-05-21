@@ -17,20 +17,35 @@ class T5Starship:
     """A starship class intended to implement just enough of the T5 Starship concepts to function in the simulator"""
 
     def __init__(self, ship_name, ship_location, ship_class: T5ShipClass):
+        # Core identity
         self.shipName = ship_name
         self.location = ship_location
         self.holdSize = ship_class.cargoCapacity
+
+        # Passenger system
         self.highPassengers = set()
-        self.passengers = dict(
-            [("high", set()), ("mid", set()), ("low", set()), ("all", set())]
-        )
-        self.mail = {}
-        self.crew = {}
-        self.cargo = {"freight": [], "cargo": []}
-        self.cargoSize = 0
-        self.mailLockerSize = 5
-        self.destinationWorld = None
-        self._balance = 0.0  # credits, in millions or however you're scaling
+        self.passengers = {
+            "high": set(),
+            "mid": set(),
+            "low": set(),
+            "all": set(),  # useful for global queries or summary stats
+        }
+
+        # Mail, crew, and cargo tracking
+        self.mail = {}  # mail_id → T5Mail object
+        self.crew = {}  # role → T5NPC or crew record
+        self.cargo = {
+            "freight": [],  # freight lots
+            "cargo": [],  # miscellaneous or special cargo
+        }
+        self.cargoSize = 0  # total tons of cargo on board
+        self.mailLockerSize = 5  # max number of mail containers
+
+        # Navigation
+        self.destinationWorld = None  # assigned when a flight plan is set
+
+        # Financials
+        self._balance = 0.0  # in credits (millions, thousands — your scale)
 
     def set_course_for(self, destination):
         self.destinationWorld = destination

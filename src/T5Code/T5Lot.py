@@ -22,21 +22,35 @@ class T5Lot:
         return hash(self.serial)
 
     def __init__(self, origin_name, GameState):
+        # Basic identity
         self.size = 10
         self.origin_name = origin_name
+
+        # Verify GameState is initialized
         if GameState.world_data is None:
             raise ValueError("GameState.world_data has not been initialized!")
-        self.origin_UWP = GameState.world_data[origin_name].UWP()
+
+        # Lookup world data
+        world = GameState.world_data[origin_name]
+
+        # Extract UWP and Tech Level
+        self.origin_UWP = world.UWP()
         self.origin_tech_level = letter_to_tech_level(self.origin_UWP[8:])
+
+        # Filter valid trade classifications
         self.origin_trade_classifications = T5Lot.filter_trade_classifications(
-            GameState.world_data[origin_name].trade_classifications(),
+            world.trade_classifications(),
             " ".join(BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE.keys()),
         )
+
+        # Calculate value based on origin attributes
         self.origin_value = T5Lot.determine_lot_cost(
             self.origin_trade_classifications,
             BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
             self.origin_tech_level,
         )
+
+        # Metadata and identifiers
         self.lot_id = self.generate_lot_id()
         self.mass = self.generate_lot_mass()
         self.serial = str(uuid.uuid4())
