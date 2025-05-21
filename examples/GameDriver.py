@@ -94,16 +94,22 @@ if __name__ == "__main__":
         print(
             f"\tMail bundle with serial number {starship.get_mail()[mailItem].serial}."
         )
-    for lot in starship.get_cargo()["freight"]:
-        print(f"\tFreight Lot {lot.serial} of {lot.mass} tons, lot id: {lot.lot_id}")
-    print(
-        f"\tStarship {starship.shipName} has {len(starship.get_cargo()['freight'])} freight items aboard."
-    )
-    for lot in starship.get_cargo()["cargo"]:
-        print(f"\tCargo Lot {lot.serial} of {lot.mass} tons, lot id: {lot.lot_id}")
-    print(
-        f"\tStarship {starship.shipName} has {len(starship.get_cargo()['cargo'])} cargo items aboard."
-    )
+    if len(starship.get_cargo()["freight"]) > 0:
+        print(
+            f"\tThere are {len(starship.get_cargo()['freight'])} freight items aboard:"
+        )
+        for lot in starship.get_cargo()["freight"]:
+            print(
+                f"\t\tFreight Lot {lot.serial} of {lot.mass} tons, lot id: {lot.lot_id}"
+            )
+
+    if len(starship.get_cargo()["cargo"]) > 0:
+        print(f"\tThere are {len(starship.get_cargo()['cargo'])} cargo items aboard:")
+        for lot in starship.get_cargo()["cargo"]:
+            print(
+                f"\t\tCargo Lot {lot.serial} of {lot.mass} tons, lot id: {lot.lot_id}"
+            )
+
     print(
         f"\n\n\nStarship {starship.shipName} JUMPING to {starship.destination()}\n\n\n"
     )
@@ -115,18 +121,18 @@ if __name__ == "__main__":
     for passenger in starship.offload_passengers("high"):
         print(f"\tOffloaded high passenger {passenger.characterName}.")
     print(
-        f"\tStarship {starship.shipName} has {len(starship.passengers['high'])} high passengers aboard."
+        f"\tStarship {starship.shipName} now has {len(starship.passengers['high'])} high passengers aboard."
     )
     print("Priority Offload Mail!")
     starship.offload_mail()
     print(
-        f"\tStarship {starship.shipName} has {len(starship.get_mail())} mail bundles in the mail locker."
+        f"\tStarship {starship.shipName} now has {len(starship.get_mail())} mail bundles in the mail locker."
     )
     print("Offload Mid Passengers!")
     for passenger in starship.offload_passengers("mid"):
         print(f"\tOffloaded mid passenger {passenger.characterName}.")
     print(
-        f"\tStarship {starship.shipName} has {len(starship.passengers['mid'])} mid passengers aboard."
+        f"\tStarship {starship.shipName} now has {len(starship.passengers['mid'])} mid passengers aboard."
     )
     print("Offload Freight!")
     starshipFreight = list(starship.get_cargo()["freight"])
@@ -134,7 +140,7 @@ if __name__ == "__main__":
         starship.offload_lot(lot.serial, "freight")
         print(f"\tLot {lot.serial} offloaded, {lot.mass} tons, lot id: {lot.lot_id}.")
     print(
-        f"\tStarship {starship.shipName} has {len(starship.get_cargo()['freight'])} freight items on board."
+        f"\tStarship {starship.shipName} now has {len(starship.get_cargo()['freight'])} freight items on board."
     )
     print("Awakening Low Passengers!")
     for passenger in starship.offload_passengers("low"):
@@ -143,7 +149,7 @@ if __name__ == "__main__":
         else:
             print(f"\tThe medic killed low passenger {passenger.characterName}.")
     print(
-        f"\tStarship {starship.shipName} has {len(starship.passengers['high'])} low passengers aboard."
+        f"\tStarship {starship.shipName} now has {len(starship.passengers['high'])} low passengers aboard."
     )
     starport = GameDriver.world_data[starship.location].get_starport()
     print(f"The starport on {starship.location} is type {starport}.")
@@ -170,6 +176,10 @@ if __name__ == "__main__":
         print(
             f"\t\tCrediting Cr{final_value} after subtracting broker fee of Cr{broker_fee}."
         )
+        starship.offload_lot(lot.serial, "cargo")
 
-    print(f"Starship {starship.shipName} has Cr{starship.balance} at this point.")
+    print(
+        f"\tStarship {starship.shipName} now has {len(list(starship.get_cargo()["cargo"]))} cargo items on board."
+    )
+    print(f"Starship {starship.shipName}'s bank account now has Cr{starship.balance}.")
     print("End simulation version 0.3")
