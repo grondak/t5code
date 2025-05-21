@@ -39,7 +39,7 @@ class T5Starship:
             "cargo": [],  # miscellaneous or special cargo
         }
         self.cargoSize = 0  # total tons of cargo on board
-        self.mailLockerSize = 5  # max number of mail containers
+        self.mailLockerSize = 1  # max number of mail containers
 
         # Navigation
         self.destinationWorld = None  # assigned when a flight plan is set
@@ -88,7 +88,7 @@ class T5Starship:
             return False
 
     def onload_mail(self, mailItem):
-        if len(self.mail.keys()) > self.mailLockerSize:
+        if len(self.mail.keys()) >= self.mailLockerSize:
             raise ValueError("Starship mail locker size exceeded.")
         self.mail[mailItem.serial] = mailItem
 

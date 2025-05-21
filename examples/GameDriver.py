@@ -34,20 +34,20 @@ if __name__ == "__main__":
     print(
         f"Rhylanor is {GameDriver.world_data['Rhylanor'].UWP()} with Trade Classifications {GameDriver.world_data['Rhylanor'].trade_classifications()}."
     )
-    test_lot = T5Lot("Rhylanor", GameDriver)
-    test_lot.mass = 5
+    test_lot1 = T5Lot("Rhylanor", GameDriver)
+    test_lot1.mass = 5
     print(
-        f"The test lot ID is {test_lot.lot_id} with mass {test_lot.mass} and serial {test_lot.serial}."
+        f"The test lot ID is {test_lot1.lot_id} with mass {test_lot1.mass} and serial {test_lot1.serial}."
     )
     print(f"Selling on worlds:")
     for world in ["Porozlo", "Risek", "Loneseda", "Valhalla"]:
         print(
             f"\tWorld: {world} trade classifications: {GameDriver.world_data[world].trade_classifications()} "
-            + f"tech level: {letter_to_tech_level(GameDriver.world_data[world].UWP()[8:])} // lot value: {test_lot.determine_sale_value_on(world, GameDriver)}."
+            + f"tech level: {letter_to_tech_level(GameDriver.world_data[world].UWP()[8:])} // lot value: {test_lot1.determine_sale_value_on(world, GameDriver)}."
         )
     print(
         f"\tSelling World: {world} trade classifications: {GameDriver.world_data[world].trade_classifications()} "
-        + f"tech level: {letter_to_tech_level(GameDriver.world_data[world].UWP()[8:])} // lot value: {test_lot.determine_sale_value_on(world, GameDriver)}."
+        + f"tech level: {letter_to_tech_level(GameDriver.world_data[world].UWP()[8:])} // lot value: {test_lot1.determine_sale_value_on(world, GameDriver)}."
     )
     test_world = "Efate"
     print(
@@ -72,17 +72,15 @@ if __name__ == "__main__":
     starship = T5Starship("Paprika", "Rhylanor", GameDriver.ship_data["Freighter"])
     starship.set_course_for("Jae Tellona")
     mail1 = T5Mail("Rhylanor", "Jae Tellona", GameDriver)
-    mail2 = T5Mail("Rhylanor", "Jae Tellona", GameDriver)
     starship.onload_passenger(npc1, "high")
     starship.onload_passenger(npc2, "high")
     starship.onload_passenger(npc3, "mid")
     starship.onload_passenger(npc4, "low")
     starship.hire_crew("medic", npc5)
-    starship.onload_lot(test_lot, "freight")
+    starship.onload_lot(test_lot1, "freight")
     starship.onload_lot(test_lot2, "freight")
     starship.onload_lot(test_lot3, "cargo")
     starship.onload_mail(mail1)
-    starship.onload_mail(mail2)
     print(
         f"\n\n\nStarship {starship.shipName} bound for {starship.destination()}. Contents:"
     )
