@@ -13,6 +13,17 @@ class DuplicateItemError(Exception):
     pass
 
 
+class _BestCrewSkillDict:
+    def __init__(self, crew_dict):
+        self.crew = crew_dict
+
+    def __getitem__(self, skill_name):
+        skill_name = skill_name.lower()
+        return max(
+            (member.get_skill(skill_name) for member in self.crew.values()), default=0
+        )
+
+
 class T5Starship:
     """A starship class intended to implement just enough of the T5 Starship concepts to function in the simulator"""
 
@@ -101,24 +112,38 @@ class T5Starship:
         return self.mail
 
     def hire_crew(self, position, npc: T5NPC):
-        ALLOWED_CREW_POSITIONS = ["medic"]
+        ALLOWED_CREW_POSITIONS = ["medic", "crew1", "crew2", "crew3"]
         if position not in ALLOWED_CREW_POSITIONS:
             raise ValueError("Invalid crew position.")
         if not (isinstance(npc, T5NPC)):
             raise TypeError("Invalid NPC.")
         self.crew[position] = npc
 
-    def onload_lot(self, inLot: T5Lot, lotType):
-        if not (isinstance(inLot, T5Lot)):
+    @property
+    def bestCrewSkill(self):
+        return _BestCrewSkillDict(self.crew)
+
+    ALLOWED_LOT_TYPES = {"cargo", "freight"}
+
+    def can_onload_lot(self, inLot, lotType):
+        if not isinstance(inLot, T5Lot):
             raise TypeError("Invalid lot type.")
-        if not ((lotType == "cargo") or (lotType == "freight")):
+
+        if lotType not in self.ALLOWED_LOT_TYPES:
             raise ValueError("Invalid lot value.")
+
         if inLot.mass + self.cargoSize > self.holdSize:
             raise ValueError("Lot will not fit in remaining space.")
-        if (inLot in self.cargo["freight"]) or (inLot in self.cargo["cargo"]):
+
+        if inLot in self.cargo["freight"] or inLot in self.cargo["cargo"]:
             raise ValueError("Attempt to load same lot twice.")
-        self.cargo[lotType].append(inLot)
-        self.cargoSize += inLot.mass
+
+        return True  # explicitly returns True if all checks pass
+
+    def onload_lot(self, inLot, lotType):
+        if self.can_onload_lot(inLot, lotType):
+            self.cargo[lotType].append(inLot)
+            self.cargoSize += inLot.mass
 
     def offload_lot(self, inSerial: uuid, lotType):
         try:

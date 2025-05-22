@@ -45,16 +45,16 @@ ________________________________________________________________ coverage: platf
 Name                        Stmts   Miss  Cover
 -----------------------------------------------
 src/T5Code/GameState.py        23      2    91%
-src/T5Code/T5Basics.py         18      0   100%
-src/T5Code/T5Lot.py            59      0   100%
-src/T5Code/T5Mail.py           15      0   100%
-src/T5Code/T5NPC.py            18      0   100%
+src/T5Code/T5Basics.py         22      0   100%
+src/T5Code/T5Lot.py            64      0   100%
+src/T5Code/T5Mail.py           18      0   100%
+src/T5Code/T5NPC.py            25      0   100%
 src/T5Code/T5ShipClass.py      11      0   100%
-src/T5Code/T5Starship.py       98      0   100%
-src/T5Code/T5Tables.py          3      0   100%
-src/T5Code/T5World.py          15      0   100%
+src/T5Code/T5Starship.py      129      0   100%
+src/T5Code/T5Tables.py          6      0   100%
+src/T5Code/T5World.py          40      0   100%
 -----------------------------------------------
-TOTAL                         260      2    99%
+TOTAL                         338      2    99%
 =============================================================================== 37 passed in 0.15s ===============================================================================
 ```
 There is a test simulator/Game called GameDriver.py.

@@ -1,4 +1,5 @@
 import unittest
+import pytest
 from T5Code.T5Starship import T5Starship, DuplicateItemError
 from T5Code.T5ShipClass import T5ShipClass
 from T5Code.T5NPC import T5NPC
@@ -6,6 +7,32 @@ from T5Code.GameState import *
 from T5Code.T5Mail import T5Mail
 from T5Code.T5Lot import T5Lot
 from T5Code.T5World import T5World
+
+
+@pytest.fixture
+def basic_starship():
+    MAP_FILE = "tests/t5_test_map.txt"
+    GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
+    test_ship_data = {
+        "small": {
+            "class_name": "small",
+            "jump_rating": 1,
+            "maneuver_rating": 2,
+            "cargo_capacity": 10,
+        },
+        "large": {
+            "class_name": "large",
+            "jump_rating": 3,
+            "maneuver_rating": 3,
+            "cargo_capacity": 200,
+        },
+    }
+    test_ship_class = T5ShipClass("small", test_ship_data["small"])
+    ship = T5Starship("Steamboat", "Rhylanor", test_ship_class)
+
+    ship.holdSize = 100
+    ship.cargoSize = 0
+    return ship
 
 
 class TestT5Starship(unittest.TestCase):
@@ -235,7 +262,7 @@ class TestT5Starship(unittest.TestCase):
         self.assertFalse(isStillThere)
         self.assertEqual(len(starship.get_cargo()["cargo"]), 1)
 
-    def setUp(self):
+    def setUp2(self):
         self.ship = self.get_me_a_starship("Steamboat", "Rhylanor")
 
     def test_initial_balance(self):
@@ -270,6 +297,71 @@ class TestT5Starship(unittest.TestCase):
         self.ship.credit(50)
         with self.assertRaises(ValueError):
             self.ship.debit(100)
+
+    def setUp(self):
+        # Create NPCs with varying skill levels
+        self.alice = T5NPC("Alice")
+        self.bob = T5NPC("Bob")
+        self.charlie = T5NPC("Charlie")
+
+        self.alice.set_skill("Liaison", 2)
+        self.bob.set_skill("Liaison", 5)
+        self.charlie.set_skill("Liaison", 1)
+
+        # Also test with someone who lacks the skill
+        self.charlie.set_skill("Vacc Suit", 3)
+
+        # Starship with crew
+        MAP_FILE = "tests/t5_test_map.txt"
+        GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
+        self.ship = self.get_me_a_starship("Steamboat", "Rhylanor")
+        self.ship.hire_crew("crew1", self.alice)
+        self.ship.hire_crew("crew2", self.bob)
+        self.ship.hire_crew("crew3", self.charlie)
+
+    def test_best_crew_skill_known(self):
+        best = self.ship.bestCrewSkill["Liaison"]
+        self.assertEqual(best, 5)  # Bob has the highest skill
+
+    def test_best_crew_skill_zero(self):
+        best = self.ship.bestCrewSkill["Tactics"]
+        self.assertEqual(best, 0)  # None of the crew has this skill
+
+    def test_best_crew_skill_case_insensitive(self):
+        best = self.ship.bestCrewSkill["liAiSON"]
+        self.assertEqual(best, 5)
+
+    def test_can_onload_valid_lot(self):
+        lot = T5Lot("Rhylanor", GameState)
+        lot.mass = 10
+        self.assertTrue(self.ship.can_onload_lot(lot, "freight"))
+
+    def test_can_onload_rejects_non_T5Lot(self):
+        with self.assertRaises(TypeError) as cm:
+            self.ship.can_onload_lot("not_a_lot", "freight")
+        self.assertIn("Invalid lot type.", str(cm.exception))
+
+    def test_can_onload_rejects_invalid_lot_type(self):
+        lot = T5Lot("Rhylanor", GameState)
+        lot.mass = 5
+        with self.assertRaises(ValueError) as cm:
+            self.ship.can_onload_lot(lot, "contraband")
+        self.assertIn("Invalid lot value.", str(cm.exception))
+
+    def test_can_onload_rejects_over_capacity(self):
+        lot = T5Lot("Rhylanor", GameState)
+        lot.mass = 150
+        with self.assertRaises(ValueError) as cm:
+            self.ship.can_onload_lot(lot, "cargo")
+        self.assertIn("Lot will not fit", str(cm.exception))
+
+    def test_can_onload_rejects_duplicate_lot(self):
+        lot = T5Lot("Rhylanor", GameState)
+        lot.mass = 5
+        self.ship.cargo["cargo"].append(lot)
+        with self.assertRaises(ValueError) as cm:
+            self.ship.can_onload_lot(lot, "cargo")
+        self.assertIn("load same lot twice", str(cm.exception))
 
 
 if __name__ == "__main__":

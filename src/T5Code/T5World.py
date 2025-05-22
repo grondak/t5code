@@ -1,6 +1,6 @@
 """A class that represents one World from Traveller 5."""
 
-import T5Code.T5Basics
+from T5Code.T5Basics import roll_flux
 from T5Code.T5Tables import BROKERS
 
 
@@ -47,3 +47,32 @@ class T5World:
 
     def get_starport(self):
         return self.UWP()[0:1]
+
+    def get_population(self):
+        return int(self.UWP()[4:5])
+
+    TRADE_CODE_MULTIPLIER_TAGS = {
+        "Ag",
+        "As",
+        "Ba",
+        "De",
+        "Fl",
+        "Hi",
+        "Ic",
+        "In",
+        "Lo",
+        "Na",
+        "Ni",
+        "Po",
+        "Ri",
+        "Va",
+    }
+
+    def freight_lot_mass(self, liaison_bonus):
+        flux = roll_flux()
+        population = self.get_population()
+        tags = set(self.trade_classifications())
+        multiplier = 1 + int(bool(tags & self.TRADE_CODE_MULTIPLIER_TAGS))
+
+        mass = (flux + population) * multiplier + liaison_bonus
+        return max(mass, 0)

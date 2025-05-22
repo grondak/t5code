@@ -7,7 +7,7 @@ class TestT5World(unittest.TestCase):
 
     test_world_data = {
         "Earth": {
-            "UWP": "A111111-A",
+            "UWP": "A123456-A",
             "TradeClassifications": "Ag As",
             "Importance": 4,
         },
@@ -20,7 +20,7 @@ class TestT5World(unittest.TestCase):
 
     def test_UWP(self):
         test_world = T5World("Earth", self.test_world_data)
-        self.assertEqual("A111111-A", test_world.UWP())
+        self.assertEqual("A123456-A", test_world.UWP())
         with self.assertRaises(Exception) as context:
             test_world = T5World("Bogus", self.test_world_data)
         self.assertTrue(
@@ -43,6 +43,10 @@ class TestT5World(unittest.TestCase):
     def test_get_starport_type(self):
         test_world = T5World("Earth", self.test_world_data)
         self.assertEqual("A", test_world.get_starport())
+
+    def test_get_population(self):
+        test_world = T5World("Earth", self.test_world_data)
+        self.assertEqual(4, test_world.get_population())
 
     def test_tier_A(self):
         result = find_best_broker("A")

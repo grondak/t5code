@@ -182,4 +182,41 @@ if __name__ == "__main__":
         f"\tStarship {starship.shipName} now has {len(list(starship.get_cargo()["cargo"]))} cargo items on board."
     )
     print(f"Starship {starship.shipName}'s bank account now has Cr{starship.balance}.")
+    searching = True
+    simDay = 0
+    while searching:
+        print(f"Searching for Freight/Cargo/Mail on Day {simDay}:")
+        freightLotMass = GameDriver.world_data[starship.location].freight_lot_mass(
+            starship.bestCrewSkill["Liaison"]
+        )
+        if freightLotMass > 0:
+            lot = T5Lot(starship.location, GameDriver)
+            lot.mass = freightLotMass
+            print(
+                f"\tThe lot size available today is {lot.serial} of {lot.mass} tons, lot id: {lot.lot_id}."
+            )
+            try:
+                starship.onload_lot(lot, "freight")
+                starship.credit(1000 * lot.mass)
+            except ValueError as e:
+                if "Lot will not fit" in str(e):
+                    searching = False
+                    print(f"Rejecting lot because {lot.mass} is too big for the ship.")
+                else:
+                    raise
+        else:
+            print("\tNo lot available today.")
+        starshipFreight = list(starship.get_cargo()["freight"])
+        for lot in starshipFreight:
+            print(f"\tLot {lot.serial} aboard, {lot.mass} tons, lot id: {lot.lot_id}.")
+        print(
+            f"\tStarship {starship.shipName} now has {len(starship.get_cargo()['freight'])} freight items on board, with total mass {starship.cargoSize}."
+        )
+        simDay += 1
+        if starship.cargoSize > 0.8 * starship.holdSize:
+            searching = False
+            print(
+                f"Met 80% or more criteria for departure at {starship.cargoSize/starship.holdSize*100.0}%."
+            )
+    print(f"Starship {starship.shipName}'s bank account now has Cr{starship.balance}.")
     print("End simulation version 0.3")
