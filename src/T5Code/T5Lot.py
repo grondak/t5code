@@ -2,7 +2,6 @@
 
 import uuid
 import random
-import numpy as np
 
 from T5Code.T5Tables import (
     BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
@@ -89,7 +88,9 @@ class T5Lot:
 
     def generate_lot_mass(self, mu=2.6, sigma=0.7, min_mass=1, max_mass=100):
         while True:
-            lot = np.random.lognormal(mean=mu, sigma=sigma)
+            # random.lognormvariate provides similar behaviour without
+            # requiring the numpy dependency
+            lot = random.lognormvariate(mu, sigma)
             if min_mass <= lot <= max_mass:
                 return int(round(lot))
 
@@ -157,19 +158,6 @@ class T5Lot:
 
         # Convert the result back to a space-separated string
         return " ".join(sorted(filtered_set))  # Sorting ensures consistent output order
-
-        def consult_actual_value_table(self, mod: int) -> float:
-            """
-            Roll Flux (1d6 - 1d6), apply modifier, clamp result [-5, 8],
-            and return the corresponding actual value from T5Tables.
-            """
-            die1 = random.randint(1, 6)
-            die2 = random.randint(1, 6)
-            raw_flux = die1 - die2
-            modded_flux = raw_flux + mod
-
-            clamped_flux = max(-5, min(8, modded_flux))
-            return T5Tables.ACTUAL_VALUE[clamped_flux]
 
     def consult_actual_value_table(self, mod: int) -> float:
         """
