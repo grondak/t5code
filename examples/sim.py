@@ -191,7 +191,7 @@ def log_event(message, env, start_time):
 # Log ship event
 def ship_log_event(message, ship, env, start_time):
     log_event(
-        f"Ship {ship['id']} ({ship['class_name']} {ship['status']} at {ship['location']}{" bound for " + ship['destination'] if ship['status']=="traveling" else ""}. Fuel: {ship['fuel']} Cargo: {ship['cargo']}){message}",
+        f"Ship {ship['id']} ({ship['class_name']} {ship['status']} at {ship['location']}{" bound for " + ship['destination'] if ship['status']=="traveling" else ""}. Fuel: {ship['fuel']} Cargo: {ship['cargo']}) {message}",
         env,
         start_time,
     )
