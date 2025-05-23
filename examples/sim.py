@@ -4,11 +4,11 @@ from datetime import datetime, timedelta
 
 
 # Constants
-LOG_FILE = "simulation_log.txt"
-SHIP_CLASSES_CSV = "ship_classes.csv"
-INPUT_CSV = "ships.csv"
-OUTPUT_CSV = "ships_output.csv"
-MAP_FILE = "t5_map.txt"
+LOG_FILE = "output/simulation_log.txt"
+SHIP_CLASSES_CSV = "resources/t5_ship_classes.csv"
+INPUT_CSV = "resources/ships.csv"
+OUTPUT_CSV = "output/ships_output.csv"
+MAP_FILE = "resources/t5_map.txt"
 START_YEAR = 1107
 START_DAY = 1
 SIM_INTERVAL = 1  # 1 hour in simulation time

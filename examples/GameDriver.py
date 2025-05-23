@@ -15,8 +15,8 @@ from T5Code import (
 
 # import T5Code
 
-MAP_FILE = "t5_map.txt"
-SHIP_CLASSES_FILE = "t5_ship_classes.csv"
+MAP_FILE = "resources/t5_map.txt"
+SHIP_CLASSES_FILE = "resources/t5_ship_classes.csv"
 
 
 class GameDriver:
