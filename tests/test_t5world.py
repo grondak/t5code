@@ -1,73 +1,87 @@
-import unittest
+import pytest
 from T5Code.T5World import T5World, find_best_broker
 
-
-class TestT5World(unittest.TestCase):
-    """Tests for the class T5World"""
-
-    test_world_data = {
-        "Earth": {
-            "UWP": "A123456-A",
-            "TradeClassifications": "Ag As",
-            "Importance": 4,
-        },
-        "Mars": {
-            "UWP": "B222222-B",
-            "TradeClassifications": "Ba De",
-            "Importance": -1,
-        },
-    }
-
-    def test_UWP(self):
-        test_world = T5World("Earth", self.test_world_data)
-        self.assertEqual("A123456-A", test_world.UWP())
-        with self.assertRaises(Exception) as context:
-            test_world = T5World("Bogus", self.test_world_data)
-        self.assertTrue(
-            "Specified world Bogus is not in provided worlds table"
-            in str(context.exception)
-        )
-
-    def test_trade_classifications(self):
-        test_world = T5World("Earth", self.test_world_data)
-        self.assertEqual("Ag As", test_world.trade_classifications())
-
-    def test_importance(self):
-        test_world = T5World("Earth", self.test_world_data)
-        self.assertEqual(4, test_world.importance())
-
-    def test_load_all_worlds(self):
-        test_worlds = T5World.load_all_worlds(self.test_world_data)
-        self.assertEqual(2, len(test_worlds))
-
-    def test_get_starport_type(self):
-        test_world = T5World("Earth", self.test_world_data)
-        self.assertEqual("A", test_world.get_starport())
-
-    def test_get_population(self):
-        test_world = T5World("Earth", self.test_world_data)
-        self.assertEqual(4, test_world.get_population())
-
-    def test_tier_A(self):
-        result = find_best_broker("A")
-        self.assertEqual(result, {"name": "Broker-7+", "mod": 4, "rate": 0.2})
-
-    def test_tier_B(self):
-        result = find_best_broker("B")
-        self.assertEqual(result, {"name": "Broker-6", "mod": 3, "rate": 0.15})
-
-    def test_tier_C(self):
-        result = find_best_broker("C")
-        self.assertEqual(result, {"name": "Broker-4", "mod": 2, "rate": 0.1})
-
-    def test_tier_D(self):
-        result = find_best_broker("D")
-        self.assertEqual(result, {"name": "Broker-2", "mod": 1, "rate": 0.05})
-
-    def test_invalid_tier(self):
-        with self.assertRaises(ValueError):
-            find_best_broker("E")
+test_world_data = {
+    "Earth": {
+        "UWP": "A123456-A",
+        "TradeClassifications": "Ag As",
+        "Importance": 4,
+    },
+    "Mars": {
+        "UWP": "B222222-B",
+        "TradeClassifications": "Ba De",
+        "Importance": -1,
+    },
+}
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_UWP():
+    test_world = T5World("Earth", test_world_data)
+    assert test_world.UWP() == "A123456-A"
+    with pytest.raises(Exception) as excinfo:
+        T5World("Bogus", test_world_data)
+    assert "Specified world Bogus is not in provided worlds table" in str(excinfo.value)
+
+
+def test_trade_classifications():
+    test_world = T5World("Earth", test_world_data)
+    assert test_world.trade_classifications() == "Ag As"
+
+
+def test_importance():
+    test_world = T5World("Earth", test_world_data)
+    assert test_world.importance() == 4
+
+
+def test_importance_negative():
+    test_world = T5World("Mars", test_world_data)
+    assert test_world.importance() == -1
+
+
+def test_load_all_worlds():
+    test_worlds = T5World.load_all_worlds(test_world_data)
+    assert len(test_worlds) == 2
+    assert all(isinstance(w, T5World) for w in test_worlds.values())
+
+
+def test_get_starport_type():
+    test_world = T5World("Earth", test_world_data)
+    assert test_world.get_starport() == "A"
+
+
+def test_get_population():
+    test_world = T5World("Earth", test_world_data)
+    assert test_world.get_population() == 4
+
+
+def test_get_population_mars():
+    test_world = T5World("Mars", test_world_data)
+    assert test_world.get_population() == 2
+
+
+@pytest.mark.parametrize(
+    "tier,expected",
+    [
+        ("A", {"name": "Broker-7+", "mod": 4, "rate": 0.2}),
+        ("B", {"name": "Broker-6", "mod": 3, "rate": 0.15}),
+        ("C", {"name": "Broker-4", "mod": 2, "rate": 0.1}),
+        ("D", {"name": "Broker-2", "mod": 1, "rate": 0.05}),
+    ],
+)
+def test_find_best_broker_tiers(tier, expected):
+    assert find_best_broker(tier) == expected
+
+
+def test_invalid_tier():
+    with pytest.raises(ValueError):
+        find_best_broker("E")
+
+
+def test_trade_classifications_mars():
+    test_world = T5World("Mars", test_world_data)
+    assert test_world.trade_classifications() == "Ba De"
+
+
+def test_get_starport_type_mars():
+    test_world = T5World("Mars", test_world_data)
+    assert test_world.get_starport() == "B"
