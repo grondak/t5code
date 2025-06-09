@@ -13,6 +13,13 @@ from .T5Basics import (
 from .T5Lot import T5Lot
 from .T5Mail import T5Mail
 from .T5NPC import T5NPC
+from .T5RandomTradeGoods import (
+    TradeGood,
+    TradeGoodsTypeTable,
+    TradeClassificationGoodsTable,
+    RandomTradeGoodsTable,
+    T5RTGTable,
+)
 from .T5ShipClass import T5ShipClass
 from .T5Starship import T5Starship
 from .T5Tables import (
