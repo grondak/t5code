@@ -7,6 +7,7 @@ from T5Code.T5RandomTradeGoods import (
     RandomTradeGoodsTable,
     T5RTGTable,
     clone_classification_table,
+    ImbalanceTradeGood,
 )
 
 
@@ -133,3 +134,21 @@ def test_random_trade_goods_get_and_roll():
         result = rtg.get_random("Foo")
         assert isinstance(result, str)
         assert result.startswith(("G", "H", "I", "J", "K", "L"))
+
+
+class DummyRTGTable:
+    def __init__(self, expected):
+        self.expected = expected
+        self.last_classification = None
+
+    def get_random(self, classification):
+        self.last_classification = classification
+        return self.expected
+
+
+def test_imbalance_trade_good_resolve_name():
+    dummy_rtg = DummyRTGTable("TestGood")
+    imbalance = ImbalanceTradeGood("As", dummy_rtg)
+    result = imbalance.resolve_name()
+    assert result == "Imbalance from As: TestGood (+Cr1,000 if sold on As)"
+    assert dummy_rtg.last_classification == "As"

@@ -10,6 +10,17 @@ class TradeGood:
         return self._name() if callable(self._name) else self._name
 
 
+class ImbalanceTradeGood(TradeGood):
+    def __init__(self, reroll_classification: str, rtg_table: "RandomTradeGoodsTable"):
+        self.reroll_classification = reroll_classification
+        self.rtg_table = rtg_table
+        super().__init__(self.resolve_name)
+
+    def resolve_name(self) -> str:
+        rerolled = self.rtg_table.get_random(self.reroll_classification)
+        return f"Imbalance from {self.reroll_classification}: {rerolled} (+Cr1,000 if sold on {self.reroll_classification})"
+
+
 class TradeGoodsTypeTable:
     def __init__(self, type_name: str, goods: List[Union[str, Callable[[], str]]]):
         if len(goods) != 6:
@@ -139,30 +150,23 @@ ag1_table.add_type_table(
         "Exotic Sauces",
     ],
 )
-ag1_table.add_type_table("Imbalances", ["As", "De", "Fl", "Ic", "Na", "In"])
+ag1_table.add_type_table(
+    "Imbalances",
+    [
+        ImbalanceTradeGood("As", T5RTGTable),
+        ImbalanceTradeGood("De", T5RTGTable),
+        ImbalanceTradeGood("Fl", T5RTGTable),
+        ImbalanceTradeGood("Ic", T5RTGTable),
+        ImbalanceTradeGood("Na", T5RTGTable),
+        ImbalanceTradeGood("In", T5RTGTable),
+    ],
+)
 
 T5RTGTable.add_classification_table("Ag-1", ag1_table)
 
 
 # Ga entry (same as Ag-1)
 clone_classification_table("Ga", ag1_table, T5RTGTable)
-
-
-""" 
-blank_table = TradeClassificationGoodsTable("Blank")
-blank_table.add_type_table(
-    "Somethings",
-    [
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-    ],
-)
-T5RTGTable.add_classification_table("", blank_table)
-"""
 
 ag2_table = TradeClassificationGoodsTable("Ag-2")
 ag2_table.add_type_table(
@@ -223,12 +227,12 @@ ag2_table.add_type_table(
 ag2_table.add_type_table(
     "Imbalances",
     [
-        "Po",
-        "Ri",
-        "Va",
-        "Ic",
-        "Na",
-        "In",
+        ImbalanceTradeGood("Po", T5RTGTable),
+        ImbalanceTradeGood("Ri", T5RTGTable),
+        ImbalanceTradeGood("Va", T5RTGTable),
+        ImbalanceTradeGood("Ic", T5RTGTable),
+        ImbalanceTradeGood("Na", T5RTGTable),
+        ImbalanceTradeGood("In", T5RTGTable),
     ],
 )
 T5RTGTable.add_classification_table("Ag-2", ag2_table)
@@ -294,12 +298,12 @@ as_table.add_type_table(
 as_table.add_type_table(
     "Imbalances",
     [
-        "Ag",
-        "De",
-        "Na",
-        "Po",
-        "Ri",
-        "Ic",
+        ImbalanceTradeGood("Ag", T5RTGTable),
+        ImbalanceTradeGood("De", T5RTGTable),
+        ImbalanceTradeGood("Na", T5RTGTable),
+        ImbalanceTradeGood("Po", T5RTGTable),
+        ImbalanceTradeGood("Ri", T5RTGTable),
+        ImbalanceTradeGood("Ic", T5RTGTable),
     ],
 )
 T5RTGTable.add_classification_table("As", as_table)
@@ -430,14 +434,15 @@ fl_table.add_type_table(
 fl_table.add_type_table(
     "Imbalances",
     [
-        "In",
-        "Ri",
-        "Ic",
-        "Na",
-        "Ag",
-        "Po",
+        ImbalanceTradeGood("In", T5RTGTable),
+        ImbalanceTradeGood("Ri", T5RTGTable),
+        ImbalanceTradeGood("Ic", T5RTGTable),
+        ImbalanceTradeGood("Na", T5RTGTable),
+        ImbalanceTradeGood("Ag", T5RTGTable),
+        ImbalanceTradeGood("Po", T5RTGTable),
     ],
 )
+
 T5RTGTable.add_classification_table("Fl", fl_table)
 ic_table = TradeClassificationGoodsTable("Ic")
 ic_table.add_type_table(
@@ -566,12 +571,12 @@ na_table.add_type_table(
 na_table.add_type_table(
     "Imbalances",
     [
-        "Ag",
-        "Ri",
-        "In",
-        "Ic",
-        "De",
-        "Fl",
+        ImbalanceTradeGood("Ag", T5RTGTable),
+        ImbalanceTradeGood("Ri", T5RTGTable),
+        ImbalanceTradeGood("In", T5RTGTable),
+        ImbalanceTradeGood("Ic", T5RTGTable),
+        ImbalanceTradeGood("De", T5RTGTable),
+        ImbalanceTradeGood("Fl", T5RTGTable),
     ],
 )
 T5RTGTable.add_classification_table("Na", na_table)
@@ -702,12 +707,12 @@ po_table.add_type_table(
 po_table.add_type_table(
     "Imbalances",
     [
-        "In",
-        "Ri",
-        "Fl",
-        "Ic",
-        "Ag",
-        "Va",
+        ImbalanceTradeGood("In", T5RTGTable),
+        ImbalanceTradeGood("Ri", T5RTGTable),
+        ImbalanceTradeGood("Fl", T5RTGTable),
+        ImbalanceTradeGood("Ic", T5RTGTable),
+        ImbalanceTradeGood("Ag", T5RTGTable),
+        ImbalanceTradeGood("Va", T5RTGTable),
     ],
 )
 T5RTGTable.add_classification_table("Po", po_table)

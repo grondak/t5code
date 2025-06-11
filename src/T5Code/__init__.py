@@ -19,6 +19,7 @@ from .T5RandomTradeGoods import (
     TradeClassificationGoodsTable,
     RandomTradeGoodsTable,
     T5RTGTable,
+    ImbalanceTradeGood,
 )
 from .T5ShipClass import T5ShipClass
 from .T5Starship import T5Starship
