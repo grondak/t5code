@@ -153,39 +153,767 @@ blank_table = TradeClassificationGoodsTable("Blank")
 blank_table.add_type_table(
     "Somethings",
     [
-        "" "",
+        "",
+        "",
         "",
         "",
         "",
         "",
     ],
 )
+T5RTGTable.add_classification_table("", blank_table)
 """
 
 ag2_table = TradeClassificationGoodsTable("Ag-2")
+ag2_table.add_type_table(
+    "Raws",
+    [
+        "Bulk Woods",
+        "Bulk Pelts",
+        "Bulk Herbs",
+        "Bulk Spices",
+        "Bulk Nitrates",
+        "Foodstuffs",
+    ],
+)
+ag2_table.add_type_table(
+    "Consumables",
+    [
+        "Flowers",
+        "Aromatics",
+        "Pheromones",
+        "Secretions",
+        "Adhesives",
+        "Novel Flavorings",
+    ],
+)
+ag2_table.add_type_table(
+    "Pharma",
+    [
+        "Antifungals",
+        "Antivirals",
+        "Panacea",
+        "Pseudomones",
+        "Anagathics",
+        "Slow Drug",
+    ],
+)
+ag2_table.add_type_table(
+    "Novelties",
+    [
+        "Strange Seeds",
+        "Motile Plants",
+        "Reactive Plants",
+        "Reactive Woods",
+        "IR Emitters",
+        "Lek Emitters",
+    ],
+)
+ag2_table.add_type_table(
+    "Rares",
+    [
+        "Spices",
+        "Organic Gems",
+        "Flavorings",
+        "Aged Meats",
+        "Fermented Fluids",
+        "Fine Aromatics",
+    ],
+)
+ag2_table.add_type_table(
+    "Imbalances",
+    [
+        "Po",
+        "Ri",
+        "Va",
+        "Ic",
+        "Na",
+        "In",
+    ],
+)
 T5RTGTable.add_classification_table("Ag-2", ag2_table)
 # Fa entry (same as Ag-2)
 clone_classification_table("Fa", ag2_table, T5RTGTable)
 
 as_table = TradeClassificationGoodsTable("As")
+as_table.add_type_table(
+    "Raws",
+    [
+        "Bulk Nitrates",
+        "Bulk Carbon",
+        "Bulk Iron",
+        "Bulk Copper",
+        "Radioactive Ores",
+        "Bulk Ices",
+    ],
+)
+as_table.add_type_table(
+    "Samples",
+    [
+        "Ores",
+        "Ices",
+        "Carbons",
+        "Metals",
+        "Uranium",
+        "Chelates",
+    ],
+)
+as_table.add_type_table(
+    "Valuata",
+    [
+        "Platinum",
+        "Gold",
+        "Gallium",
+        "Silver",
+        "Thorium",
+        "Radium",
+    ],
+)
+as_table.add_type_table(
+    "Novelties",
+    [
+        "Unusual Rocks",
+        "Fused Metals",
+        "Strange Crystals",
+        "Fine Dusts",
+        "Magnetics",
+        "Light-Sensitives",
+    ],
+)
+as_table.add_type_table(
+    "Rares",
+    [
+        "Gemstones",
+        "Alloys",
+        "Iridium Sponge",
+        "Lanthanum",
+        "Isotopes",
+        "Anti-Matter",
+    ],
+)
+as_table.add_type_table(
+    "Imbalances",
+    [
+        "Ag",
+        "De",
+        "Na",
+        "Po",
+        "Ri",
+        "Ic",
+    ],
+)
 T5RTGTable.add_classification_table("As", as_table)
 de_table = TradeClassificationGoodsTable("De")
+de_table.add_type_table(
+    "Raws",
+    [
+        "Bulk Nitrates",
+        "Bulk Minerals",
+        "Bulk Abrasives",
+        "Bulk Particulates",
+        "Exotic Fauna",
+        "Exotic Flora",
+    ],
+)
+de_table.add_type_table(
+    "Samples",
+    [
+        "Archeologicals",
+        "Fauna",
+        "Flora",
+        "Minerals",
+        "Ephemerals",
+        "Polymers",
+    ],
+)
+de_table.add_type_table(
+    "Pharma",
+    [
+        "Stimulants",
+        "Bulk Herbs",
+        "Paliatives",
+        "Pheromones",
+        "Antibiotics",
+        "Combat Drug",
+    ],
+)
+de_table.add_type_table(
+    "Novelties",
+    [
+        "Envirosuits",
+        "Reclamation Suits",
+        "Navigators",
+        "Dupe Masterpieces",
+        "ShimmerCloth",
+        "ANIFX Blocker",
+    ],
+)
+de_table.add_type_table(
+    "Rares",
+    [
+        "Excretions",
+        "Flavorings",
+        "Nectars",
+        "Pelts",
+        "ANIFX Dyes",
+        "Seedstock",
+    ],
+)
+de_table.add_type_table(
+    "Uniques",
+    [
+        "Pheromones",
+        "Artifacts",
+        "Sparx",
+        "Repulsant",
+        "Dominants",
+        "Fossils",
+    ],
+)
 T5RTGTable.add_classification_table("De", de_table)
 fl_table = TradeClassificationGoodsTable("Fl")
+fl_table.add_type_table(
+    "Raws",
+    [
+        "Bulk Carbon",
+        "Bulk Petros",
+        "Bulk Precipiates",
+        "Exotic Fluids",
+        "Organic Polymers",
+        "Bulk Synthetics",
+    ],
+)
+fl_table.add_type_table(
+    "Samples",
+    [
+        "Archeologicals",
+        "Fauna",
+        "Flora",
+        "Germanes",
+        "Flill",
+        "Chelates",
+    ],
+)
+fl_table.add_type_table(
+    "Pharma",
+    [
+        "Antifungals",
+        "Antivirals",
+        "Paliatives",
+        "Counter-prions",
+        "Antibiotics",
+        "Cold Sleep Pills",
+    ],
+)
+fl_table.add_type_table(
+    "Novelties",
+    [
+        "Silanes",
+        "Lek Emitters",
+        "Aware Blockers",
+        "Soothants",
+        "Self-Solving Puzzles",
+        "Fluidic Timepieces",
+    ],
+)
+fl_table.add_type_table(
+    "Rares",
+    [
+        "Flavorings",
+        "Unusual Fluids",
+        "Encapsulants",
+        "Insidiants",
+        "Corrosives",
+        "Exotic Aromatics",
+    ],
+)
+fl_table.add_type_table(
+    "Imbalances",
+    [
+        "In",
+        "Ri",
+        "Ic",
+        "Na",
+        "Ag",
+        "Po",
+    ],
+)
 T5RTGTable.add_classification_table("Fl", fl_table)
 ic_table = TradeClassificationGoodsTable("Ic")
+ic_table.add_type_table(
+    "Raws",
+    [
+        "Bulk Ices",
+        "Bulk Precipitates",
+        "Bulk Ephemerals",
+        "Exotic Flora",
+        "Bulk Gases",
+        "Bulk Oxygen",
+    ],
+)
+ic_table.add_type_table(
+    "Samples",
+    [
+        "Archeologicals",
+        "Fauna",
+        "Flora",
+        "Minerals",
+        "Luminescents",
+        "Polymers",
+    ],
+)
+ic_table.add_type_table(
+    "Pharma",
+    [
+        "Antifungals",
+        "Antivirals",
+        "Palliatives",
+        "Restoratives",
+        "Antibiotics",
+        "Antiseptics",
+    ],
+)
+ic_table.add_type_table(
+    "Novelties",
+    [
+        "Heat Pumps",
+        "Mag Emitters",
+        "Percept Blockers",
+        "Silanes",
+        "Cold Light Blocks",
+        "VHDUS Blocker",
+    ],
+)
+ic_table.add_type_table(
+    "Rares",
+    [
+        "Unusual Ices",
+        "Cyro Alloys",
+        "Rare Minerals",
+        "Unusual Fluids",
+        "Cryogems",
+        "VHDUS Dyes",
+    ],
+)
+ic_table.add_type_table(
+    "Uniques",
+    [
+        "Fossils",
+        "Cyrogems",
+        "Vision Suppressant",
+        "Fission Suppressant",
+        "Wafers",
+        "Cold Sleep Pills",
+    ],
+)
 T5RTGTable.add_classification_table("Ic", ic_table)
 na_table = TradeClassificationGoodsTable("Na")
+na_table.add_type_table(
+    "Raws",
+    [
+        "Bulk Abrasives",
+        "Bulk Gases",
+        "Bulk Minerals",
+        "Bulk Precipitates",
+        "Exotic Fauna",
+        "Exotic Flora",
+    ],
+)
+na_table.add_type_table(
+    "Samples",
+    [
+        "Archeologicals",
+        "Fauna",
+        "Flora",
+        "Minerals",
+        "Ephemerals",
+        "Polymers",
+    ],
+)
+na_table.add_type_table(
+    "Novelties",
+    [
+        "Branded Tools",
+        "Drinkable Lymphs",
+        "Strange Seeds",
+        "Pattern Creators",
+        "Pigments",
+        "Warm Leather",
+    ],
+)
+na_table.add_type_table(
+    "Rares",
+    [
+        "Hummingsand",
+        "Masterpieces",
+        "Fine Carpets",
+        "Isotopes",
+        "Pelts",
+        "Seedstock",
+    ],
+)
+na_table.add_type_table(
+    "Uniques",
+    [
+        "Masterpieces",
+        "Unusual Rocks",
+        "Artifacts",
+        "Non-Fossil Carca",
+        "Replicating Clays",
+        "ANIFX Emitter",
+    ],
+)
+na_table.add_type_table(
+    "Imbalances",
+    [
+        "Ag",
+        "Ri",
+        "In",
+        "Ic",
+        "De",
+        "Fl",
+    ],
+)
 T5RTGTable.add_classification_table("Na", na_table)
 in_table = TradeClassificationGoodsTable("In")
+in_table.add_type_table(
+    "Manufactureds",
+    [
+        "Electronics",
+        "Photonics",
+        "Magnetics",
+        "Fluidics",
+        "Polymers",
+        "Gravitics",
+    ],
+)
+in_table.add_type_table(
+    "Scrap / Waste",
+    [
+        "Obsoletes",
+        "Used Goods",
+        "Reparables",
+        "Radioactives",
+        "Metals",
+        "Sludges",
+    ],
+)
+in_table.add_type_table(
+    "Manufactureds",
+    [
+        "Biologics",
+        "Mechanicals",
+        "Textiles",
+        "Weapons",
+        "Armor",
+        "Robots",
+    ],
+)
+in_table.add_type_table(
+    "Pharma",
+    [
+        "Nostrums",
+        "Restoratives",
+        "Palliatives",
+        "Chelates",
+        "Antidotes",
+        "Antitoxins",
+    ],
+)
+in_table.add_type_table(
+    "Data",
+    [
+        "Software",
+        "Databases",
+        "Expert Systems",
+        "Upgrades",
+        "Backups",
+        "Raw Sensings",
+    ],
+)
+in_table.add_type_table(
+    "Consumables",
+    [
+        "Disposables",
+        "Respirators",
+        "Filter Masks",
+        "Combination",
+        "Parts",
+        "Improvements",
+    ],
+)
 T5RTGTable.add_classification_table("In", in_table)
 po_table = TradeClassificationGoodsTable("Po")
+po_table.add_type_table(
+    "Raws",
+    [
+        "Bulk Nutrients",
+        "Bulk Fibers",
+        "Bulk Organics",
+        "Bulk Minerals",
+        "Bulk Textiles",
+        "Exotic Flora",
+    ],
+)
+po_table.add_type_table(
+    "Entertainments",
+    [
+        "Art",
+        "Recordings",
+        "Writings",
+        "Tactiles",
+        "Osmancies",
+        "Wafers",
+    ],
+)
+po_table.add_type_table(
+    "Novelties",
+    [
+        "Strange Crystals",
+        "Strange Seeds",
+        "Pigments",
+        "Emotion Lighting",
+        "Silanes",
+        "Flora",
+    ],
+)
+po_table.add_type_table(
+    "Rares",
+    [
+        "Gemstones",
+        "Antiques",
+        "Collectibles",
+        "Allotropes",
+        "Spices",
+        "Seedstock",
+    ],
+)
+po_table.add_type_table(
+    "Uniques",
+    [
+        "Masterpieces",
+        "Exotic Flora",
+        "Antiques",
+        "Incomprehensibles",
+        "Fossiles",
+        "VHDUS Emitter",
+    ],
+)
+po_table.add_type_table(
+    "Imbalances",
+    [
+        "In",
+        "Ri",
+        "Fl",
+        "Ic",
+        "Ag",
+        "Va",
+    ],
+)
 T5RTGTable.add_classification_table("Po", po_table)
 ri_table = TradeClassificationGoodsTable("Ri")
+ri_table.add_type_table(
+    "Raws",
+    [
+        "Bulk Foodstuffs",
+        "Bulk Protein",
+        "Bulk Carbs",
+        "Bulk Fats",
+        "Exotic Flora",
+        "Exotic Fauna",
+    ],
+)
+ri_table.add_type_table(
+    "Novelties",
+    [
+        "Echostones",
+        "Self-Defenders",
+        "Attractants",
+        "Sophont Cuisine",
+        "Sophont Hats",
+        "Variable Tattoos",
+    ],
+)
+ri_table.add_type_table(
+    "Consumables",
+    [
+        "Branded Foods",
+        "Branded Drinks",
+        "Branded Clothes",
+        "Branded Drinks",
+        "Flowers",
+        "Music",
+    ],
+)
+ri_table.add_type_table(
+    "Rares",
+    [
+        "Delicacies",
+        "Spices",
+        "Tisanes",
+        "Nectars",
+        "Pelts",
+        "Variable Tattoos",
+    ],
+)
+ri_table.add_type_table(
+    "Uniques",
+    [
+        "Antique Art",
+        "Masterpieces",
+        "Artifacts",
+        "Fine Art",
+        "Meson Barriers",
+        "Famous Wafers",
+    ],
+)
+ri_table.add_type_table(
+    "Entertainments",
+    [
+        "Edutainments",
+        "Recordings",
+        "Writings",
+        "Tactiles",
+        "Osmancies",
+        "Wafers",
+    ],
+)
 T5RTGTable.add_classification_table("Ri", ri_table)
 va_table = TradeClassificationGoodsTable("Va")
+va_table.add_type_table(
+    "Raws",
+    [
+        "Bulk Dusts",
+        "Bulk Minerals",
+        "Bulk Metals",
+        "Radioactive Ores",
+        "Bulk Particulates",
+        "Ephemerals",
+    ],
+)
+va_table.add_type_table(
+    "Novelties",
+    [
+        "Branded Vacc Suits",
+        "Awareness Pinger",
+        "Strange Seeds",
+        "Pigments",
+        "Unusual Minerals",
+        "Exotic Crystals",
+    ],
+)
+va_table.add_type_table(
+    "Consumables",
+    [
+        "Branded Foods",
+        "Branded Drinks",
+        "Branded Clothes",
+        "Flavored Drinks",
+        "Flowers",
+        "Music",
+    ],
+)
+va_table.add_type_table(
+    "Rares",
+    [
+        "Delicacies",
+        "Spices",
+        "Tisanes",
+        "Nectars",
+        "Pelts",
+        "Variable Tattoos",
+    ],
+)
+va_table.add_type_table(
+    "Samples",
+    [
+        "Archeologicals",
+        "Fauna",
+        "Flora",
+        "Minerals",
+        "Ephemerals",
+        "Polymers",
+    ],
+)
+va_table.add_type_table(
+    "Scrap / Waste",
+    [
+        "Obsoletes",
+        "Used Goods",
+        "Reparables",
+        "Plutonium",
+        "Metals",
+        "Sludges",
+    ],
+)
 T5RTGTable.add_classification_table("Va", va_table)
 cp_table = TradeClassificationGoodsTable("Cp")
+cp_table.add_type_table(
+    "Data",
+    [
+        "Software",
+        "Expert Systems",
+        "Databases",
+        "Upgrades",
+        "Backups",
+        "Raw Sensings",
+    ],
+)
+cp_table.add_type_table(
+    "Novelties",
+    [
+        "Incenses",
+        "Contemplatives",
+        "Cold Welders",
+        "Polymer Sheets",
+        "Hats",
+        "Skin Tones",
+    ],
+)
+cp_table.add_type_table(
+    "Consumables",
+    [
+        "Branded Clothes",
+        "Branded Devices",
+        "Flavored Drinks",
+        "Flavorings",
+        "Decorations",
+        "Group Symbols",
+    ],
+)
+cp_table.add_type_table(
+    "Rares",
+    [
+        "Monumental Art",
+        "Holo Scripture",
+        "Collectible Books",
+        "Jewelry",
+        "Museum Items",
+        "Monumental Art",
+    ],
+)
+cp_table.add_type_table(
+    "Valuata",
+    [
+        "Coinage",
+        "Currency",
+        "Money Cards",
+        "Gold",
+        "Silver",
+        "Platinum",
+    ],
+)
+cp_table.add_type_table(
+    "Red Tape",
+    [
+        "Regulations",
+        "Synchronizations",
+        "Expert Systems",
+        "Educationals",
+        "Mandates",
+        "Accountings",
+    ],
+)
 T5RTGTable.add_classification_table("Cp", cp_table)
 
 # Cs entry (same as Cp)
