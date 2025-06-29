@@ -3,12 +3,12 @@
 import uuid
 import random
 
-from T5Code.T5Tables import (
+from t5code.T5Tables import (
     BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
     SELLING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
     ACTUAL_VALUE,
 )
-from T5Code.T5Basics import letter_to_tech_level, tech_level_to_letter
+from t5code.T5Basics import letter_to_tech_level, tech_level_to_letter
 
 
 class T5Lot:

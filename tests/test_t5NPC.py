@@ -1,6 +1,6 @@
 import pytest
 import uuid
-from T5Code.T5NPC import T5NPC
+from t5code.T5NPC import T5NPC
 
 
 def is_guid(string):

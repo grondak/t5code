@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch
-from T5Code.T5World import T5World
+from t5code.T5World import T5World
 
 
 class DummyWorld:
@@ -36,14 +36,14 @@ def world():
     return DummyWorld()
 
 
-@patch("T5Code.T5World.roll_flux", return_value=2)
+@patch("t5code.T5World.roll_flux", return_value=2)
 def test_freight_size_with_trade_tags(mock_flux, world):
     result = world.freight_lot_size(liaison_bonus=3)
     # (2 + 5) * 2 + 3 = 17
     assert result == 17
 
 
-@patch("T5Code.T5World.roll_flux", return_value=2)
+@patch("t5code.T5World.roll_flux", return_value=2)
 def test_freight_size_without_trade_tags(mock_flux, world):
     world.trade_classifications = lambda: ["Hi", "Huh"]
     result = world.freight_lot_size(liaison_bonus=1)
@@ -51,7 +51,7 @@ def test_freight_size_without_trade_tags(mock_flux, world):
     assert result == 15
 
 
-@patch("T5Code.T5World.roll_flux", return_value=-5)
+@patch("t5code.T5World.roll_flux", return_value=-5)
 def test_freight_size_cannot_be_negative(mock_flux, world):
     world.trade_classifications = lambda: []
     world.get_population = lambda: 2

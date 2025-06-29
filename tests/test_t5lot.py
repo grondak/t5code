@@ -1,9 +1,9 @@
 import pytest
 import uuid
 from unittest.mock import patch
-from T5Code.T5Lot import T5Lot
-from T5Code.GameState import *
-from T5Code.T5World import T5World
+from t5code.T5Lot import T5Lot
+from t5code.GameState import *
+from t5code.T5World import T5World
 
 MAP_FILE = "tests/t5_test_map.txt"
 

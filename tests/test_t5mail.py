@@ -1,7 +1,7 @@
 import pytest
-from T5Code.T5Mail import T5Mail
-from T5Code.GameState import *
-from T5Code.T5World import T5World
+from t5code.T5Mail import T5Mail
+from t5code.GameState import *
+from t5code.T5World import T5World
 
 
 def test_destination_is_less_important_than_origin():
@@ -14,8 +14,9 @@ def test_destination_is_less_important_than_origin():
     GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
     with pytest.raises(Exception) as excinfo:
         T5Mail("Jae Tellona", "Rhylanor", GameState)
-    assert "Destination World must be at least Importance-2 less than origin world" in str(
-        excinfo.value
+    assert (
+        "Destination World must be at least Importance-2 less than origin world"
+        in str(excinfo.value)
     )
 
     mail = T5Mail("Rhylanor", "Jae Tellona", GameState)

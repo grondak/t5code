@@ -1,5 +1,5 @@
 import uuid
-from T5Code.T5Tables import SKILLS_BY_GROUP
+from t5code.T5Tables import SKILLS_BY_GROUP
 
 ALL_KNOWN_SKILLS = {
     skill.lower(): group_name

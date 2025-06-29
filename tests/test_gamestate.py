@@ -1,5 +1,5 @@
 import io
-from T5Code import (
+from t5code import (
     load_and_parse_t5_map_filelike,
     load_and_parse_t5_ship_classes_filelike,
 )

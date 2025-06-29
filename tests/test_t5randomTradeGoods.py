@@ -1,6 +1,6 @@
 import pytest
 import random
-from T5Code.T5RandomTradeGoods import (
+from t5code.T5RandomTradeGoods import (
     TradeGood,
     TradeGoodsTypeTable,
     TradeClassificationGoodsTable,

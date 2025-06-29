@@ -1,7 +1,7 @@
 """A class that represents one World from Traveller 5."""
 
-from T5Code.T5Basics import roll_flux
-from T5Code.T5Tables import BROKERS
+from t5code.T5Basics import roll_flux
+from t5code.T5Tables import BROKERS
 
 
 def find_best_broker(starport_tier: str):

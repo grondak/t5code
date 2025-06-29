@@ -1,11 +1,11 @@
 import pytest
-from T5Code.T5Starship import T5Starship, DuplicateItemError
-from T5Code.T5ShipClass import T5ShipClass
-from T5Code.T5NPC import T5NPC
-from T5Code.GameState import *
-from T5Code.T5Mail import T5Mail
-from T5Code.T5Lot import T5Lot
-from T5Code.T5World import T5World
+from t5code.T5Starship import T5Starship, DuplicateItemError
+from t5code.T5ShipClass import T5ShipClass
+from t5code.T5NPC import T5NPC
+from t5code.GameState import *
+from t5code.T5Mail import T5Mail
+from t5code.T5Lot import T5Lot
+from t5code.T5World import T5World
 
 
 @pytest.fixture
@@ -50,7 +50,12 @@ def get_me_a_starship(name, world, test_ship_data):
 def test_create_starship_with_name(test_ship_data):
     starship = get_me_a_starship("Your mom", "Home", test_ship_data)
     assert starship.shipName == "Your mom"
-    assert starship.passengers == {"all": set(), "high": set(), "low": set(), "mid": set()}
+    assert starship.passengers == {
+        "all": set(),
+        "high": set(),
+        "low": set(),
+        "mid": set(),
+    }
     assert starship.mail == {}
     assert starship.location == "Home"
     assert starship.crew == {}
@@ -79,7 +84,9 @@ def test_onload_passenger(test_ship_data):
     npc2 = T5NPC("Doug")
     starship.onload_passenger(npc2, "high")
     assert {npc1, npc2} == starship.passengers["high"]
-    with pytest.raises(DuplicateItemError, match="Cannot load same passenger Bob twice."):
+    with pytest.raises(
+        DuplicateItemError, match="Cannot load same passenger Bob twice."
+    ):
         starship.onload_passenger(npc1, "high")
     assert {npc1, npc2} == starship.passengers["high"]
     assert npc1.location == starship.shipName
@@ -201,7 +208,9 @@ def test_offload_lot(test_ship_data, setup_gamestate):
     with pytest.raises(ValueError, match="Lot not found as specified type."):
         starship.offload_lot(lot.serial, "freight")
     lot3 = starship.offload_lot(lot.serial, "cargo")
-    isStillThere = any(lotIndex.serial == lot3.serial for lotIndex in starship.get_cargo()["cargo"])
+    isStillThere = any(
+        lotIndex.serial == lot3.serial for lotIndex in starship.get_cargo()["cargo"]
+    )
     assert lot.serial == lot3.serial
     assert not isStillThere
     assert len(starship.get_cargo()["cargo"]) == 1

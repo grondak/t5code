@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch
-from T5Code.T5Basics import (
+from t5code.T5Basics import (
     letter_to_tech_level,
     tech_level_to_letter,
     check_success,
@@ -16,8 +16,9 @@ def test_letter_to_tech_level_valid():
 def test_letter_to_tech_level_invalid():
     with pytest.raises(Exception) as excinfo:
         letter_to_tech_level("fail")
-    assert "Invalid Tech Level character. Must be in the range '0'-'9' or 'A'-'Z'." in str(
-        excinfo.value
+    assert (
+        "Invalid Tech Level character. Must be in the range '0'-'9' or 'A'-'Z'."
+        in str(excinfo.value)
     )
 
 

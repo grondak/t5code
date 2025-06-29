@@ -1,10 +1,10 @@
 import uuid
 
-import T5Code.T5Mail
-from T5Code.T5Basics import check_success
-from T5Code.T5Lot import T5Lot
-from T5Code.T5NPC import T5NPC
-from T5Code.T5ShipClass import T5ShipClass
+import t5code.T5Mail
+from t5code.T5Basics import check_success
+from t5code.T5Lot import T5Lot
+from t5code.T5NPC import T5NPC
+from t5code.T5ShipClass import T5ShipClass
 
 
 class DuplicateItemError(Exception):

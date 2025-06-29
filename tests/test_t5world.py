@@ -1,5 +1,5 @@
 import pytest
-from T5Code.T5World import T5World, find_best_broker
+from t5code.T5World import T5World, find_best_broker
 
 test_world_data = {
     "Earth": {

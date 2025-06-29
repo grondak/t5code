@@ -1,7 +1,7 @@
 """a class that represents the game state and hauls global variables around for all to play with"""
 
 import csv
-from T5Code import (
+from t5code import (
     T5Lot,
     T5Mail,
     T5NPC,

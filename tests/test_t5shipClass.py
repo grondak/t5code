@@ -1,4 +1,4 @@
-from T5Code.T5ShipClass import T5ShipClass
+from t5code.T5ShipClass import T5ShipClass
 
 test_ship_data = {
     "small": {
