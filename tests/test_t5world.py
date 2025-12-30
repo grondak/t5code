@@ -15,9 +15,9 @@ test_world_data = {
 }
 
 
-def test_UWP():
+def uwp():
     test_world = T5World("Earth", test_world_data)
-    assert test_world.UWP() == "A123456-A"
+    assert test_world.uwp() == "A123456-A"
     with pytest.raises(Exception) as excinfo:
         T5World("Bogus", test_world_data)
     assert "Specified world Bogus is not in provided worlds table" in str(excinfo.value)

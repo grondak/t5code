@@ -1,6 +1,4 @@
 import uuid
-
-import t5code.T5Mail
 from t5code.T5Basics import check_success
 from t5code.T5Lot import T5Lot
 from t5code.T5NPC import T5NPC
@@ -20,21 +18,23 @@ class _BestCrewSkillDict:
     def __getitem__(self, skill_name):
         skill_name = skill_name.lower()
         return max(
-            (member.get_skill(skill_name) for member in self.crew.values()), default=0
+            (member.get_skill(skill_name) for member in self.crew.values()),
+            default=0
         )
 
 
 class T5Starship:
-    """A starship class intended to implement just enough of the T5 Starship concepts to function in the simulator"""
+    """A starship class intended to implement just enough of the
+    T5 Starship concepts to function in the simulator"""
 
     def __init__(self, ship_name, ship_location, ship_class: T5ShipClass):
         # Core identity
-        self.shipName = ship_name
+        self.ship_name = ship_name
         self.location = ship_location
-        self.holdSize = ship_class.cargoCapacity
+        self.hold_size = ship_class.cargo_capacity
 
         # Passenger system
-        self.highPassengers = set()
+        self.high_passengers = set()
         self.passengers = {
             "high": set(),
             "mid": set(),
@@ -49,59 +49,83 @@ class T5Starship:
             "freight": [],  # freight lots
             "cargo": [],  # miscellaneous or special cargo
         }
-        self.cargoSize = 0  # total tons of cargo on board
-        self.mailLockerSize = 1  # max number of mail containers
+        self.cargo_size = 0  # total tons of cargo on board
+        self.mail_locker_size = 1  # max number of mail containers
 
         # Navigation
-        self.destinationWorld = None  # assigned when a flight plan is set
-
+        self.destination_world = None  # assigned when a flight plan is set
         # Financials
         self._balance = 0.0  # in credits (millions, thousands — your scale)
 
     def set_course_for(self, destination):
-        self.destinationWorld = destination
+        self.destination_world = destination
 
     def destination(self):
-        return self.destinationWorld
+        return self.destination_world
 
-    def onload_passenger(self, npc, passageClass):
+    def onload_passenger(self, npc, passage_class):
         if not (isinstance(npc, T5NPC)):
             raise TypeError("Invalid passenger type.")
         ALLOWED_PASSAGE_CLASSES = ["high", "mid", "low"]
-        if passageClass not in ALLOWED_PASSAGE_CLASSES:
+        if passage_class not in ALLOWED_PASSAGE_CLASSES:
             raise ValueError("Invalid passenger class.")
         if npc in self.passengers["all"]:
-            errorResult = "Cannot load same passenger " + npc.characterName + " twice."
-            raise DuplicateItemError(errorResult)
+            error_result = "Cannot load same passenger " + \
+                f"{npc.character_name} twice."
+            raise DuplicateItemError(error_result)
         self.passengers["all"].add(npc)
-        self.passengers[passageClass].add(npc)
-        npc.location = self.shipName
+        self.passengers[passage_class].add(npc)
+        npc.location = self.ship_name
 
-    def offload_passengers(self, passageClass):
-        offloadedPassengers = set()
+    def offload_passengers2(self, passage_class):
+        offloaded_passengers = set()
         ALLOWED_PASSAGE_CLASSES = ["high", "mid", "low"]
-        if passageClass not in ALLOWED_PASSAGE_CLASSES:
+        if passage_class not in ALLOWED_PASSAGE_CLASSES:
             raise ValueError("Invalid passenger class.")
-        for npc in list(self.passengers[passageClass]):
-            if passageClass == "low":
-                self.awakenLowPassenger(npc, self.crew.get("medic"))
+        for npc in self.passengers[passage_class]:
+            if passage_class == "low":
+                self.awaken_low_passenger(npc, self.crew.get("medic"))
             npc.location = self.location
-            self.passengers[passageClass].remove(npc)
+            self.passengers[passage_class].remove(npc)
             self.passengers["all"].remove(npc)
-            offloadedPassengers.add(npc)
-        return offloadedPassengers
+            offloaded_passengers.add(npc)
+        return offloaded_passengers
 
-    def awakenLowPassenger(self, npc: T5NPC, medic, roll_override_in: int = None):
-        if check_success(roll_override=roll_override_in, skills_override=medic.skills):
+    def offload_passengers(self, passage_class):
+        offloaded_passengers = set()
+        allowed_passage_classes = {"high", "mid", "low"}
+
+        if passage_class not in allowed_passage_classes:
+            raise ValueError("Invalid passenger class.")
+
+        for npc in set(self.passengers[passage_class]):
+            if passage_class == "low":
+                self.awaken_low_passenger(
+                    npc,
+                    self.crew.get("medic"),
+                )
+            npc.location = self.location
+            self.passengers[passage_class].remove(npc)
+            self.passengers["all"].remove(npc)
+            offloaded_passengers.add(npc)
+
+        return offloaded_passengers
+
+    def awaken_low_passenger(self,
+                             npc: T5NPC,
+                             medic,
+                             roll_override_in: int = None):
+        if check_success(roll_override=roll_override_in,
+                         skills_override=medic.skills):
             return True
         else:
             npc.kill()
             return False
 
-    def onload_mail(self, mailItem):
-        if len(self.mail.keys()) >= self.mailLockerSize:
+    def onload_mail(self, mail_item):
+        if len(self.mail.keys()) >= self.mail_locker_size:
             raise ValueError("Starship mail locker size exceeded.")
-        self.mail[mailItem.serial] = mailItem
+        self.mail[mail_item.serial] = mail_item
 
     def offload_mail(self):
         if len(self.mail.keys()) == 0:
@@ -120,45 +144,46 @@ class T5Starship:
         self.crew[position] = npc
 
     @property
-    def bestCrewSkill(self):
+    def best_crew_skill(self):
         return _BestCrewSkillDict(self.crew)
 
     ALLOWED_LOT_TYPES = {"cargo", "freight"}
 
-    def can_onload_lot(self, inLot, lotType):
-        if not isinstance(inLot, T5Lot):
+    def can_onload_lot(self, in_lot, lot_type):
+        if not isinstance(in_lot, T5Lot):
             raise TypeError("Invalid lot type.")
 
-        if lotType not in self.ALLOWED_LOT_TYPES:
+        if lot_type not in self.ALLOWED_LOT_TYPES:
             raise ValueError("Invalid lot value.")
 
-        if inLot.mass + self.cargoSize > self.holdSize:
+        if in_lot.mass + self.cargo_size > self.hold_size:
             raise ValueError("Lot will not fit in remaining space.")
 
-        if inLot in self.cargo["freight"] or inLot in self.cargo["cargo"]:
+        if in_lot in self.cargo["freight"] or in_lot in self.cargo["cargo"]:
             raise ValueError("Attempt to load same lot twice.")
 
         return True  # explicitly returns True if all checks pass
 
-    def onload_lot(self, inLot, lotType):
-        if self.can_onload_lot(inLot, lotType):
-            self.cargo[lotType].append(inLot)
-            self.cargoSize += inLot.mass
+    def onload_lot(self, in_lot, lot_type):
+        if self.can_onload_lot(in_lot, lot_type):
+            self.cargo[lot_type].append(in_lot)
+            self.cargo_size += in_lot.mass
 
-    def offload_lot(self, inSerial: uuid, lotType):
+    def offload_lot(self, in_serial: uuid, lot_type):
         try:
-            uuid.UUID(inSerial)
+            uuid.UUID(in_serial)
         except ValueError:
             raise ValueError("Invalid lot serial number.")
-        if not ((lotType == "cargo") or (lotType == "freight")):
+        if not ((lot_type == "cargo") or (lot_type == "freight")):
             raise ValueError("Invalid lot value.")
-        result = next((l for l in self.cargo[lotType] if l.serial == inSerial), None)
+        result = next((lot for lot in self.cargo[
+            lot_type] if lot.serial == in_serial), None)
 
         if result is None:
             raise ValueError("Lot not found as specified type.")
         else:
-            self.cargo[lotType].remove(result)
-            self.cargoSize -= result.mass
+            self.cargo[lot_type].remove(result)
+            self.cargo_size -= result.mass
             return result
 
     def get_cargo(self):

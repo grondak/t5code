@@ -1,6 +1,7 @@
 import random
 
-"""A Traveller Swiss Army Knife. Most of this will get refactored into modules later-but for now, the code needs a home"""
+"""A Traveller Swiss Army Knife. Most of this will get refactored into modules
+later-but for now, the code needs a home"""
 
 
 def letter_to_tech_level(char):
@@ -20,13 +21,15 @@ def letter_to_tech_level(char):
         return ord(char) - ord("A") + 10
     else:
         raise ValueError(
-            "Invalid Tech Level character. Must be in the range '0'-'9' or 'A'-'Z'."
+            "Invalid Tech Level character. Must be in the"
+            " range '0'-'9' or 'A'-'Z'."
         )
 
 
 def tech_level_to_letter(value):
     """
-    Encodes an integer value (0-35) into its corresponding Tech Level character (0-Z).
+    Encodes an integer value (0-35) into its corresponding
+    Tech Level character (0-Z).
     Integers 0-9 map to '0'-'9', and 10-35 map to 'A'-'Z'.
 
     Args:
@@ -45,14 +48,15 @@ def tech_level_to_letter(value):
         )
 
 
-def check_success(roll_override: int = None, skills_override: dict = None) -> bool:
-    modifier = sum(skills_override.values()) if skills_override is not None else 0
+def check_success(roll_override: int = None,
+                  skills_override: dict = None) -> bool:
+    mod = sum(skills_override.values()) if skills_override is not None else 0
     roll = (
         roll_override
         if roll_override is not None
         else random.randint(1, 6) + random.randint(1, 6)
     )
-    return (roll + modifier) >= 8
+    return (roll + mod) >= 8
 
 
 def roll_flux():

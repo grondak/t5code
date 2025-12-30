@@ -31,9 +31,10 @@ class T5World:
         if name in world_data:
             self.world_data = world_data[name]
         else:
-            raise ValueError(f"Specified world {name} is not in provided worlds table")
+            raise ValueError(f"Specified world {name} is "
+                             "not in provided worlds table")
 
-    def UWP(self):
+    def uwp(self):
         return self.world_data["UWP"]
 
     def trade_classifications(self):
@@ -42,14 +43,16 @@ class T5World:
     def importance(self):
         return self.world_data["Importance"]
 
+    @staticmethod
     def load_all_worlds(world_data):
-        return {name: T5World(name, world_data) for name, data in world_data.items()}
+        return {name: T5World(name, world_data) for name,
+                data in world_data.items()}
 
     def get_starport(self):
-        return self.UWP()[0:1]
+        return self.uwp()[0:1]
 
     def get_population(self):
-        return int(self.UWP()[4:5])
+        return int(self.uwp()[4:5])
 
     TRADE_CODE_MULTIPLIER_TAGS = {
         "Ag",

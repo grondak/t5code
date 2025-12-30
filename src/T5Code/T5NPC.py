@@ -9,11 +9,12 @@ ALL_KNOWN_SKILLS = {
 
 
 class T5NPC:
-    """An NPC class intended to implement just enough of the T5 character concepts to function in the simulator"""
+    """An NPC class intended to implement just enough of the T5
+    character concepts to function in the simulator"""
 
     def __init__(self, character_name):
         # Core identity
-        self.characterName = character_name
+        self.character_name = character_name
         self.serial = str(uuid.uuid4())  # Unique persistent ID
 
         # Starting attributes
@@ -34,7 +35,8 @@ class T5NPC:
         return self.skills.get(name.lower(), 0)
 
     def skill_group(self, name):
-        """Optional: Returns the group this skill belongs to, or None if unknown."""
+        """Optional: Returns the group this skill
+        belongs to, or None if unknown."""
         return ALL_KNOWN_SKILLS.get(name.lower())
 
     def kill(self):

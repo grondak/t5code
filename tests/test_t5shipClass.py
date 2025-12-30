@@ -16,11 +16,11 @@ test_ship_data = {
 }
 
 
-def test_USP():
+def test_usp():
     test_class = T5ShipClass("small", test_ship_data["small"])
-    assert test_class.USP() == "small 12\nCargo: 10 tons"
+    assert test_class.usp() == "small 12\nCargo: 10 tons"
     test_class2 = T5ShipClass("large", test_ship_data["large"])
-    assert test_class2.USP() == "large 33\nCargo: 200 tons"
+    assert test_class2.usp() == "large 33\nCargo: 200 tons"
 
 
 def test_load_all_ship_classes():

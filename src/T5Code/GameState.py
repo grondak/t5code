@@ -1,4 +1,5 @@
-"""a class that represents the game state and hauls global variables around for all to play with"""
+"""a class that represents the game state and hauls
+global variables around for all to play with"""
 
 import csv
 
@@ -24,7 +25,7 @@ def load_and_parse_t5_map_filelike(mapfile):
             "Name": row["Name"],
             "UWP": row["UWP"],
             "Zone": row["Zone"],
-            "Coordinates": (int(row["Hex"][:2]), int(row["Hex"][2:])),  # (X, Y)
+            "Coordinates": (int(row["Hex"][:2]), int(row["Hex"][2:])),
             "TradeClassifications": row["Remarks"],
             "Importance": row["{Ix}"],
         }
@@ -36,9 +37,9 @@ def load_and_parse_t5_ship_classes(file_path):
         return load_and_parse_t5_ship_classes_filelike(shipFile)
 
 
-def load_and_parse_t5_ship_classes_filelike(shipFile):
+def load_and_parse_t5_ship_classes_filelike(ship_file):
     ships = {}
-    reader = csv.DictReader(shipFile)
+    reader = csv.DictReader(ship_file)
     for row in reader:
         ships[row["class_name"]] = {
             "class_name": row["class_name"],

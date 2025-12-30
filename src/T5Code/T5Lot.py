@@ -20,21 +20,21 @@ class T5Lot:
     def __hash__(self):
         return hash(self.serial)
 
-    def __init__(self, origin_name, GameState):
+    def __init__(self, origin_name, game_state):
         # Basic identity
         self.size = 10
         self.origin_name = origin_name
 
         # Verify GameState is initialized
-        if GameState.world_data is None:
+        if game_state.world_data is None:
             raise ValueError("GameState.world_data has not been initialized!")
 
         # Lookup world data
-        world = GameState.world_data[origin_name]
+        world = game_state.world_data[origin_name]
 
         # Extract UWP and Tech Level
-        self.origin_UWP = world.UWP()
-        self.origin_tech_level = letter_to_tech_level(self.origin_UWP[8:])
+        self.origin_uwp = world.uwp()
+        self.origin_tech_level = letter_to_tech_level(self.origin_uwp[8:])
 
         # Filter valid trade classifications
         self.origin_trade_classifications = T5Lot.filter_trade_classifications(
@@ -54,18 +54,19 @@ class T5Lot:
         self.mass = self.generate_lot_mass()
         self.serial = str(uuid.uuid4())
 
-    def determine_sale_value_on(self, marketWorld, GameState):
+    def determine_sale_value_on(self, market_world, game_state):
         """10% x Source TL minus Market TL + table effects"""
-        TL_adjustment = 0.1 * (
+        tl_adjustment = 0.1 * (
             self.origin_tech_level
-            - letter_to_tech_level(GameState.world_data[marketWorld].UWP()[8:])
+            - letter_to_tech_level(
+                game_state.world_data[market_world].uwp()[8:])
         )
         result = round(
-            max((1 + TL_adjustment), 0)
+            max((1 + tl_adjustment), 0)
             * (
                 5000
                 + T5Lot.determine_selling_trade_classifications_effects(
-                    GameState.world_data[marketWorld],
+                    game_state.world_data[market_world],
                     self.origin_trade_classifications,
                     SELLING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
                 )
@@ -94,6 +95,7 @@ class T5Lot:
             if min_mass <= lot <= max_mass:
                 return int(round(lot))
 
+    @staticmethod
     def determine_lot_cost(
         trade_classifications, trade_classifictions_table, tech_level
     ):
@@ -106,6 +108,7 @@ class T5Lot:
         )
         return result
 
+    @staticmethod
     def determine_buying_trade_classifications_effects(
         trade_classifications, trade_classifictions_table
     ):
@@ -115,36 +118,43 @@ class T5Lot:
                 effect += trade_classifictions_table[classification]
         return effect
 
+    @staticmethod
     def determine_selling_trade_classifications_effects(
-        marketWorld,
+        market_world,
         origin_trade_classifications,
         selling_goods_trade_classifications_table,
     ):
         effect = 0
+        table = selling_goods_trade_classifications_table
         for origin_classification in origin_trade_classifications.split():
-            if selling_goods_trade_classifications_table[origin_classification] != None:
-                for selling_classification in selling_goods_trade_classifications_table[
+            if table[origin_classification] is not None:
+                for selling_classification in table[
                     origin_classification
                 ].split():
                     if (
                         selling_classification
-                        in marketWorld.trade_classifications().split()
+                        in market_world.trade_classifications().split()
                     ):
                         effect += 1000
         return effect
 
+    @staticmethod
     def filter_trade_classifications(
         provided_trade_classifications, allowed_trade_classifications
     ):
         """
-        Filters provided trade classifications based on the allowed trade classifications.
+        Filters provided trade classifications based
+        on the allowed trade classifications.
 
         Args:
-            provided_trade_classifications (str): A space-separated string of provided classifications.
-            allowed_trade_classifications (str): A space-separated string of allowed classifications.
+            provided_trade_classifications (str): A space-separated string
+               of provided classifications.
+            allowed_trade_classifications (str): A space-separated string
+               of allowed classifications.
 
         Returns:
-            str: A space-separated string of classifications that are both provided and allowed.
+            str: A space-separated string of classifications that
+               are both provided and allowed.
         """
         provided_set = set(
             provided_trade_classifications.split()
@@ -157,7 +167,7 @@ class T5Lot:
         filtered_set = provided_set.intersection(allowed_set)
 
         # Convert the result back to a space-separated string
-        return " ".join(sorted(filtered_set))  # Sorting ensures consistent output order
+        return " ".join(sorted(filtered_set))  # Sorting ensures output order
 
     def consult_actual_value_table(self, mod: int) -> float:
         """

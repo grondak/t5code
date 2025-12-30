@@ -13,7 +13,7 @@ def is_guid(string):
 
 def test_create_NPC_with_name():
     npc = T5NPC("Bob")
-    assert npc.characterName == "Bob"
+    assert npc.character_name == "Bob"
     assert is_guid(npc.serial)
     assert npc.location is None
 

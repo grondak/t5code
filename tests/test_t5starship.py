@@ -49,7 +49,7 @@ def get_me_a_starship(name, world, test_ship_data):
 
 def test_create_starship_with_name(test_ship_data):
     starship = get_me_a_starship("Your mom", "Home", test_ship_data)
-    assert starship.shipName == "Your mom"
+    assert starship.ship_name == "Your mom"
     assert starship.passengers == {
         "all": set(),
         "high": set(),
@@ -89,8 +89,8 @@ def test_onload_passenger(test_ship_data):
     ):
         starship.onload_passenger(npc1, "high")
     assert {npc1, npc2} == starship.passengers["high"]
-    assert npc1.location == starship.shipName
-    assert npc2.location == starship.shipName
+    assert npc1.location == starship.ship_name
+    assert npc2.location == starship.ship_name
 
 
 def test_offload_passengers(test_ship_data):
@@ -160,9 +160,9 @@ def test_awaken_passenger(test_ship_data):
     starship.hire_crew("medic", npc1)
     npc2 = T5NPC("Ted")
     starship.onload_passenger(npc2, "low")
-    assert starship.awakenLowPassenger(npc2, npc1, roll_override_in=20) is True
+    assert starship.awaken_low_passenger(npc2, npc1, roll_override_in=20) is True
     assert npc2.get_state() == "Alive"
-    assert starship.awakenLowPassenger(npc2, npc1, roll_override_in=-20) is False
+    assert starship.awaken_low_passenger(npc2, npc1, roll_override_in=-20) is False
     assert npc2.get_state() == "Dead"
 
 
@@ -274,17 +274,17 @@ def test_debit_insufficient_funds(crewed_ship):
 
 
 def test_best_crew_skill_known(crewed_ship):
-    best = crewed_ship.bestCrewSkill["Liaison"]
+    best = crewed_ship.best_crew_skill["Liaison"]
     assert best == 5  # Bob has the highest skill
 
 
 def test_best_crew_skill_zero(crewed_ship):
-    best = crewed_ship.bestCrewSkill["Tactics"]
+    best = crewed_ship.best_crew_skill["Tactics"]
     assert best == 0  # None of the crew has this skill
 
 
 def test_best_crew_skill_case_insensitive(crewed_ship):
-    best = crewed_ship.bestCrewSkill["liAiSON"]
+    best = crewed_ship.best_crew_skill["liAiSON"]
     assert best == 5
 
 

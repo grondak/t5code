@@ -1,6 +1,16 @@
 from typing import Union, Callable, List, Dict
 import random
 
+BULK_NITRATES = "Bulk Nitrates"
+STRANGE_SEEDS = "Strange Seeds"
+BULK_MINERALS = "Bulk Minerals"
+EXOTIC_FAUNA = "Exotic Fauna"
+EXOTIC_FLORA = "Exotic Flora"
+EXPERT_SYSTEMS = "Expert Systems"
+VARIABLE_TATTOOS = "Variable Tattoos"
+BRANDED_DRINKS = "Branded Drinks"
+BRANDED_CLOTHES = "Branded Clothes"
+
 
 class TradeGood:
     def __init__(self, name: Union[str, Callable[[], str]]):
@@ -11,20 +21,24 @@ class TradeGood:
 
 
 class ImbalanceTradeGood(TradeGood):
-    def __init__(self, reroll_classification: str, rtg_table: "RandomTradeGoodsTable"):
+    def __init__(self, reroll_classification: str,
+                 rtg_table: "RandomTradeGoodsTable"):
         self.reroll_classification = reroll_classification
         self.rtg_table = rtg_table
         super().__init__(self.resolve_name)
 
     def resolve_name(self) -> str:
         rerolled = self.rtg_table.get_random(self.reroll_classification)
-        return f"Imbalance from {self.reroll_classification}: {rerolled} (+Cr1,000 if sold on {self.reroll_classification})"
+        return f"Imbalance from {self.reroll_classification}: " \
+               f"{rerolled} (+Cr1,000 if sold on {self.reroll_classification})"
 
 
 class TradeGoodsTypeTable:
-    def __init__(self, type_name: str, goods: List[Union[str, Callable[[], str]]]):
+    def __init__(self, type_name: str,
+                 goods: List[Union[str, Callable[[], str]]]):
         if len(goods) != 6:
-            raise ValueError(f"{type_name} table must have exactly 6 trade goods.")
+            raise ValueError(f"{type_name} table must have "
+                             "exactly 6 trade goods.")
         self.type_name = type_name
         self.goods = [TradeGood(g) for g in goods]
 
@@ -36,6 +50,7 @@ class TradeGoodsTypeTable:
 
 
 class TradeClassificationGoodsTable:
+
     def __init__(self, classification_code: str):
         self.classification_code = classification_code
         self.type_tables: Dict[str, TradeGoodsTypeTable] = {}
@@ -69,7 +84,10 @@ class RandomTradeGoodsTable:
     ):
         self.classifications[classification_code] = table
 
-    def get_good(self, classification: str, type_name: str, index: int) -> TradeGood:
+    def get_good(self,
+                 classification: str,
+                 type_name: str,
+                 index: int) -> TradeGood:
         return self.classifications[classification].get_good(type_name, index)
 
     def get_random(self, classification: str) -> str:
@@ -78,12 +96,14 @@ class RandomTradeGoodsTable:
 
 def clone_classification_table(new_code, source_table, target_table):
     """
-    Clone all type tables from source_table into a new TradeClassificationGoodsTable
+    Clone all type tables from source_table into
+    a new TradeClassificationGoodsTable
     with code new_code, and register it in target_table.
     """
     new_table = TradeClassificationGoodsTable(new_code)
     for type_name in source_table.type_tables:
-        goods = [g.get_name() for g in source_table.type_tables[type_name].goods]
+        goods = [g.get_name() for g in source_table.type_tables[
+            type_name].goods]
         new_table.add_type_table(type_name, goods)
     target_table.add_classification_table(new_code, new_table)
     return new_table
@@ -176,7 +196,7 @@ ag2_table.add_type_table(
         "Bulk Pelts",
         "Bulk Herbs",
         "Bulk Spices",
-        "Bulk Nitrates",
+        BULK_NITRATES,
         "Foodstuffs",
     ],
 )
@@ -205,7 +225,7 @@ ag2_table.add_type_table(
 ag2_table.add_type_table(
     "Novelties",
     [
-        "Strange Seeds",
+        STRANGE_SEEDS,
         "Motile Plants",
         "Reactive Plants",
         "Reactive Woods",
@@ -243,7 +263,7 @@ as_table = TradeClassificationGoodsTable("As")
 as_table.add_type_table(
     "Raws",
     [
-        "Bulk Nitrates",
+        BULK_NITRATES,
         "Bulk Carbon",
         "Bulk Iron",
         "Bulk Copper",
@@ -311,12 +331,12 @@ de_table = TradeClassificationGoodsTable("De")
 de_table.add_type_table(
     "Raws",
     [
-        "Bulk Nitrates",
-        "Bulk Minerals",
+        BULK_NITRATES,
+        BULK_MINERALS,
         "Bulk Abrasives",
         "Bulk Particulates",
-        "Exotic Fauna",
-        "Exotic Flora",
+        EXOTIC_FAUNA,
+        EXOTIC_FLORA,
     ],
 )
 de_table.add_type_table(
@@ -451,7 +471,7 @@ ic_table.add_type_table(
         "Bulk Ices",
         "Bulk Precipitates",
         "Bulk Ephemerals",
-        "Exotic Flora",
+        EXOTIC_FLORA,
         "Bulk Gases",
         "Bulk Oxygen",
     ],
@@ -518,10 +538,10 @@ na_table.add_type_table(
     [
         "Bulk Abrasives",
         "Bulk Gases",
-        "Bulk Minerals",
+        BULK_MINERALS,
         "Bulk Precipitates",
-        "Exotic Fauna",
-        "Exotic Flora",
+        EXOTIC_FAUNA,
+        EXOTIC_FLORA,
     ],
 )
 na_table.add_type_table(
@@ -540,7 +560,7 @@ na_table.add_type_table(
     [
         "Branded Tools",
         "Drinkable Lymphs",
-        "Strange Seeds",
+        STRANGE_SEEDS,
         "Pattern Creators",
         "Pigments",
         "Warm Leather",
@@ -630,7 +650,7 @@ in_table.add_type_table(
     [
         "Software",
         "Databases",
-        "Expert Systems",
+        EXPERT_SYSTEMS,
         "Upgrades",
         "Backups",
         "Raw Sensings",
@@ -655,9 +675,9 @@ po_table.add_type_table(
         "Bulk Nutrients",
         "Bulk Fibers",
         "Bulk Organics",
-        "Bulk Minerals",
+        BULK_MINERALS,
         "Bulk Textiles",
-        "Exotic Flora",
+        EXOTIC_FLORA,
     ],
 )
 po_table.add_type_table(
@@ -675,7 +695,7 @@ po_table.add_type_table(
     "Novelties",
     [
         "Strange Crystals",
-        "Strange Seeds",
+        STRANGE_SEEDS,
         "Pigments",
         "Emotion Lighting",
         "Silanes",
@@ -697,7 +717,7 @@ po_table.add_type_table(
     "Uniques",
     [
         "Masterpieces",
-        "Exotic Flora",
+        EXOTIC_FLORA,
         "Antiques",
         "Incomprehensibles",
         "Fossiles",
@@ -724,8 +744,8 @@ ri_table.add_type_table(
         "Bulk Protein",
         "Bulk Carbs",
         "Bulk Fats",
-        "Exotic Flora",
-        "Exotic Fauna",
+        EXOTIC_FLORA,
+        EXOTIC_FAUNA,
     ],
 )
 ri_table.add_type_table(
@@ -736,16 +756,16 @@ ri_table.add_type_table(
         "Attractants",
         "Sophont Cuisine",
         "Sophont Hats",
-        "Variable Tattoos",
+        VARIABLE_TATTOOS,
     ],
 )
 ri_table.add_type_table(
     "Consumables",
     [
         "Branded Foods",
-        "Branded Drinks",
-        "Branded Clothes",
-        "Branded Drinks",
+        BRANDED_DRINKS,
+        BRANDED_CLOTHES,
+        BRANDED_DRINKS,
         "Flowers",
         "Music",
     ],
@@ -758,7 +778,7 @@ ri_table.add_type_table(
         "Tisanes",
         "Nectars",
         "Pelts",
-        "Variable Tattoos",
+        VARIABLE_TATTOOS,
     ],
 )
 ri_table.add_type_table(
@@ -789,7 +809,7 @@ va_table.add_type_table(
     "Raws",
     [
         "Bulk Dusts",
-        "Bulk Minerals",
+        BULK_MINERALS,
         "Bulk Metals",
         "Radioactive Ores",
         "Bulk Particulates",
@@ -801,7 +821,7 @@ va_table.add_type_table(
     [
         "Branded Vacc Suits",
         "Awareness Pinger",
-        "Strange Seeds",
+        STRANGE_SEEDS,
         "Pigments",
         "Unusual Minerals",
         "Exotic Crystals",
@@ -811,8 +831,8 @@ va_table.add_type_table(
     "Consumables",
     [
         "Branded Foods",
-        "Branded Drinks",
-        "Branded Clothes",
+        BRANDED_DRINKS,
+        BRANDED_CLOTHES,
         "Flavored Drinks",
         "Flowers",
         "Music",
@@ -826,7 +846,7 @@ va_table.add_type_table(
         "Tisanes",
         "Nectars",
         "Pelts",
-        "Variable Tattoos",
+        VARIABLE_TATTOOS,
     ],
 )
 va_table.add_type_table(
@@ -857,7 +877,7 @@ cp_table.add_type_table(
     "Data",
     [
         "Software",
-        "Expert Systems",
+        EXPERT_SYSTEMS,
         "Databases",
         "Upgrades",
         "Backups",
@@ -878,7 +898,7 @@ cp_table.add_type_table(
 cp_table.add_type_table(
     "Consumables",
     [
-        "Branded Clothes",
+        BRANDED_CLOTHES,
         "Branded Devices",
         "Flavored Drinks",
         "Flavorings",
@@ -913,7 +933,7 @@ cp_table.add_type_table(
     [
         "Regulations",
         "Synchronizations",
-        "Expert Systems",
+        EXPERT_SYSTEMS,
         "Educationals",
         "Mandates",
         "Accountings",
