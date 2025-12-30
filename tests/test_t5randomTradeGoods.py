@@ -1,5 +1,4 @@
 import pytest
-import random
 from t5code.T5RandomTradeGoods import (
     TradeGood,
     TradeGoodsTypeTable,
@@ -31,13 +30,13 @@ def test_clone_classification_table():
             )
 
 
-def test_fa_table_access():
-    # This will execute the Fa table initialization code
+def test_ga_table_access():
+    # This will execute the Ga table initialization code
     assert isinstance(T5RTGTable.classifications["Ga"], object)
 
 
 def test_cs_table_access():
-    assert isinstance(T5RTGTable.classifications["Fa"], object)
+    assert isinstance(T5RTGTable.classifications["Cs"], object)
 
 
 def test_fa_table_access():
@@ -45,8 +44,8 @@ def test_fa_table_access():
     assert isinstance(T5RTGTable.classifications["Fa"], object)
 
 
-def test_cs_table_access():
-    assert isinstance(T5RTGTable.classifications["Cs"], object)
+def test_as_table_access():
+    assert isinstance(T5RTGTable.classifications["As"], object)
 
 
 def test_cx_table_access():
@@ -71,8 +70,9 @@ def test_trade_goods_type_table_access():
 
 def test_too_many_goods_in_a_table():
     goods = ["A", "B", "C", "D", "E", "F", "G"]
-    with pytest.raises(ValueError, match="Test table must have exactly 6 trade goods."):
-        table = TradeGoodsTypeTable("Test", goods)
+    with pytest.raises(ValueError,
+                       match="Test table must have exactly 6 trade goods."):
+        TradeGoodsTypeTable("Test", goods)
 
 
 def test_trade_goods_type_table_roll():
@@ -110,7 +110,8 @@ def test_too_many_type_tables():
     for i in range(6):
         table.add_type_table(f"type{i}", [f"good{j}" for j in range(6)])
     with pytest.raises(
-        ValueError, match="Each classification may only have 6 TradeGoodsTypeTables."
+        ValueError,
+        match="Each classification may only have 6 TradeGoodsTypeTables."
     ):
         table.add_type_table("type6", [f"good{j}" for j in range(6)])
 

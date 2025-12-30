@@ -20,7 +20,8 @@ def uwp():
     assert test_world.uwp() == "A123456-A"
     with pytest.raises(Exception) as excinfo:
         T5World("Bogus", test_world_data)
-    assert "Specified world Bogus is not in provided worlds table" in str(excinfo.value)
+    assert "Specified world Bogus is not in provided worlds table" in str(
+        excinfo.value)
 
 
 def test_trade_classifications():

@@ -39,7 +39,6 @@ def world():
 @patch("t5code.T5World.roll_flux", return_value=2)
 def test_freight_size_with_trade_tags(mock_flux, world):
     result = world.freight_lot_size(liaison_bonus=3)
-    # (2 + 5) * 2 + 3 = 17
     assert result == 17
 
 
@@ -47,7 +46,6 @@ def test_freight_size_with_trade_tags(mock_flux, world):
 def test_freight_size_without_trade_tags(mock_flux, world):
     world.trade_classifications = lambda: ["Hi", "Huh"]
     result = world.freight_lot_size(liaison_bonus=1)
-    # (2 + 5) * 2 + 1 = 15
     assert result == 15
 
 

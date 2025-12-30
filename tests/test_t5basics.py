@@ -17,7 +17,8 @@ def test_letter_to_tech_level_invalid():
     with pytest.raises(Exception) as excinfo:
         letter_to_tech_level("fail")
     assert (
-        "Invalid Tech Level character. Must be in the range '0'-'9' or 'A'-'Z'."
+        "Invalid Tech Level character. "
+        "Must be in the range '0'-'9' or 'A'-'Z'."
         in str(excinfo.value)
     )
 
@@ -31,21 +32,24 @@ def test_tech_level_to_letter_valid():
 def test_tech_level_to_letter_invalid(bad_value):
     with pytest.raises(Exception) as excinfo:
         tech_level_to_letter(bad_value)
-    assert "Invalid Tech Level value. Must be an integer between 0 and 35." in str(
-        excinfo.value
+    assert (
+        "Invalid Tech Level value. "
+        "Must be an integer between 0 and 35." in str(
+            excinfo.value
+        )
     )
 
 
 def test_check_success_basic():
     assert check_success(roll_override=9) is True
     assert check_success(roll_override=7) is False
-    skills = dict([("medic", 3)])
+    skills = {"medic": 5}
     assert check_success(roll_override=8, skills_override=skills)
 
 
 @patch("random.randint")
 def test_flux_max_positive(mock_randint):
-    mock_randint.side_effect = [6, 1]  # die1=6, die2=1
+    mock_randint.side_effect = [6, 1]
     assert roll_flux() == 5
 
 

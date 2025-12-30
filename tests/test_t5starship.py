@@ -106,22 +106,22 @@ def test_offload_passengers(test_ship_data):
     assert starship.passengers["high"] == {npc1, npc2}
     assert starship.passengers["mid"] == {npc3}
     assert starship.passengers["low"] == {npc4}
-    offloadedPassengers = starship.offload_passengers("high")
-    assert offloadedPassengers == {npc1, npc2}
+    offloaded_passengers = starship.offload_passengers("high")
+    assert offloaded_passengers == {npc1, npc2}
     assert starship.passengers["high"] == set()
     assert npc1.location == starship.location
     assert npc2.location == starship.location
     with pytest.raises(ValueError, match="Invalid passenger class."):
         starship.offload_passengers("a something")
-    offloadedPassengers = starship.offload_passengers("mid")
-    assert offloadedPassengers == {npc3}
+    offloaded_passengers = starship.offload_passengers("mid")
+    assert offloaded_passengers == {npc3}
     assert starship.passengers["mid"] == set()
     assert npc3.location == starship.location
     npc5 = T5NPC("Bones")
     npc5.set_skill("medic", 45)
     starship.hire_crew("medic", npc5)
-    offloadedPassengers = starship.offload_passengers("low")
-    assert offloadedPassengers == {npc4}
+    offloaded_passengers = starship.offload_passengers("low")
+    assert offloaded_passengers == {npc4}
     assert starship.passengers["low"] == set()
     assert npc4.location == starship.location
 
@@ -138,7 +138,7 @@ def test_onload_mail(test_ship_data, setup_gamestate):
     starship.onload_mail(mail)
     assert starship.get_mail()[mail.serial] == mail
     with pytest.raises(ValueError, match="Starship mail locker size exceeded."):
-        for mail_number in range(6):
+        for _ in range(6):
             mail = T5Mail("Rhylanor", "Jae Tellona", GameState)
             starship.onload_mail(mail)
 

@@ -4,6 +4,9 @@ from t5code.T5Lot import T5Lot
 from t5code.T5NPC import T5NPC
 from t5code.T5ShipClass import T5ShipClass
 
+INVALID_PASSENGER_CLASS_ERROR = "Invalid passenger class."
+INVALID_CREW_POSITION_ERROR = "Invalid crew position."
+
 
 class DuplicateItemError(Exception):
     """Custom exception for duplicate set items."""
@@ -68,7 +71,7 @@ class T5Starship:
             raise TypeError("Invalid passenger type.")
         ALLOWED_PASSAGE_CLASSES = ["high", "mid", "low"]
         if passage_class not in ALLOWED_PASSAGE_CLASSES:
-            raise ValueError("Invalid passenger class.")
+            raise ValueError(INVALID_PASSENGER_CLASS_ERROR)
         if npc in self.passengers["all"]:
             error_result = "Cannot load same passenger " + \
                 f"{npc.character_name} twice."
@@ -81,7 +84,7 @@ class T5Starship:
         offloaded_passengers = set()
         ALLOWED_PASSAGE_CLASSES = ["high", "mid", "low"]
         if passage_class not in ALLOWED_PASSAGE_CLASSES:
-            raise ValueError("Invalid passenger class.")
+            raise ValueError(INVALID_PASSENGER_CLASS_ERROR)
         for npc in self.passengers[passage_class]:
             if passage_class == "low":
                 self.awaken_low_passenger(npc, self.crew.get("medic"))
@@ -96,7 +99,7 @@ class T5Starship:
         allowed_passage_classes = {"high", "mid", "low"}
 
         if passage_class not in allowed_passage_classes:
-            raise ValueError("Invalid passenger class.")
+            raise ValueError(INVALID_PASSENGER_CLASS_ERROR)
 
         for npc in set(self.passengers[passage_class]):
             if passage_class == "low":
