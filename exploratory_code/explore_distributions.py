@@ -5,8 +5,11 @@ import matplotlib.pyplot as plt
 mu = 2.6  # Mean of the log (adjust to center around 15-20 tons)
 sigma = 0.7  # Standard deviation of the log (adjust for tail weight)
 
+# Create a random number generator
+rng = np.random.default_rng(seed=42)
+
 # Generate random cargo loads
-loads = np.random.lognormal(mean=mu, sigma=sigma, size=1)
+loads = rng.lognormal(mean=mu, sigma=sigma, size=1)
 
 # Filter loads to a minimum of 1 ton and max of 100 tons
 loads = loads[loads >= 1]

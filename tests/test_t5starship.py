@@ -2,7 +2,7 @@ import pytest
 from t5code.T5Starship import T5Starship, DuplicateItemError
 from t5code.T5ShipClass import T5ShipClass
 from t5code.T5NPC import T5NPC
-from t5code.GameState import *
+from t5code.GameState import GameState, load_and_parse_t5_map
 from t5code.T5Mail import T5Mail
 from t5code.T5Lot import T5Lot
 from t5code.T5World import T5World
@@ -29,7 +29,8 @@ def test_ship_data():
 @pytest.fixture
 def setup_gamestate():
     MAP_FILE = "tests/t5_test_map.txt"
-    GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
+    GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(
+        MAP_FILE))
 
 
 @pytest.fixture
@@ -137,7 +138,8 @@ def test_onload_mail(test_ship_data, setup_gamestate):
     mail = T5Mail("Rhylanor", "Jae Tellona", GameState)
     starship.onload_mail(mail)
     assert starship.get_mail()[mail.serial] == mail
-    with pytest.raises(ValueError, match="Starship mail locker size exceeded."):
+    with pytest.raises(ValueError,
+                       match="Starship mail locker size exceeded."):
         for _ in range(6):
             mail = T5Mail("Rhylanor", "Jae Tellona", GameState)
             starship.onload_mail(mail)
@@ -149,7 +151,8 @@ def test_offload_mail(test_ship_data, setup_gamestate):
     starship.onload_mail(mail)
     starship.offload_mail()
     assert len(starship.get_mail().keys()) == 0
-    with pytest.raises(ValueError, match="Starship has no mail to offload."):
+    with pytest.raises(ValueError,
+                       match="Starship has no mail to offload."):
         starship.offload_mail()
 
 
@@ -160,9 +163,15 @@ def test_awaken_passenger(test_ship_data):
     starship.hire_crew("medic", npc1)
     npc2 = T5NPC("Ted")
     starship.onload_passenger(npc2, "low")
-    assert starship.awaken_low_passenger(npc2, npc1, roll_override_in=20) is True
+    assert starship.awaken_low_passenger(
+        npc2,
+        npc1,
+        roll_override_in=20) is True
     assert npc2.get_state() == "Alive"
-    assert starship.awaken_low_passenger(npc2, npc1, roll_override_in=-20) is False
+    assert starship.awaken_low_passenger(
+        npc2,
+        npc1,
+        roll_override_in=-20) is False
     assert npc2.get_state() == "Dead"
 
 
@@ -174,21 +183,25 @@ def test_onload_lot(test_ship_data, setup_gamestate):
         starship.onload_lot("a string", "cargo")
     with pytest.raises(ValueError, match="Invalid lot value."):
         starship.onload_lot(lot, "your mom")
-    with pytest.raises(ValueError, match="Lot will not fit in remaining space."):
+    with pytest.raises(ValueError,
+                       match="Lot will not fit in remaining space."):
         starship.onload_lot(lot, "cargo")
     lot.mass = 5  # tons
     starship.onload_lot(lot, "freight")
     assert lot in starship.get_cargo()["freight"]
-    with pytest.raises(ValueError, match="Attempt to load same lot twice."):
+    with pytest.raises(ValueError,
+                       match="Attempt to load same lot twice."):
         starship.onload_lot(lot, "freight")
-    with pytest.raises(ValueError, match="Attempt to load same lot twice."):
+    with pytest.raises(ValueError,
+                       match="Attempt to load same lot twice."):
         starship.onload_lot(lot, "cargo")
     lot2 = T5Lot("Rhylanor", GameState)
     lot2.mass = 5  # tons
     starship.onload_lot(lot2, "cargo")
     assert lot2 in starship.get_cargo()["cargo"]
     lot3 = T5Lot("Rhylanor", GameState)
-    with pytest.raises(ValueError, match="Lot will not fit in remaining space."):
+    with pytest.raises(ValueError,
+                       match="Lot will not fit in remaining space."):
         starship.onload_lot(lot3, "cargo")
 
 
@@ -208,11 +221,12 @@ def test_offload_lot(test_ship_data, setup_gamestate):
     with pytest.raises(ValueError, match="Lot not found as specified type."):
         starship.offload_lot(lot.serial, "freight")
     lot3 = starship.offload_lot(lot.serial, "cargo")
-    isStillThere = any(
-        lotIndex.serial == lot3.serial for lotIndex in starship.get_cargo()["cargo"]
+    is_still_there = any(
+        lotIndex.serial ==
+        lot3.serial for lotIndex in starship.get_cargo()["cargo"]
     )
     assert lot.serial == lot3.serial
-    assert not isStillThere
+    assert not is_still_there
     assert len(starship.get_cargo()["cargo"]) == 1
 
 
@@ -233,18 +247,18 @@ def crewed_ship(test_ship_data, setup_gamestate):
 
 
 def test_initial_balance(crewed_ship):
-    assert crewed_ship.balance == 0.0
+    assert crewed_ship.balance == pytest.approx(0.0)
 
 
 def test_credit_valid_amount(crewed_ship):
     crewed_ship.credit(100)
-    assert crewed_ship.balance == 100.0
+    assert crewed_ship.balance == pytest.approx(100.0)
 
 
 def test_debit_valid_amount(crewed_ship):
     crewed_ship.credit(200)
     crewed_ship.debit(50)
-    assert crewed_ship.balance == 150.0
+    assert crewed_ship.balance == pytest.approx(150.0)
 
 
 def test_credit_invalid_type(crewed_ship):
@@ -294,7 +308,7 @@ def test_can_onload_valid_lot(crewed_ship, setup_gamestate):
     assert crewed_ship.can_onload_lot(lot, "freight")
 
 
-def test_can_onload_rejects_non_T5Lot(crewed_ship):
+def test_can_onload_rejects_non_t5lot(crewed_ship):
     with pytest.raises(TypeError, match="Invalid lot type."):
         crewed_ship.can_onload_lot("not_a_lot", "freight")
 

@@ -1,4 +1,7 @@
-import simpy, csv, math, os, random
+import simpy
+import csv
+import os
+import random
 
 from datetime import datetime, timedelta
 
@@ -44,12 +47,11 @@ def simpy_time_to_timestamp(env, start_time):
 
 
 # Process: Custom clock
-def clock(env, start_time, interval=SIM_INTERVAL):
+def clock(env, interval=SIM_INTERVAL):
     """
     Simulates a clock that prints the current simulation time.
     """
     while True:
-        timestamp = simpy_time_to_timestamp(env, start_time)
         yield env.timeout(interval)
 
 
@@ -120,7 +122,7 @@ def parse_t5_map(file_path):
                 "name": row["Name"],
                 "uwp": row["UWP"],
                 "zone": row["Zone"],
-                "coordinates": (int(row["Hex"][:2]), int(row["Hex"][2:])),  # (X, Y)
+                "coordinates": (int(row["Hex"][:2]), int(row["Hex"][2:])),
             }
     return systems
 
@@ -144,7 +146,7 @@ def get_hex_from_name(system_name, systems):
         str: The hex location (e.g., "0312") or None if not found.
     """
     for hex_code, data in systems.items():
-        if data["name"].lower() == system_name.lower():  # Case-insensitive match
+        if data["name"].lower() == system_name.lower():
             return hex_code
     return None
 
@@ -185,16 +187,142 @@ def get_valid_destinations(current_system, jump_rating, systems):
 # Log events
 def log_event(message, env, start_time):
     with open(LOG_FILE, mode="a") as logfile:
-        logfile.write(f"{simpy_time_to_timestamp(env, start_time)}: {message}\n")
+        logfile.write(
+            f"{simpy_time_to_timestamp(env, start_time)}: {message}\n")
 
 
 # Log ship event
 def ship_log_event(message, ship, env, start_time):
     log_event(
-        f"Ship {ship['id']} ({ship['class_name']} {ship['status']} at {ship['location']}{" bound for " + ship['destination'] if ship['status']=="traveling" else ""}. Fuel: {ship['fuel']} Cargo: {ship['cargo']}) {message}",
+        f"Ship {ship['id']} ({ship['class_name']} "
+        f"{ship['status']} at "
+        f"{ship['location']}{" bound for " +
+                             ship['destination'] if ship[
+                                 'status'] == "traveling"
+                             else ""}. Fuel: "
+        f" {ship['fuel']} Cargo: "
+        f"{ship['cargo']}) {message}",
         env,
         start_time,
     )
+
+
+# Handle traveling ship
+def handle_traveling_ship(env, ship, start_time):
+    yield env.timeout(ship["travel_time"])
+    ship["location"] = ship["destination"]
+    ship["status"] = "docked"
+    ship_log_event(
+        f"has arrived at {ship['location']} and is now docked.",
+        ship,
+        env,
+        start_time,
+    )
+
+
+# Unload cargo
+def unload_cargo(env, ship, start_time):
+    unload_divisor = 3
+    if ship["cargo"] > 0:
+        unloading_time = (ship["cargo"] // unload_divisor) + 1
+        yield env.timeout(unloading_time)
+        ship["cargo"] = 0
+        ship_log_event("has unloaded its cargo.", ship, env, start_time)
+
+
+# Load cargo
+def load_cargo(env, ship, ship_class, start_time):
+    load_divisor = 4
+    if ship["cargo"] < ship_class["cargo_capacity"]:
+        loading_time = (
+            (ship_class["cargo_capacity"] - ship["cargo"]) // load_divisor
+        ) + 1
+        yield env.timeout(loading_time)
+        ship["cargo"] = ship_class["cargo_capacity"]
+        ship_log_event(
+            "has loaded new cargo to full capacity.",
+            ship,
+            env,
+            start_time
+        )
+
+
+# Choose next destination
+def choose_next_destination(env,
+                            ship,
+                            ship_class,
+                            current_system,
+                            systems,
+                            start_time):
+    jump_rating = ship_class["jump_rating"]
+    valid_destinations = get_valid_destinations(
+        current_system, jump_rating, systems
+    )
+    if valid_destinations:
+        ship["destination"] = valid_destinations[0]
+        ship["travel_time"] = 168
+        ship["status"] = "traveling"
+        ship_log_event(
+            f"has departed for {ship['destination']}.",
+            ship,
+            env,
+            start_time
+        )
+    else:
+        ship_log_event(
+            "has no valid destinations and is idle.",
+            ship,
+            env,
+            start_time
+        )
+        ship["status"] = "idle"
+        yield env.timeout(1)
+
+
+# Handle docked ship
+def handle_docked_ship(env,
+                       ship,
+                       ship_class,
+                       current_system,
+                       systems,
+                       start_time):
+    preunload_business_time = 2
+    yield env.timeout(preunload_business_time)
+    ship_log_event(
+        "has completed ship's business before cargo handling.",
+        ship,
+        env,
+        start_time,
+    )
+
+    yield env.process(unload_cargo(env, ship, start_time))
+    yield env.process(load_cargo(env, ship, ship_class, start_time))
+
+    post_unload_business_time = 3
+    yield env.timeout(post_unload_business_time)
+    ship_log_event(
+        "has completed ship's business after cargo handling.",
+        ship,
+        env,
+        start_time,
+    )
+
+    yield env.process(choose_next_destination(env,
+                                              ship,
+                                              ship_class,
+                                              current_system,
+                                              systems,
+                                              start_time))
+
+
+# Handle idle ship
+def handle_idle_ship(env, ship, start_time):
+    ship_log_event("is idle.", ship, env, start_time)
+    might_move = random.randint(1, 10)
+    if might_move == 1:
+        ship["status"] = "docked"
+        ship_log_event("has new orders.", ship, env, start_time)
+    yield env.timeout(1)
 
 
 # Ship process
@@ -203,92 +331,23 @@ def ship_process(env, ship, ship_classes, systems, event_queue, start_time):
         ship_class = ship_classes[ship["class_name"]]
         current_system = ship["location"]
 
-        ship_log_event(f".", ship, env, start_time)
+        ship_log_event(".", ship, env, start_time)
 
         if ship["status"] == "traveling":
-            # Simulate travel
-            yield env.timeout(ship["travel_time"])
-            ship["location"] = ship["destination"]
-            ship["status"] = "docked"
-            ship_log_event(
-                f"has arrived at {ship['location']} and is now docked.",
-                ship,
-                env,
-                start_time,
-            )
-
+            yield env.process(handle_traveling_ship(env, ship, start_time))
         elif ship["status"] == "docked":
-            # Simulate ship's business before cargo handling
-            preunload_business_time = 2  # Example: 2 hours for ship's business
-            yield env.timeout(preunload_business_time)
-            ship_log_event(
-                f"has completed ship's business before cargo handling.",
-                ship,
-                env,
-                start_time,
-            )
-
-            unload_divisor = 3
-            # Unload cargo
-            if ship["cargo"] > 0:
-                unloading_time = (ship["cargo"] // unload_divisor) + 1
-                yield env.timeout(unloading_time)
-                ship["cargo"] = 0
-                ship_log_event(f"has unloaded its cargo.", ship, env, start_time)
-
-            load_divisor = 4
-            # Load cargo
-            if ship["cargo"] < ship_class["cargo_capacity"]:
-                loading_time = (
-                    (ship_class["cargo_capacity"] - ship["cargo"]) // load_divisor
-                ) + 1
-                yield env.timeout(loading_time)
-                ship["cargo"] = ship_class["cargo_capacity"]
-                ship_log_event(
-                    f"has loaded new cargo to full capacity.", ship, env, start_time
-                )
-
-            # Simulate ship's business after cargo handling
-            post_unload_business_time = 3
-            yield env.timeout(post_unload_business_time)
-            ship_log_event(
-                f"has completed ship's business after cargo handling.",
-                ship,
-                env,
-                start_time,
-            )
-
-            # Choose next destination
-            jump_rating = ship_class["jump_rating"]
-            valid_destinations = get_valid_destinations(
-                current_system, jump_rating, systems
-            )
-            if valid_destinations:
-                ship["destination"] = valid_destinations[
-                    0
-                ]  # Example: Choose the first valid destination
-                ship["travel_time"] = 168  # Jump travel time (1 week of jumpspace time)
-
-                ship["status"] = "traveling"
-                ship_log_event(
-                    f"has departed for {ship['destination']}.", ship, env, start_time
-                )
-            else:
-                ship_log_event(
-                    f"has no valid destinations and is idle.", ship, env, start_time
-                )
-                ship["status"] = "idle"
-                yield env.timeout(1)
+            yield env.process(handle_docked_ship(env,
+                                                 ship,
+                                                 ship_class,
+                                                 current_system,
+                                                 systems,
+                                                 start_time))
         elif ship["status"] == "idle":
-            ship_log_event(f"is idle.", ship, env, start_time)
-            might_move = random.randint(1, 10)
-            if might_move == 1:
-                ship["status"] = "docked"
-                ship_log_event(f"has new orders.", ship, env, start_time)
-            yield env.timeout(1)
+            yield env.process(handle_idle_ship(env, ship, start_time))
         else:
-            ship_log_event(f"is huh.", ship, env, start_time)
-            exit
+            ship_log_event("is huh.", ship, env, start_time)
+            exit(1)
+
         # Update state for export
         event_queue.append(dict(ship))
 
@@ -314,11 +373,12 @@ def run_simulation(
 
     log_event("Simulation starting.", env, start_time)
     # Add clock process
-    env.process(clock(env, start_time, SIM_INTERVAL))
+    env.process(clock(env, SIM_INTERVAL))
 
     for ship in ships:
         env.process(
-            ship_process(env, ship, ship_classes, systems, event_queue, start_time)
+            ship_process(env, ship, ship_classes,
+                         systems, event_queue, start_time)
         )
 
     # Run the simulation

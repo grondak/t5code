@@ -2,7 +2,7 @@ import pytest
 import uuid
 from unittest.mock import patch
 from t5code.T5Lot import T5Lot
-from t5code.GameState import *
+from t5code.GameState import load_and_parse_t5_map, GameState
 from t5code.T5World import T5World
 
 MAP_FILE = "tests/t5_test_map.txt"
@@ -17,14 +17,16 @@ def is_guid(string):
 
 
 def setup_gamestate():
-    GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(MAP_FILE))
+    GameState.world_data = T5World.load_all_worlds(
+        load_and_parse_t5_map(MAP_FILE))
 
 
 def test_value():
     with pytest.raises(Exception) as excinfo:
         GameState.world_data = None
-        lot = T5Lot("Rhylanor", GameState)
-    assert "GameState.world_data has not been initialized!" in str(excinfo.value)
+        T5Lot("Rhylanor", GameState)
+    assert "GameState.world_data has not been initialized!" in str(
+        excinfo.value)
     setup_gamestate()
     lot = T5Lot("Rhylanor", GameState)
     assert lot.origin_value == 3500
@@ -33,8 +35,9 @@ def test_value():
 def test_cargo_id():
     with pytest.raises(Exception) as excinfo:
         GameState.world_data = None
-        lot = T5Lot("Rhylanor", GameState)
-    assert "GameState.world_data has not been initialized!" in str(excinfo.value)
+        T5Lot("Rhylanor", GameState)
+    assert "GameState.world_data has not been initialized!" in str(
+        excinfo.value)
     setup_gamestate()
     lot = T5Lot("Rhylanor", GameState)
     assert lot.lot_id == "F-Hi 3500"
@@ -75,9 +78,9 @@ def test_selling_trade_class_effect():
     origin_trade_classifications = "In"
     selling_goods_trade_classifications_table = {"In": "Ag In"}
     setup_gamestate()
-    marketWorld = GameState.world_data["Jae Tellona"]
+    market_world = GameState.world_data["Jae Tellona"]
     adjustment = T5Lot.determine_selling_trade_classifications_effects(
-        marketWorld,
+        market_world,
         origin_trade_classifications,
         selling_goods_trade_classifications_table,
     )
@@ -154,28 +157,28 @@ def lot():
 @patch("random.randint")
 def test_flux_with_positive_mod(mock_randint, lot):
     mock_randint.side_effect = [6, 1]
-    assert lot.consult_actual_value_table(2) == 3.0
+    assert lot.consult_actual_value_table(2) == pytest.approx(3.0)
 
 
 @patch("random.randint")
 def test_flux_with_negative_mod_below_bounds(mock_randint, lot):
     mock_randint.side_effect = [1, 6]
-    assert lot.consult_actual_value_table(-2) == 0.4
+    assert lot.consult_actual_value_table(-2) == pytest.approx(0.4)
 
 
 @patch("random.randint")
 def test_flux_with_zero_mod(mock_randint, lot):
     mock_randint.side_effect = [3, 3]
-    assert lot.consult_actual_value_table(0) == 1.0
+    assert lot.consult_actual_value_table(0) == pytest.approx(1.0)
 
 
 @patch("random.randint")
 def test_flux_middle_case(mock_randint, lot):
     mock_randint.side_effect = [4, 2]
-    assert lot.consult_actual_value_table(3) == 1.7
+    assert lot.consult_actual_value_table(3) == pytest.approx(1.7)
 
 
 @patch("random.randint")
 def test_flux_above_max_bounds(mock_randint, lot):
     mock_randint.side_effect = [6, 2]
-    assert lot.consult_actual_value_table(5) == 4.0
+    assert lot.consult_actual_value_table(5) == pytest.approx(4.0)
