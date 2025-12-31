@@ -1,5 +1,9 @@
-"""a class that represents the game state and hauls
-global variables around for all to play with"""
+"""Example driver for exercising small parts of the t5code package.
+
+This module provides a simple, runnable example. It intentionally keeps
+behavior procedural, but uses an instance `GameDriver` rather than a
+class-used-as-namespace.
+"""
 
 from t5code import (
     T5Lot,
@@ -9,8 +13,8 @@ from t5code import (
     T5Starship,
     T5World,
     find_best_broker,
-    letter_to_tech_level,
-    GameState,
+    load_and_parse_t5_map,
+    load_and_parse_t5_ship_classes,
 )
 
 MAP_FILE = "resources/t5_map.txt"
@@ -18,251 +22,200 @@ SHIP_CLASSES_FILE = "resources/t5_ship_classes.csv"
 
 
 class GameDriver:
-    world_data = None
-    ship_data = None
+    """Container for game data used by the example runner."""
+
+    def __init__(self, map_file: str = MAP_FILE,
+                 ship_classes_file: str = SHIP_CLASSES_FILE):
+        raw_worlds = load_and_parse_t5_map(map_file)
+        raw_ships = load_and_parse_t5_ship_classes(ship_classes_file)
+        self.world_data = T5World.load_all_worlds(raw_worlds)
+        self.ship_data = T5ShipClass.load_all_ship_classes(raw_ships)
+
+
+def setup_departure(origin: str, gd: GameDriver) -> T5Starship:
+    """Load ship with crew, passengers, lots, and mail at origin."""
+    freight_lot = T5Lot(origin, gd)
+    freight_lot.mass = 10
+    cargo_lot = T5Lot(origin, gd)
+    cargo_lot.mass = 3
+
+    npc_high = T5NPC("Admiral Miller")
+    npc_mid = T5NPC("Colonel Mustard")
+    npc_low = T5NPC("Civilian Joe")
+    medic = T5NPC("Dr. Bones")
+    medic.set_skill("medic", 5)
+
+    ship_class = gd.ship_data.get("Freighter") or next(
+        iter(gd.ship_data.values()))
+    ship = T5Starship("Paprika", origin, ship_class)
+    ship.hire_crew("medic", medic)
+    ship.onload_passenger(npc_high, "high")
+    ship.onload_passenger(npc_mid, "mid")
+    ship.onload_passenger(npc_low, "low")
+    ship.onload_lot(freight_lot, "freight")
+    ship.onload_lot(cargo_lot, "cargo")
+    ship.onload_mail(T5Mail(origin, "Jae Tellona", gd))
+
+    return ship
+
+
+def perform_arrival(ship: T5Starship) -> None:
+    """Offload passengers, mail, and cargo at destination."""
+    for p in ship.offload_passengers("high"):
+        print(f"Offloaded high passenger: {p.character_name}")
+    for p in ship.offload_passengers("mid"):
+        print(f"Offloaded mid passenger: {p.character_name}")
+    for p in ship.offload_passengers("low"):
+        print(f"Offloaded low passenger: {p.character_name}")
+    ship.offload_mail()
+    print(f"Mail locker now has {len(ship.get_mail())} bundles")
+
+
+def sell_cargo(ship: T5Starship, gd: GameDriver) -> None:
+    """Sell all cargo items through the best broker."""
+    world = gd.world_data.get(ship.location)
+    if world:
+        starport = world.get_starport()
+        broker = find_best_broker(starport)
+    else:
+        broker = {"mod": 0, "rate": 0.0}
+
+    for lot in ship.get_cargo().get("cargo", []):
+        value = lot.determine_sale_value_on(ship.location, gd)
+        modifier = lot.consult_actual_value_table(broker.get("mod", 0))
+        actual = value * modifier
+        fee = actual * broker.get("rate", 0.0)
+        final = actual - fee
+        ship.credit(final)
+        ship.offload_lot(lot.serial, "cargo")
+        print(f"Sold cargo lot {lot.serial} for Cr{final} (fee Cr{fee})")
+
+
+def offload_freight(ship: T5Starship) -> None:
+    """Offload all freight without selling."""
+    for lot in ship.get_cargo().get("freight", []):
+        ship.offload_lot(lot.serial, "freight")
+        print(f"Offloaded freight lot {lot.serial} of {lot.mass} tons")
+
+
+def _get_liaison_skill(ship: T5Starship) -> int:
+    """Safely retrieve the Liaison skill from crew."""
+    try:
+        return ship.best_crew_skill["Liaison"]
+    except (KeyError, AttributeError):
+        return 0
+
+
+def _try_onload_freight_lot(ship: T5Starship, lot: T5Lot) -> bool:
+    """Attempt to load a freight lot.
+    Return False if hold is too small (stop searching)."""
+    try:
+        ship.onload_lot(lot, "freight")
+        ship.credit(1000 * lot.mass)
+        return True
+    except ValueError as e:
+        if "Lot will not fit" in str(e):
+            print(f"Rejecting lot because {lot.mass} is too big for the ship.")
+            return False
+        raise
+
+
+def _report_cargo_status(ship: T5Starship) -> None:
+    """Print current freight cargo status."""
+    ship_freight = list(ship.get_cargo().get("freight", []))
+    for lot in ship_freight:
+        print(
+            f"\tLot {lot.serial} aboard, {lot.mass} tons, "
+            f"lot id: {lot.lot_id}.")
+    print(
+        f"\tStarship {ship.ship_name} now has {len(ship_freight)} "
+        f"freight items on board, with total mass {ship.cargo_size}.")
+
+
+def _should_depart(ship: T5Starship) -> bool:
+    """Check if hold is 80% full; ready to depart."""
+    if ship.cargo_size > 0.8 * ship.hold_size:
+        print(
+            "Met 80% or more criteria for departure at "
+            f"{ship.cargo_size / ship.hold_size * 100.0:.1f}%.")
+        return True
+    return False
+
+
+def search_and_load_cargo(ship: T5Starship, gd: GameDriver) -> None:
+    """Search for cargo over multiple days until hold is 80% full."""
+    searching = True
+    sim_day = 0
+    while searching:
+        print(f"Searching for Freight/Cargo/Mail on Day {sim_day}:")
+        world = gd.world_data.get(ship.location)
+        if not world:
+            print(f"\tWorld {ship.location} not found in data.")
+            break
+
+        liaison_skill = _get_liaison_skill(ship)
+        freight_lot_mass = world.freight_lot_mass(liaison_skill)
+        if freight_lot_mass > 0:
+            lot = T5Lot(ship.location, gd)
+            lot.mass = freight_lot_mass
+            print(
+                f"\tThe lot size available today is {lot.serial} "
+                f"of {lot.mass} tons, lot id: {lot.lot_id}.")
+            if not _try_onload_freight_lot(ship, lot):
+                searching = False
+        else:
+            print("\tNo lot available today.")
+
+        _report_cargo_status(ship)
+        sim_day += 1
+        if _should_depart(ship):
+            searching = False
+
+
+def main() -> None:
+    """Run a single starship jump/unload/load cycle."""
+    gd = GameDriver()
+    origin = "Rhylanor"
+    dest = "Jae Tellona"
+
+    # Phase 1: Load ship at origin
+    ship = setup_departure(origin, gd)
+    print(
+        f"Before jump: location={ship.location}, "
+        f"destination={dest}, "
+        f"cargo_size={ship.cargo_size}")
+
+    # Phase 2: Jump to destination
+    ship.set_course_for(dest)
+    ship.location = ship.destination()
+    ship.status = "docked"
+    print(f"Arrived at {ship.location}; performing offload and local business")
+
+    # Phase 3: Offload passengers and mail
+    perform_arrival(ship)
+
+    # Phase 4: Sell cargo
+    sell_cargo(ship, gd)
+
+    # Phase 5: Offload freight
+    offload_freight(ship)
+
+    print(
+        f"After port business: balance={ship.balance}, "
+        f"cargo_size={ship.cargo_size}")
+    print(
+        f"Starship {ship.ship_name} now has "
+        f"{len(list(ship.get_cargo()['cargo']))} cargo items on board.")
+    print(
+        f"Starship {ship.ship_name}'s bank account now has Cr{ship.balance}.")
+
+    # Phase 6: Search for and load cargo until 80% full
+    search_and_load_cargo(ship, gd)
+
+    print(
+        f"Starship {ship.ship_name}'s bank account now has Cr{ship.balance}.")
+    print("End simulation version 0.4")
 
 
 if __name__ == "__main__":
-    GameDriver.ship_data = T5ShipClass.load_all_ship_classes(
-        GameState.load_and_parse_t5_ship_classes(SHIP_CLASSES_FILE)
-    )
-    GameDriver.world_data = T5World.load_all_worlds(
-        GameState.load_and_parse_t5_map(MAP_FILE)
-    )
-    print(
-        f"Rhylanor is {GameDriver.world_data['Rhylanor'].uwp()} with"
-        "Trade Classifications "
-        "{GameDriver.world_data['Rhylanor'].trade_classifications()}."
-    )
-    test_lot1 = T5Lot("Rhylanor", GameDriver)
-    test_lot1.mass = 5
-    print(
-        f"The test lot ID is {test_lot1.lot_id} with mass "
-        "{test_lot1.mass} and serial {test_lot1.serial}."
-    )
-    print("Selling on worlds:")
-    for world in ["Porozlo", "Risek", "Loneseda", "Valhalla"]:
-        print(
-            f"\tWorld: {world} trade classifications: "
-            f"{GameDriver.world_data[world].trade_classifications()} "
-            "tech level: "
-            f"{letter_to_tech_level(GameDriver.world_data[world].uwp()[8:])}"
-            " // lot value: "
-            f"{test_lot1.determine_sale_value_on(world, GameDriver)}."
-        )
-    print(
-        f"\tSelling World: {world} trade classifications: "
-        f"{GameDriver.world_data[world].trade_classifications()} "
-        "tech level: "
-        f"{letter_to_tech_level(GameDriver.world_data[world].uwp()[8:])}"
-        " // lot value: "
-        f"{test_lot1.determine_sale_value_on(world, GameDriver)}."
-    )
-    test_world = "Efate"
-    print(
-        f"{test_world} is {GameDriver.world_data[test_world].uwp()} with "
-        "Trade Classifications "
-        f"{GameDriver.world_data[test_world].trade_classifications()}."
-    )
-    test_lot2 = T5Lot(test_world, GameDriver)
-    test_lot2.mass = 5
-    print(
-        f"The test lot ID is {test_lot2.lot_id} with mass "
-        f"{test_lot2.mass} and serial {test_lot2.serial}."
-    )
-    test_lot3 = T5Lot(test_world, GameDriver)
-    test_lot3.mass = 5
-    print(
-        f"The test lot ID is {test_lot3.lot_id} with mass "
-        f"{test_lot3.mass} and serial {test_lot3.serial}."
-    )
-    npc1 = T5NPC("Admiral Miller")
-    npc2 = T5NPC("General Sprange")
-    npc3 = T5NPC("Colonel Mustard")
-    npc4 = T5NPC("Colonel Sanders")
-    npc5 = T5NPC("Bones")
-    npc5.set_skill("medic", 5)
-    starship = T5Starship("Paprika", "Rhylanor",
-                          GameDriver.ship_data["Freighter"])
-    starship.set_course_for("Jae Tellona")
-    mail1 = T5Mail("Rhylanor", "Jae Tellona", GameDriver)
-    starship.onload_passenger(npc1, "high")
-    starship.onload_passenger(npc2, "high")
-    starship.onload_passenger(npc3, "mid")
-    starship.onload_passenger(npc4, "low")
-    starship.hire_crew("medic", npc5)
-    starship.onload_lot(test_lot1, "freight")
-    starship.onload_lot(test_lot2, "freight")
-    starship.onload_lot(test_lot3, "cargo")
-    starship.onload_mail(mail1)
-    print(
-        f"\n\n\nStarship {starship.ship_name} bound for "
-        "{starship.destination()}. Contents:"
-    )
-    for passenger in starship.passengers["high"]:
-        print(f"\tHigh Passenger {passenger.character_name}.")
-    for passenger in starship.passengers["mid"]:
-        print(f"\tMid Passenger {passenger.character_name}.")
-    for passenger in starship.passengers["low"]:
-        print(f"\tLow Passenger {passenger.character_name}.")
-    for mailItem in starship.get_mail():
-        print(
-            "\tMail bundle with serial number "
-            f"{starship.get_mail()[mailItem].serial}."
-        )
-    if len(starship.get_cargo()["freight"]) > 0:
-        print(
-            f"\tThere are {len(starship.get_cargo()['freight'])} "
-            "freight items aboard:"
-        )
-        for lot in starship.get_cargo()["freight"]:
-            print(
-                f"\t\tFreight Lot {lot.serial} of {lot.mass} tons, "
-                f"lot id: {lot.lot_id}"
-            )
-
-    if len(starship.get_cargo()["cargo"]) > 0:
-        print(f"\tThere are {len(starship.get_cargo()['cargo'])} "
-              "cargo items aboard:")
-        for lot in starship.get_cargo()["cargo"]:
-            print(
-                f"\t\tCargo Lot {lot.serial} of {lot.mass} tons, "
-                f"lot id: {lot.lot_id}"
-            )
-
-    print(
-        f"\n\n\nStarship {starship.ship_name} JUMPING to "
-        f"{starship.destination()}\n\n\n"
-    )
-    print(f"Starship {starship.ship_name} arriving at "
-          f"{starship.destination()}.")
-    starship.location = starship.destination()
-    starship.set_course_for("Rhylanor")
-    print(f"Starship {starship.ship_name} now bound for "
-          f"{starship.destination()}.")
-    print("Priority Offload High Passengers!")
-    for passenger in starship.offload_passengers("high"):
-        print(f"\tOffloaded high passenger {passenger.character_name}.")
-    print(
-        f"\tStarship {starship.ship_name} now has "
-        f"{len(starship.passengers['high'])} high passengers aboard."
-    )
-    print("Priority Offload Mail!")
-    starship.offload_mail()
-    print(
-        f"\tStarship {starship.ship_name} now has {len(starship.get_mail())}"
-        " mail bundles in the mail locker."
-    )
-    print("Offload Mid Passengers!")
-    for passenger in starship.offload_passengers("mid"):
-        print(f"\tOffloaded mid passenger {passenger.character_name}.")
-    print(
-        f"\tStarship {starship.ship_name} now has "
-        f"{len(starship.passengers['mid'])} mid passengers aboard."
-    )
-    print("Offload Freight!")
-    starshipFreight = list(starship.get_cargo()["freight"])
-    for lot in starshipFreight:
-        starship.offload_lot(lot.serial, "freight")
-        print(f"\tLot {lot.serial} offloaded, {lot.mass} tons, "
-              "lot id: {lot.lot_id}.")
-
-    print(
-        f"\tStarship {starship.ship_name} now has "
-        f"{len(starship.get_cargo()['freight'])} freight items on board."
-    )
-    print("Awakening Low Passengers!")
-    for passenger in starship.offload_passengers("low"):
-        if passenger.get_state() == "Alive":
-            print(f"\tAwakened low passenger {passenger.character_name}.")
-        else:
-            print("\tThe medic killed low passenger "
-                  f"{passenger.character_name}.")
-    print(
-        f"\tStarship {starship.ship_name} now has "
-        f"{len(starship.passengers['high'])} low passengers aboard."
-    )
-    starport = GameDriver.world_data[starship.location].get_starport()
-    print(f"The starport on {starship.location} is type {starport}.")
-    best_broker = find_best_broker(starport)
-    print(f"The best broker on this world is {best_broker}")
-    print("Selling Cargo!")
-    starshipCargo = list(starship.get_cargo()["cargo"])
-
-    for lot in starshipCargo:
-        localCargoMarketPrice = lot.determine_sale_value_on(
-            starship.location, GameDriver
-        )
-        print(
-            f"\tSelling cargo lot id: {lot.serial} on "
-            f"{starship.location} for Cr{localCargoMarketPrice}."
-        )
-        value_modifier = lot.consult_actual_value_table(best_broker["mod"])
-        actual_value = localCargoMarketPrice * value_modifier
-        print(
-            "\t\tPost-broker Actual Value of cargo lot id "
-            f"{lot.lot_id} is Cr{actual_value}."
-        )
-        broker_fee = actual_value * best_broker["rate"]
-        final_value = actual_value - broker_fee
-        starship.credit(final_value)
-        print(
-            f"\t\tCrediting Cr{final_value} after subtracting "
-            f"broker fee of Cr{broker_fee}."
-        )
-        starship.offload_lot(lot.serial, "cargo")
-
-    print(
-        f"\tStarship {starship.ship_name} now has "
-        f"{len(list(starship.get_cargo()["cargo"]))} cargo items on board."
-    )
-    print(f"Starship {starship.ship_name}'s bank account "
-          f"now has Cr{starship.balance}.")
-    searching = True
-    simDay = 0
-    while searching:
-        print(f"Searching for Freight/Cargo/Mail on Day {simDay}:")
-        freightLotMass = (
-            GameDriver.world_data[starship.location]
-            .freight_lot_mass(
-                starship.best_crew_skill["Liaison"]
-            )
-        )
-        if freightLotMass > 0:
-            lot = T5Lot(starship.location, GameDriver)
-            lot.mass = freightLotMass
-            print(
-                f"\tThe lot size available today is {lot.serial} "
-                f"of {lot.mass} tons, lot id: {lot.lot_id}."
-            )
-            try:
-                starship.onload_lot(lot, "freight")
-                starship.credit(1000 * lot.mass)
-            except ValueError as e:
-                if "Lot will not fit" in str(e):
-                    searching = False
-                    print(f"Rejecting lot because {lot.mass} is too "
-                          "big for the ship.")
-                else:
-                    raise
-        else:
-            print("\tNo lot available today.")
-        starshipFreight = list(starship.get_cargo()["freight"])
-        for lot in starshipFreight:
-            print(f"\tLot {lot.serial} aboard, {lot.mass} tons, "
-                  f"lot id: {lot.lot_id}.")
-        print(
-            f"\tStarship {starship.ship_name} now has "
-            f"{len(starship.get_cargo()['freight'])} freight items "
-            f"on board, with total mass {starship.cargo_size}."
-        )
-        simDay += 1
-        if starship.cargo_size > 0.8 * starship.hold_size:
-            searching = False
-            print(
-                "Met 80% or more criteria for departure at "
-                f"{starship.cargo_size/starship.hold_size*100.0}%."
-            )
-    print(f"Starship {starship.ship_name}'s bank account "
-          f"now has Cr{starship.balance}.")
-    print("End simulation version 0.3")
+    main()
