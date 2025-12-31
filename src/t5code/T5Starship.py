@@ -80,20 +80,6 @@ class T5Starship:
         self.passengers[passage_class].add(npc)
         npc.location = self.ship_name
 
-    def offload_passengers2(self, passage_class):
-        offloaded_passengers = set()
-        ALLOWED_PASSAGE_CLASSES = ["high", "mid", "low"]
-        if passage_class not in ALLOWED_PASSAGE_CLASSES:
-            raise ValueError(INVALID_PASSENGER_CLASS_ERROR)
-        for npc in self.passengers[passage_class]:
-            if passage_class == "low":
-                self.awaken_low_passenger(npc, self.crew.get("medic"))
-            npc.location = self.location
-            self.passengers[passage_class].remove(npc)
-            self.passengers["all"].remove(npc)
-            offloaded_passengers.add(npc)
-        return offloaded_passengers
-
     def offload_passengers(self, passage_class):
         offloaded_passengers = set()
         allowed_passage_classes = {"high", "mid", "low"}
