@@ -4,8 +4,13 @@ Provides tables and logic for generating random trade goods with pricing,
 common classifications, and market dynamics.
 """
 
-from typing import Union, Callable, List, Dict
+from typing import Union, Callable, List, Dict, Sequence
 import random
+
+# Constants for table structure
+TABLE_SIZE = 6  # All T5 trade tables have exactly 6 entries
+DICE_MIN = 0
+DICE_MAX = 5  # Corresponds to d6 (1-6) mapped to 0-5 index
 
 BULK_NITRATES = "Bulk Nitrates"
 STRANGE_SEEDS = "Strange Seeds"
@@ -41,10 +46,10 @@ class ImbalanceTradeGood(TradeGood):
 
 class TradeGoodsTypeTable:
     def __init__(self, type_name: str,
-                 goods: List[Union[str, Callable[[], str], "TradeGood"]]):
-        if len(goods) != 6:
+                 goods: Sequence[Union[str, Callable[[], str], "TradeGood"]]):
+        if len(goods) != TABLE_SIZE:
             raise ValueError(f"{type_name} table must have "
-                             "exactly 6 trade goods.")
+                             f"exactly {TABLE_SIZE} trade goods.")
         self.type_name = type_name
         self.goods: List[TradeGood] = []
         for g in goods:
@@ -57,7 +62,7 @@ class TradeGoodsTypeTable:
         return self.goods[index]
 
     def roll(self) -> TradeGood:
-        return self.get_good(random.randint(0, 5))
+        return self.get_good(random.randint(DICE_MIN, DICE_MAX))
 
 
 class TradeClassificationGoodsTable:
@@ -70,11 +75,11 @@ class TradeClassificationGoodsTable:
     def add_type_table(
         self,
         type_name: str,
-        goods: List[Union[str, Callable[[], str], "TradeGood"]]
+        goods: Sequence[Union[str, Callable[[], str], "TradeGood"]]
     ):
-        if len(self.type_order) >= 6:
+        if len(self.type_order) >= TABLE_SIZE:
             raise ValueError(
-                "Each classification may only have 6 TradeGoodsTypeTables."
+                f"Each classification may only have {TABLE_SIZE} TradeGoodsTypeTables."
             )
         self.type_tables[type_name] = TradeGoodsTypeTable(type_name, goods)
         self.type_order.append(type_name)
@@ -83,7 +88,7 @@ class TradeClassificationGoodsTable:
         return self.type_tables[type_name].get_good(index)
 
     def roll(self) -> TradeGood:
-        type_index = random.randint(0, 5)
+        type_index = random.randint(DICE_MIN, DICE_MAX)
         type_name = self.type_order[type_index]
         return self.type_tables[type_name].roll()
 
@@ -107,7 +112,11 @@ class RandomTradeGoodsTable:
         return self.classifications[classification].roll().get_name()
 
 
-def clone_classification_table(new_code, source_table, target_table):
+def clone_classification_table(
+    new_code: str,
+    source_table: TradeClassificationGoodsTable,
+    target_table: RandomTradeGoodsTable
+) -> TradeClassificationGoodsTable:
     """
     Clone all type tables from source_table into
     a new TradeClassificationGoodsTable
