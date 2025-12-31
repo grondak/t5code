@@ -3,6 +3,7 @@
 
 import uuid
 import random
+from typing import TYPE_CHECKING, Dict
 
 from t5code.T5Tables import (
     BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
@@ -11,20 +12,24 @@ from t5code.T5Tables import (
 )
 from t5code.T5Basics import letter_to_tech_level, tech_level_to_letter
 
+if TYPE_CHECKING:
+    from t5code.GameState import GameState
+    from t5code.T5World import T5World
+
 
 class T5Lot:
     """100% RAW T5 Lot, see T5Book 2 p209."""
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, T5Lot) and self.serial == other.serial
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.serial)
 
-    def __init__(self, origin_name, game_state):
+    def __init__(self, origin_name: str, game_state: "GameState") -> None:
         # Basic identity
-        self.size = 10
-        self.origin_name = origin_name
+        self.size: int = 10
+        self.origin_name: str = origin_name
 
         # Verify GameState is initialized
         if game_state.world_data is None:
@@ -34,30 +39,36 @@ class T5Lot:
         world = game_state.world_data[origin_name]
 
         # Extract UWP and Tech Level
-        self.origin_uwp = world.uwp()
-        self.origin_tech_level = letter_to_tech_level(self.origin_uwp[8:])
+        self.origin_uwp: str = world.uwp()
+        self.origin_tech_level: int = letter_to_tech_level(self.origin_uwp[8:])
 
         # Filter valid trade classifications
-        self.origin_trade_classifications = T5Lot.filter_trade_classifications(
-            world.trade_classifications(),
-            " ".join(BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE.keys()),
+        self.origin_trade_classifications: str = (
+            T5Lot.filter_trade_classifications(
+                world.trade_classifications(),
+                " ".join(
+                    BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE.keys()
+                ),
+            )
         )
 
         # Calculate value based on origin attributes
-        self.origin_value = T5Lot.determine_lot_cost(
+        self.origin_value: int = T5Lot.determine_lot_cost(
             self.origin_trade_classifications,
             BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
             self.origin_tech_level,
         )
 
         # Metadata and identifiers
-        self.lot_id = self.generate_lot_id()
-        self.mass = self.generate_lot_mass()
-        self.serial = str(uuid.uuid4())
+        self.lot_id: str = self.generate_lot_id()
+        self.mass: int = self.generate_lot_mass()
+        self.serial: str = str(uuid.uuid4())
 
-    def determine_sale_value_on(self, market_world, game_state):
+    def determine_sale_value_on(self,
+                                market_world: str,
+                                game_state: "GameState") -> int:
         """10% x Source TL minus Market TL + table effects"""
-        tl_adjustment = 0.1 * (
+        tl_adjustment: float = 0.1 * (
             self.origin_tech_level
             - letter_to_tech_level(
                 game_state.world_data[market_world].uwp()[8:])
@@ -75,7 +86,7 @@ class T5Lot:
         )
         return result
 
-    def generate_lot_id(self):
+    def generate_lot_id(self) -> str:
         result = (
             tech_level_to_letter(self.origin_tech_level)
             + (
@@ -88,7 +99,11 @@ class T5Lot:
         )
         return result
 
-    def generate_lot_mass(self, mu=2.6, sigma=0.7, min_mass=1, max_mass=100):
+    def generate_lot_mass(self,
+                          mu: float = 2.6,
+                          sigma: float = 0.7,
+                          min_mass: int = 1,
+                          max_mass: int = 100) -> int:
         while True:
             # random.lognormvariate provides similar behaviour without
             # requiring the numpy dependency
@@ -98,8 +113,10 @@ class T5Lot:
 
     @staticmethod
     def determine_lot_cost(
-        trade_classifications, trade_classifictions_table, tech_level
-    ):
+        trade_classifications: str,
+        trade_classifictions_table: Dict[str, int],
+        tech_level: int
+    ) -> int:
         result = (
             3000
             + T5Lot.determine_buying_trade_classifications_effects(
@@ -111,8 +128,8 @@ class T5Lot:
 
     @staticmethod
     def determine_buying_trade_classifications_effects(
-        trade_classifications, trade_classifictions_table
-    ):
+        trade_classifications: str, trade_classifictions_table: Dict[str, int]
+    ) -> int:
         effect = 0
         for classification in trade_classifications.split():
             if classification in trade_classifictions_table:
@@ -121,10 +138,10 @@ class T5Lot:
 
     @staticmethod
     def determine_selling_trade_classifications_effects(
-        market_world,
-        origin_trade_classifications,
-        selling_goods_trade_classifications_table,
-    ):
+        market_world: "T5World",
+        origin_trade_classifications: str,
+        selling_goods_trade_classifications_table: Dict[str, str],
+    ) -> int:
         effect = 0
         table = selling_goods_trade_classifications_table
         for origin_classification in origin_trade_classifications.split():
@@ -141,8 +158,8 @@ class T5Lot:
 
     @staticmethod
     def filter_trade_classifications(
-        provided_trade_classifications, allowed_trade_classifications
-    ):
+        provided_trade_classifications: str, allowed_trade_classifications: str
+    ) -> str:
         """
         Filters provided trade classifications based
         on the allowed trade classifications.

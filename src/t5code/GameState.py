@@ -5,12 +5,13 @@ which form the foundation for world and ship data in the simulator.
 """
 
 import csv
+from typing import Dict, Any, Optional
 
 
 class GameState:
-    worlds = {}
-    world_data = None
-    ship_data = None
+    worlds: Dict[str, Any] = {}
+    world_data: Optional[Dict[str, Any]] = None
+    ship_data: Optional[Dict[str, Any]] = None
 
     # Parse T5 map file
 

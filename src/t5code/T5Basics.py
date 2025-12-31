@@ -5,9 +5,10 @@ ability checks, and flux rolls.
 """
 
 import random
+from typing import Dict, Optional
 
 
-def letter_to_tech_level(char):
+def letter_to_tech_level(char: str) -> int:
     """
     Decodes a single Tech Level character (0-Z) to its integer value.
     Characters '0-9' map to 0-9, and 'A-Z' map to 10-35.
@@ -29,7 +30,7 @@ def letter_to_tech_level(char):
         )
 
 
-def tech_level_to_letter(value):
+def tech_level_to_letter(value: int) -> str:
     """
     Encodes an integer value (0-35) into its corresponding
     Tech Level character (0-Z).
@@ -51,8 +52,8 @@ def tech_level_to_letter(value):
         )
 
 
-def check_success(roll_override: int = None,
-                  skills_override: dict = None) -> bool:
+def check_success(roll_override: Optional[int] = None,
+                  skills_override: Optional[Dict[str, int]] = None) -> bool:
     mod = sum(skills_override.values()) if skills_override is not None else 0
     roll = (
         roll_override
@@ -62,7 +63,7 @@ def check_success(roll_override: int = None,
     return (roll + mod) >= 8
 
 
-def roll_flux():
+def roll_flux() -> int:
     die1 = random.randint(1, 6)
     die2 = random.randint(1, 6)
     return die1 - die2

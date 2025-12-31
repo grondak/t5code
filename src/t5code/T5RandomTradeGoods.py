@@ -36,17 +36,22 @@ class ImbalanceTradeGood(TradeGood):
     def resolve_name(self) -> str:
         rerolled = self.rtg_table.get_random(self.reroll_classification)
         return f"Imbalance from {self.reroll_classification}: " \
-               f"{rerolled} (+Cr1,000 if sold on {self.reroll_classification})"
+            f"{rerolled} (+Cr1,000 if sold on {self.reroll_classification})"
 
 
 class TradeGoodsTypeTable:
     def __init__(self, type_name: str,
-                 goods: List[Union[str, Callable[[], str]]]):
+                 goods: List[Union[str, Callable[[], str], "TradeGood"]]):
         if len(goods) != 6:
             raise ValueError(f"{type_name} table must have "
                              "exactly 6 trade goods.")
         self.type_name = type_name
-        self.goods = [TradeGood(g) for g in goods]
+        self.goods: List[TradeGood] = []
+        for g in goods:
+            if isinstance(g, TradeGood):
+                self.goods.append(g)
+            else:
+                self.goods.append(TradeGood(g))
 
     def get_good(self, index: int) -> TradeGood:
         return self.goods[index]
@@ -63,7 +68,9 @@ class TradeClassificationGoodsTable:
         self.type_order: List[str] = []
 
     def add_type_table(
-        self, type_name: str, goods: List[Union[str, Callable[[], str]]]
+        self,
+        type_name: str,
+        goods: List[Union[str, Callable[[], str], "TradeGood"]]
     ):
         if len(self.type_order) >= 6:
             raise ValueError(
@@ -108,8 +115,8 @@ def clone_classification_table(new_code, source_table, target_table):
     """
     new_table = TradeClassificationGoodsTable(new_code)
     for type_name in source_table.type_tables:
-        goods = [g.get_name() for g in source_table.type_tables[
-            type_name].goods]
+        # Pass the actual TradeGood objects, not their names
+        goods = source_table.type_tables[type_name].goods
         new_table.add_type_table(type_name, goods)
     target_table.add_classification_table(new_code, new_table)
     return new_table

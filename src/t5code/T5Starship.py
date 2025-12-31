@@ -5,10 +5,14 @@ passenger and crew management, cargo handling, and financial tracking.
 """
 
 import uuid
+from typing import Dict, List, Set, TYPE_CHECKING
 from t5code.T5Basics import check_success
 from t5code.T5Lot import T5Lot
 from t5code.T5NPC import T5NPC
 from t5code.T5ShipClass import T5ShipClass
+
+if TYPE_CHECKING:
+    from t5code.T5Mail import T5Mail
 
 INVALID_PASSENGER_CLASS_ERROR = "Invalid passenger class."
 INVALID_CREW_POSITION_ERROR = "Invalid crew position."
@@ -21,10 +25,10 @@ class DuplicateItemError(Exception):
 
 
 class _BestCrewSkillDict:
-    def __init__(self, crew_dict):
-        self.crew = crew_dict
+    def __init__(self, crew_dict: Dict[str, T5NPC]) -> None:
+        self.crew: Dict[str, T5NPC] = crew_dict
 
-    def __getitem__(self, skill_name):
+    def __getitem__(self, skill_name: str) -> int:
         skill_name = skill_name.lower()
         return max(
             (member.get_skill(skill_name) for member in self.crew.values()),
@@ -36,15 +40,18 @@ class T5Starship:
     """A starship class intended to implement just enough of the
     T5 Starship concepts to function in the simulator"""
 
-    def __init__(self, ship_name, ship_location, ship_class: T5ShipClass):
+    def __init__(self,
+                 ship_name: str,
+                 ship_location: str,
+                 ship_class: T5ShipClass) -> None:
         # Core identity
-        self.ship_name = ship_name
-        self.location = ship_location
-        self.hold_size = ship_class.cargo_capacity
+        self.ship_name: str = ship_name
+        self.location: str = ship_location
+        self.hold_size: int = ship_class.cargo_capacity
 
         # Passenger system
-        self.high_passengers = set()
-        self.passengers = {
+        self.high_passengers: Set[T5NPC] = set()
+        self.passengers: Dict[str, Set[T5NPC]] = {
             "high": set(),
             "mid": set(),
             "low": set(),
@@ -52,27 +59,28 @@ class T5Starship:
         }
 
         # Mail, crew, and cargo tracking
-        self.mail = {}  # mail_id → T5Mail object
-        self.crew = {}  # role → T5NPC or crew record
-        self.cargo = {
+        self.mail: Dict[str, "T5Mail"] = {}  # mail_id → T5Mail object
+        self.crew: Dict[str, T5NPC] = {}  # role → T5NPC or crew record
+        self.cargo: Dict[str, List[T5Lot]] = {
             "freight": [],  # freight lots
             "cargo": [],  # miscellaneous or special cargo
         }
-        self.cargo_size = 0  # total tons of cargo on board
-        self.mail_locker_size = 1  # max number of mail containers
+        self.cargo_size: int = 0  # total tons of cargo on board
+        self.mail_locker_size: int = 1  # max number of mail containers
 
         # Navigation
-        self.destination_world = None  # assigned when a flight plan is set
-        # Financials
-        self._balance = 0.0  # in credits (millions, thousands — your scale)
+        # Destination world assigned when a flight plan is set
+        self.destination_world: str = "Unassigned"
+        # Financials # in credits (millions, thousands — your scale)
+        self._balance: float = 0.0
 
-    def set_course_for(self, destination):
+    def set_course_for(self, destination: str) -> None:
         self.destination_world = destination
 
-    def destination(self):
+    def destination(self) -> str:
         return self.destination_world
 
-    def onload_passenger(self, npc, passage_class):
+    def onload_passenger(self, npc: T5NPC, passage_class: str) -> None:
         if not (isinstance(npc, T5NPC)):
             raise TypeError("Invalid passenger type.")
         ALLOWED_PASSAGE_CLASSES = ["high", "mid", "low"]
@@ -86,8 +94,8 @@ class T5Starship:
         self.passengers[passage_class].add(npc)
         npc.location = self.ship_name
 
-    def offload_passengers(self, passage_class):
-        offloaded_passengers = set()
+    def offload_passengers(self, passage_class: str) -> Set[T5NPC]:
+        offloaded_passengers: Set[T5NPC] = set()
         allowed_passage_classes = {"high", "mid", "low"}
 
         if passage_class not in allowed_passage_classes:
@@ -117,20 +125,20 @@ class T5Starship:
             npc.kill()
             return False
 
-    def onload_mail(self, mail_item):
+    def onload_mail(self, mail_item: "T5Mail") -> None:
         if len(self.mail.keys()) >= self.mail_locker_size:
             raise ValueError("Starship mail locker size exceeded.")
         self.mail[mail_item.serial] = mail_item
 
-    def offload_mail(self):
+    def offload_mail(self) -> None:
         if len(self.mail.keys()) == 0:
             raise ValueError("Starship has no mail to offload.")
         self.mail = {}
 
-    def get_mail(self):
+    def get_mail(self) -> Dict[str, "T5Mail"]:
         return self.mail
 
-    def hire_crew(self, position, npc: T5NPC):
+    def hire_crew(self, position: str, npc: T5NPC) -> None:
         ALLOWED_CREW_POSITIONS = ["medic", "crew1", "crew2", "crew3"]
         if position not in ALLOWED_CREW_POSITIONS:
             raise ValueError("Invalid crew position.")
@@ -144,7 +152,7 @@ class T5Starship:
 
     ALLOWED_LOT_TYPES = {"cargo", "freight"}
 
-    def can_onload_lot(self, in_lot, lot_type):
+    def can_onload_lot(self, in_lot: T5Lot, lot_type: str) -> bool:
         if not isinstance(in_lot, T5Lot):
             raise TypeError("Invalid lot type.")
 
@@ -164,7 +172,7 @@ class T5Starship:
             self.cargo[lot_type].append(in_lot)
             self.cargo_size += in_lot.mass
 
-    def offload_lot(self, in_serial: uuid, lot_type):
+    def offload_lot(self, in_serial: str, lot_type: str) -> "T5Lot":
         try:
             uuid.UUID(in_serial)
         except ValueError:

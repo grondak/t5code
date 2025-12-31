@@ -1,10 +1,11 @@
 """A class that represents one World from Traveller 5."""
 
+from typing import Dict, Any
 from t5code.T5Basics import roll_flux
 from t5code.T5Tables import BROKERS
 
 
-def find_best_broker(starport_tier: str):
+def find_best_broker(starport_tier: str) -> Dict[str, Any]:
     if starport_tier not in {"A", "B", "C", "D"}:
         raise ValueError("Tier must be one of: 'A', 'B', 'C', 'D'")
 
@@ -26,32 +27,37 @@ def find_best_broker(starport_tier: str):
 
 
 class T5World:
-    def __init__(self, name, world_data):
-        self.name = name
+    def __init__(self,
+                 name: str,
+                 world_data: Dict[str, Dict[str, Any]]) -> None:
+        self.name: str = name
         if name in world_data:
-            self.world_data = world_data[name]
+            self.world_data: Dict[str, Any] = world_data[name]
         else:
             raise ValueError(f"Specified world {name} is "
                              "not in provided worlds table")
 
-    def uwp(self):
+    def uwp(self) -> str:
         return self.world_data["UWP"]
 
-    def trade_classifications(self):
+    def trade_classifications(self) -> str:
         return self.world_data["TradeClassifications"]
 
-    def importance(self):
+    def importance(self) -> str:
         return self.world_data["Importance"]
 
     @staticmethod
-    def load_all_worlds(world_data):
+    def load_all_worlds(
+        world_data: Dict[str,
+                         Dict[str,
+                              Any]]) -> Dict[str, "T5World"]:
         return {name: T5World(name, world_data) for name,
                 data in world_data.items()}
 
-    def get_starport(self):
+    def get_starport(self) -> str:
         return self.uwp()[0:1]
 
-    def get_population(self):
+    def get_population(self) -> int:
         return int(self.uwp()[4:5])
 
     TRADE_CODE_MULTIPLIER_TAGS = {
@@ -71,7 +77,7 @@ class T5World:
         "Va",
     }
 
-    def freight_lot_mass(self, liaison_bonus):
+    def freight_lot_mass(self, liaison_bonus: int) -> int:
         flux = roll_flux()
         population = self.get_population()
         tags = set(self.trade_classifications())

@@ -18,13 +18,13 @@ def test_create_npc_with_name():
     npc = T5NPC("Bob")
     assert npc.character_name == "Bob"
     assert is_guid(npc.serial)
-    assert npc.location is None
+    assert npc.location == "Unknown"
 
 
 def test_update_location():
     """Verify NPC location can be updated."""
     npc = T5NPC("Doug")
-    assert npc.location is None
+    assert npc.location == "Unknown"
     npc.update_location("A new place")
     assert npc.location == "A new place"
 
