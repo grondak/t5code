@@ -1,3 +1,6 @@
+"""Tests for freight lot size calculations with
+trade code multipliers and flux."""
+
 import pytest
 from unittest.mock import patch
 from t5code.T5World import T5World
@@ -38,12 +41,14 @@ def world():
 
 @patch("t5code.T5World.roll_flux", return_value=2)
 def test_freight_size_with_trade_tags(mock_flux, world):
+    """Verify freight lot size multiplier with trade code tags."""
     result = world.freight_lot_size(liaison_bonus=3)
     assert result == 17
 
 
 @patch("t5code.T5World.roll_flux", return_value=2)
 def test_freight_size_without_trade_tags(mock_flux, world):
+    """Verify freight lot size without trade code multiplier."""
     world.trade_classifications = lambda: ["Hi", "Huh"]
     result = world.freight_lot_size(liaison_bonus=1)
     assert result == 15
@@ -51,6 +56,7 @@ def test_freight_size_without_trade_tags(mock_flux, world):
 
 @patch("t5code.T5World.roll_flux", return_value=-5)
 def test_freight_size_cannot_be_negative(mock_flux, world):
+    """Verify freight lot size clamps to minimum of 0."""
     world.trade_classifications = lambda: []
     world.get_population = lambda: 2
     result = world.freight_lot_size(liaison_bonus=0)

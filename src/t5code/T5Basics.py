@@ -1,7 +1,10 @@
-import random
+"""Traveller 5 core mechanics and utility functions.
 
-"""A Traveller Swiss Army Knife. Most of this will get refactored into modules
-later-but for now, the code needs a home"""
+Provides basic T5 rules helpers including technology level conversion,
+ability checks, and flux rolls.
+"""
+
+import random
 
 
 def letter_to_tech_level(char):

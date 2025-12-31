@@ -1,5 +1,8 @@
-"""a class that represents the game state and hauls
-global variables around for all to play with"""
+"""Game state initialization and data loading utilities.
+
+Provides functions to parse Traveller 5 map and ship class data from CSV files,
+which form the foundation for world and ship data in the simulator.
+"""
 
 import csv
 

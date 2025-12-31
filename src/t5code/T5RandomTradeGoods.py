@@ -1,3 +1,9 @@
+"""Random trade goods generation for Traveller 5 cargo generation.
+
+Provides tables and logic for generating random trade goods with pricing,
+common classifications, and market dynamics.
+"""
+
 from typing import Union, Callable, List, Dict
 import random
 

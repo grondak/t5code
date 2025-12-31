@@ -1,3 +1,6 @@
+"""Tests for world representation, starports,
+populations, and broker selection."""
+
 import pytest
 from t5code.T5World import T5World, find_best_broker
 
@@ -16,6 +19,7 @@ test_world_data = {
 
 
 def test_uwp():
+    """Verify world Universal World Profile (UWP) is retrieved correctly."""
     test_world = T5World("Earth", test_world_data)
     assert test_world.uwp() == "A123456-A"
 
@@ -27,37 +31,44 @@ def test_uwp():
 
 
 def test_trade_classifications():
+    """Verify world trade classifications are retrieved correctly."""
     test_world = T5World("Earth", test_world_data)
     assert test_world.trade_classifications() == "Ag As"
 
 
 def test_importance():
+    """Verify world importance value is retrieved correctly."""
     test_world = T5World("Earth", test_world_data)
     assert test_world.importance() == 4
 
 
 def test_importance_negative():
+    """Verify world importance can be negative."""
     test_world = T5World("Mars", test_world_data)
     assert test_world.importance() == -1
 
 
 def test_load_all_worlds():
+    """Verify factory method loads all worlds from data dict."""
     test_worlds = T5World.load_all_worlds(test_world_data)
     assert len(test_worlds) == 2
     assert all(isinstance(w, T5World) for w in test_worlds.values())
 
 
 def test_get_starport_type():
+    """Verify starport tier is extracted from UWP."""
     test_world = T5World("Earth", test_world_data)
     assert test_world.get_starport() == "A"
 
 
 def test_get_population():
+    """Verify population digit is extracted from UWP."""
     test_world = T5World("Earth", test_world_data)
     assert test_world.get_population() == 4
 
 
 def test_get_population_mars():
+    """Verify population extraction for different world."""
     test_world = T5World("Mars", test_world_data)
     assert test_world.get_population() == 2
 

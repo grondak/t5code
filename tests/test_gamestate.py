@@ -1,3 +1,5 @@
+"""Tests for loading and parsing game data files (maps and ship classes)."""
+
 import io
 from t5code import (
     load_and_parse_t5_map_filelike,
@@ -6,6 +8,7 @@ from t5code import (
 
 
 def test_load_and_parse_t5_map_filelike():
+    """Verify T5 map file parsing from file-like object."""
     mock_data = (
         "Name\tUWP\tZone\tHex\tRemarks\t{Ix}\n"
         "Regina\tA788899-C\tR\t1234\tHi In\t{2}\n"
@@ -18,6 +21,7 @@ def test_load_and_parse_t5_map_filelike():
 
 
 def test_load_and_parse_t5_ship_classes_filelike():
+    """Verify ship class CSV parsing from file-like object."""
     mock_data = (
         "class_name,jump_rating,maneuver_rating,cargo_capacity\n"
         "test_ship_class,5,3,20000\n"

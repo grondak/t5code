@@ -1,3 +1,10 @@
+"""Discrete-event simulation of multi-ship trading across Traveller 5 worlds.
+
+Uses SimPy to simulate starship movements, cargo loading/unloading, and port
+visits. Provides functions for ship initialization, event logging, destination
+calculation, and the main simulation loop.
+"""
+
 import simpy
 import csv
 import os

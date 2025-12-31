@@ -1,3 +1,9 @@
+"""Starship simulation and cargo/passenger/crew management.
+
+Defines the T5Starship class for simulating starship operations including
+passenger and crew management, cargo handling, and financial tracking.
+"""
+
 import uuid
 from t5code.T5Basics import check_success
 from t5code.T5Lot import T5Lot

@@ -1,3 +1,6 @@
+"""Tests for random trade goods generation and
+classification table mechanics."""
+
 import pytest
 from t5code.T5RandomTradeGoods import (
     TradeGood,
@@ -11,6 +14,7 @@ from t5code.T5RandomTradeGoods import (
 
 
 def test_clone_classification_table():
+    """Verify classification table cloning preserves trade good data."""
     # Setup a source table
     source = TradeClassificationGoodsTable("Src")
     source.add_type_table("Alpha", ["A1", "A2", "A3", "A4", "A5", "A6"])
@@ -31,44 +35,53 @@ def test_clone_classification_table():
 
 
 def test_ga_table_access():
+    """Verify Ga (Agriculture) classification table is initialized."""
     # This will execute the Ga table initialization code
     assert isinstance(T5RTGTable.classifications["Ga"], object)
 
 
 def test_cs_table_access():
+    """Verify Cs (Computer) classification table is initialized."""
     assert isinstance(T5RTGTable.classifications["Cs"], object)
 
 
 def test_fa_table_access():
+    """Verify Fa (Fossil Fuels) classification table is initialized."""
     # This will execute the Fa table initialization code
     assert isinstance(T5RTGTable.classifications["Fa"], object)
 
 
 def test_as_table_access():
+    """Verify As (Asteroid) classification table is initialized."""
     assert isinstance(T5RTGTable.classifications["As"], object)
 
 
 def test_cx_table_access():
+    """Verify Cx (Crystals) classification table is initialized."""
     assert isinstance(T5RTGTable.classifications["Cx"], object)
 
 
 def test_trade_good_static_name():
+    """Verify trade good with static name returns that name."""
     g = TradeGood("Bulk Woods")
     assert g.get_name() == "Bulk Woods"
 
 
 def test_trade_good_callable_name():
+    """Verify trade good with callable name invokes function."""
     g = TradeGood(lambda: "Mystery Dust")
     assert g.get_name() == "Mystery Dust"
 
 
 def test_trade_goods_type_table_access():
+    """Verify trade good lookup by index in type table."""
     goods = ["A", "B", "C", "D", "E", "F"]
     table = TradeGoodsTypeTable("Test", goods)
     assert table.get_good(2).get_name() == "C"
 
 
 def test_too_many_goods_in_a_table():
+    """Verify type table must have exactly 6 goods."""
     goods = ["A", "B", "C", "D", "E", "F", "G"]
     with pytest.raises(ValueError,
                        match="Test table must have exactly 6 trade goods."):
@@ -76,6 +89,7 @@ def test_too_many_goods_in_a_table():
 
 
 def test_trade_goods_type_table_roll():
+    """Verify random roll from type table returns valid goods."""
     goods = [f"Good{i}" for i in range(6)]
     table = TradeGoodsTypeTable("RollTable", goods)
     for _ in range(100):
@@ -84,6 +98,7 @@ def test_trade_goods_type_table_roll():
 
 
 def test_trade_classification_table_access_and_roll():
+    """Verify classification table access and random rolling."""
     table = TradeClassificationGoodsTable("TestClass")
     type_data = {
         "Alpha": ["A1", "A2", "A3", "A4", "A5", "A6"],
@@ -106,6 +121,7 @@ def test_trade_classification_table_access_and_roll():
 
 
 def test_too_many_type_tables():
+    """Verify classification must have exactly 6 type tables."""
     table = TradeClassificationGoodsTable("Test")
     for i in range(6):
         table.add_type_table(f"type{i}", [f"good{j}" for j in range(6)])
@@ -117,6 +133,7 @@ def test_too_many_type_tables():
 
 
 def test_random_trade_goods_get_and_roll():
+    """Verify RandomTradeGoodsTable access and rolling."""
     rtg = RandomTradeGoodsTable()
     tcgt = TradeClassificationGoodsTable("Foo")
 
@@ -148,6 +165,7 @@ class DummyRTGTable:
 
 
 def test_imbalance_trade_good_resolve_name():
+    """Verify imbalance trade good resolves name dynamically."""
     dummy_rtg = DummyRTGTable("TestGood")
     imbalance = ImbalanceTradeGood("As", dummy_rtg)
     result = imbalance.resolve_name()

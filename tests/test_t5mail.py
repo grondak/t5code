@@ -1,3 +1,5 @@
+"""Tests for mail shipment representation and importance constraints."""
+
 import pytest
 from t5code.T5Mail import T5Mail
 from t5code.GameState import load_and_parse_t5_map, GameState
@@ -5,6 +7,7 @@ from t5code.T5World import T5World
 
 
 def test_destination_is_less_important_than_origin():
+    """Verify mail destination must be less important than origin world."""
     GameState.world_data = None
     with pytest.raises(Exception) as excinfo:
         T5Mail("Rhylanor", "Jae Tellona", GameState)

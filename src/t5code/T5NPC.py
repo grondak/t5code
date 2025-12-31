@@ -1,3 +1,9 @@
+"""Non-player character (NPC) representation for Traveller 5.
+
+Defines the T5NPC class for creating and managing NPCs with skills,
+used for crew and passenger roles aboard starships.
+"""
+
 import uuid
 from t5code.T5Tables import SKILLS_BY_GROUP
 

@@ -1,4 +1,5 @@
-"""A class that represents one lot from Traveller 5."""
+"""A class that represents one lot from Traveller 5.
+   A lot is a batch of goods for sale from one world, p209."""
 
 import uuid
 import random

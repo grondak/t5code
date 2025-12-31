@@ -1,3 +1,9 @@
+"""Traveller 5 reference tables for world traits, trade, brokers, and skills.
+
+Contains hardcoded lookup tables from the Traveller 5 ruleset used by
+world and trade good generation.
+"""
+
 TRADE_CLASSIFICATIONS = {
     "Ab": "Data Repository",
     "Ag": "Agricultural",

@@ -1,3 +1,5 @@
+"""Tests for cargo lot representation, pricing, and market mechanics."""
+
 import pytest
 import uuid
 from unittest.mock import patch
@@ -22,6 +24,7 @@ def setup_gamestate():
 
 
 def test_value():
+    """Verify lot value is calculated correctly (3500 for Rhylanor)."""
     with pytest.raises(Exception) as excinfo:
         GameState.world_data = None
         T5Lot("Rhylanor", GameState)
@@ -33,6 +36,8 @@ def test_value():
 
 
 def test_cargo_id():
+    """Verify lot ID format includes trade code
+    and value (e.g., 'F-Hi 3500')."""
     with pytest.raises(Exception) as excinfo:
         GameState.world_data = None
         T5Lot("Rhylanor", GameState)
@@ -44,18 +49,21 @@ def test_cargo_id():
 
 
 def test_lot_mass():
+    """Verify lot mass is generated as a positive value."""
     setup_gamestate()
     lot = T5Lot("Rhylanor", GameState)
     assert lot.mass > 0
 
 
 def test_lot_serial():
+    """Verify lot serial is a valid UUID."""
     setup_gamestate()
     lot = T5Lot("Rhylanor", GameState)
     assert is_guid(lot.serial)
 
 
 def test_determine_sale_value_on():
+    """Verify sale value is adjusted based on destination world."""
     setup_gamestate()
     lot = T5Lot("Rhylanor", GameState)
     sale_value = lot.determine_sale_value_on("Jae Tellona", GameState)
@@ -63,6 +71,8 @@ def test_determine_sale_value_on():
 
 
 def test_buying_trade_class_effects():
+    """Verify trade classification modifiers
+    apply correctly to purchase price."""
     test_trade_classifications_table = {
         "Bob": 1000,
         "Doug": -500,
@@ -75,6 +85,7 @@ def test_buying_trade_class_effects():
 
 
 def test_selling_trade_class_effect():
+    """Verify selling market trade classifications affect sale price."""
     origin_trade_classifications = "In"
     selling_goods_trade_classifications_table = {"In": "Ag In"}
     setup_gamestate()
@@ -88,6 +99,7 @@ def test_selling_trade_class_effect():
 
 
 def test_lot_costs():
+    """Verify lot cost calculation with trade classification modifiers."""
     test_trade_classifications_table = {
         "Bob": 1000,
         "Doug": -500,
@@ -100,6 +112,7 @@ def test_lot_costs():
 
 
 def test_filter_trade_classifications():
+    """Verify filtering of trade classifications by allowed set."""
     provided_trade_classifications = ""
     allowed_trade_classifications = ""
     answer = T5Lot.filter_trade_classifications(
@@ -121,6 +134,7 @@ def test_filter_trade_classifications():
 
 
 def test_equality_and_hash():
+    """Verify lots with same serial are equal and have matching hash values."""
     setup_gamestate()
     lot1 = T5Lot("Rhylanor", GameState)
     lot2 = T5Lot("Rhylanor", GameState)
@@ -156,29 +170,34 @@ def lot():
 
 @patch("random.randint")
 def test_flux_with_positive_mod(mock_randint, lot):
+    """Verify actual value table lookup with positive modifier."""
     mock_randint.side_effect = [6, 1]
     assert lot.consult_actual_value_table(2) == pytest.approx(3.0)
 
 
 @patch("random.randint")
 def test_flux_with_negative_mod_below_bounds(mock_randint, lot):
+    """Verify actual value table clamps minimum to 0.4."""
     mock_randint.side_effect = [1, 6]
     assert lot.consult_actual_value_table(-2) == pytest.approx(0.4)
 
 
 @patch("random.randint")
 def test_flux_with_zero_mod(mock_randint, lot):
+    """Verify actual value table lookup with zero modifier."""
     mock_randint.side_effect = [3, 3]
     assert lot.consult_actual_value_table(0) == pytest.approx(1.0)
 
 
 @patch("random.randint")
 def test_flux_middle_case(mock_randint, lot):
+    """Verify actual value table lookup for mid-range modifier."""
     mock_randint.side_effect = [4, 2]
     assert lot.consult_actual_value_table(3) == pytest.approx(1.7)
 
 
 @patch("random.randint")
 def test_flux_above_max_bounds(mock_randint, lot):
+    """Verify actual value table clamps maximum to 4.0."""
     mock_randint.side_effect = [6, 2]
     assert lot.consult_actual_value_table(5) == pytest.approx(4.0)

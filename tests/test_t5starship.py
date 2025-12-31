@@ -1,3 +1,6 @@
+"""Tests for starship operations including crew, passengers,
+cargo, and balance tracking."""
+
 import pytest
 from t5code.T5Starship import T5Starship, DuplicateItemError
 from t5code.T5ShipClass import T5ShipClass
@@ -49,6 +52,7 @@ def get_me_a_starship(name, world, test_ship_data):
 
 
 def test_create_starship_with_name(test_ship_data):
+    """Verify starship creation with name and default collections."""
     starship = get_me_a_starship("Your mom", "Home", test_ship_data)
     assert starship.ship_name == "Your mom"
     assert starship.passengers == {
@@ -63,6 +67,7 @@ def test_create_starship_with_name(test_ship_data):
 
 
 def test_hire_crew(test_ship_data):
+    """Verify crew hiring with validation."""
     starship = get_me_a_starship("Your mom", "Home", test_ship_data)
     npc1 = T5NPC("Bob")
     with pytest.raises(ValueError, match="Invalid crew position."):
@@ -74,6 +79,7 @@ def test_hire_crew(test_ship_data):
 
 
 def test_onload_passenger(test_ship_data):
+    """Verify passenger boarding with duplicate detection."""
     starship = get_me_a_starship("Titanic", "Southampton", test_ship_data)
     with pytest.raises(TypeError, match="Invalid passenger type."):
         starship.onload_passenger("a string", "high")
@@ -95,6 +101,7 @@ def test_onload_passenger(test_ship_data):
 
 
 def test_offload_passengers(test_ship_data):
+    """Verify passenger offloading by class with medic requirement."""
     starship = get_me_a_starship("Pequod", "Nantucket", test_ship_data)
     npc1 = T5NPC("Bob")
     starship.onload_passenger(npc1, "high")
@@ -128,12 +135,14 @@ def test_offload_passengers(test_ship_data):
 
 
 def test_set_course_for(test_ship_data, setup_gamestate):
+    """Verify destination setting and retrieval."""
     starship = get_me_a_starship("Steamboat", "Rhylanor", test_ship_data)
     starship.set_course_for("Jae Tellona")
     assert starship.destination() == "Jae Tellona"
 
 
 def test_onload_mail(test_ship_data, setup_gamestate):
+    """Verify mail loading with capacity validation."""
     starship = get_me_a_starship("Steamboat", "Rhylanor", test_ship_data)
     mail = T5Mail("Rhylanor", "Jae Tellona", GameState)
     starship.onload_mail(mail)
@@ -146,6 +155,7 @@ def test_onload_mail(test_ship_data, setup_gamestate):
 
 
 def test_offload_mail(test_ship_data, setup_gamestate):
+    """Verify mail offloading and empty state handling."""
     starship = get_me_a_starship("Steamboat", "Rhylanor", test_ship_data)
     mail = T5Mail("Rhylanor", "Jae Tellona", GameState)
     starship.onload_mail(mail)
@@ -157,6 +167,7 @@ def test_offload_mail(test_ship_data, setup_gamestate):
 
 
 def test_awaken_passenger(test_ship_data):
+    """Verify low berth awakening with medic skill check."""
     starship = get_me_a_starship("Steamboat", "Rhylanor", test_ship_data)
     npc1 = T5NPC("Bones")
     npc1.set_skill("medic", 3)
@@ -176,6 +187,7 @@ def test_awaken_passenger(test_ship_data):
 
 
 def test_onload_lot(test_ship_data, setup_gamestate):
+    """Verify cargo lot loading with capacity and duplication checking."""
     starship = get_me_a_starship("Steamboat", "Rhylanor", test_ship_data)
     lot = T5Lot("Rhylanor", GameState)
     lot.mass = 5000  # tons
@@ -206,6 +218,7 @@ def test_onload_lot(test_ship_data, setup_gamestate):
 
 
 def test_offload_lot(test_ship_data, setup_gamestate):
+    """Verify cargo lot offloading and removal from cargo hold."""
     starship = get_me_a_starship("Steamboat", "Rhylanor", test_ship_data)
     lot = T5Lot("Rhylanor", GameState)
     lot.mass = 5
@@ -247,73 +260,87 @@ def crewed_ship(test_ship_data, setup_gamestate):
 
 
 def test_initial_balance(crewed_ship):
+    """Verify starship balance initializes to zero."""
     assert crewed_ship.balance == pytest.approx(0.0)
 
 
 def test_credit_valid_amount(crewed_ship):
+    """Verify crediting funds increases balance."""
     crewed_ship.credit(100)
     assert crewed_ship.balance == pytest.approx(100.0)
 
 
 def test_debit_valid_amount(crewed_ship):
+    """Verify debiting funds decreases balance."""
     crewed_ship.credit(200)
     crewed_ship.debit(50)
     assert crewed_ship.balance == pytest.approx(150.0)
 
 
 def test_credit_invalid_type(crewed_ship):
+    """Verify crediting non-numeric raises TypeError."""
     with pytest.raises(TypeError):
         crewed_ship.credit("not money")
 
 
 def test_debit_invalid_type(crewed_ship):
+    """Verify debiting non-numeric raises TypeError."""
     with pytest.raises(TypeError):
         crewed_ship.debit(None)
 
 
 def test_credit_negative_amount(crewed_ship):
+    """Verify crediting negative amount raises ValueError."""
     with pytest.raises(ValueError):
         crewed_ship.credit(-10)
 
 
 def test_debit_negative_amount(crewed_ship):
+    """Verify debiting negative amount raises ValueError."""
     with pytest.raises(ValueError):
         crewed_ship.debit(-5)
 
 
 def test_debit_insufficient_funds(crewed_ship):
+    """Verify debiting more than balance raises ValueError."""
     crewed_ship.credit(50)
     with pytest.raises(ValueError):
         crewed_ship.debit(100)
 
 
 def test_best_crew_skill_known(crewed_ship):
+    """Verify best crew skill retrieval returns highest crew value."""
     best = crewed_ship.best_crew_skill["Liaison"]
     assert best == 5  # Bob has the highest skill
 
 
 def test_best_crew_skill_zero(crewed_ship):
+    """Verify unknown skill returns zero."""
     best = crewed_ship.best_crew_skill["Tactics"]
     assert best == 0  # None of the crew has this skill
 
 
 def test_best_crew_skill_case_insensitive(crewed_ship):
+    """Verify skill lookup is case-insensitive."""
     best = crewed_ship.best_crew_skill["liAiSON"]
     assert best == 5
 
 
 def test_can_onload_valid_lot(crewed_ship, setup_gamestate):
+    """Verify valid lot passes capacity check."""
     lot = T5Lot("Rhylanor", GameState)
     lot.mass = 10
     assert crewed_ship.can_onload_lot(lot, "freight")
 
 
 def test_can_onload_rejects_non_t5lot(crewed_ship):
+    """Verify non-T5Lot object raises TypeError."""
     with pytest.raises(TypeError, match="Invalid lot type."):
         crewed_ship.can_onload_lot("not_a_lot", "freight")
 
 
 def test_can_onload_rejects_invalid_lot_type(crewed_ship, setup_gamestate):
+    """Verify invalid lot category raises ValueError."""
     lot = T5Lot("Rhylanor", GameState)
     lot.mass = 5
     with pytest.raises(ValueError, match="Invalid lot value."):
@@ -321,6 +348,7 @@ def test_can_onload_rejects_invalid_lot_type(crewed_ship, setup_gamestate):
 
 
 def test_can_onload_rejects_over_capacity(crewed_ship, setup_gamestate):
+    """Verify oversized lot raises ValueError."""
     lot = T5Lot("Rhylanor", GameState)
     lot.mass = 150
     with pytest.raises(ValueError, match="Lot will not fit"):
@@ -328,6 +356,7 @@ def test_can_onload_rejects_over_capacity(crewed_ship, setup_gamestate):
 
 
 def test_can_onload_rejects_duplicate_lot(crewed_ship, setup_gamestate):
+    """Verify loading same lot twice raises ValueError."""
     lot = T5Lot("Rhylanor", GameState)
     lot.mass = 5
     crewed_ship.cargo["cargo"].append(lot)
