@@ -1,0 +1,742 @@
+{
+  "classifications": {
+    "Ag-1": {
+      "types": {
+        "Raws": [
+          "Bulk Protein",
+          "Bulk Carbs",
+          "Bulk Fats",
+          "Bulk Pharma",
+          "Livestock",
+          "Seedstock"
+        ],
+        "Consumables": [
+          "Flavored Waters",
+          "Wines",
+          "Juices",
+          "Nectars",
+          "Deconcoctions",
+          "Drinkable Lymphs"
+        ],
+        "Pharma": [
+          "Health Foods",
+          "Nutraceuticals",
+          "Fast Drug",
+          "Painkillers",
+          "Antiseptic",
+          "Antibiotics"
+        ],
+        "Novelties": [
+          "Incenses",
+          "Iridescents",
+          "Photonics",
+          "Pigments",
+          "Noisemakers",
+          "Soundmakers"
+        ],
+        "Rares": [
+          "Fine Furs",
+          "Meat Delicacies",
+          "Fruit Delicacies",
+          "Candies",
+          "Textiles",
+          "Exotic Sauces"
+        ],
+        "Imbalances": [
+          {
+            "type": "imbalance",
+            "reroll_classification": "As"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "De"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Fl"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ic"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Na"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "In"
+          }
+        ]
+      }
+    },
+    "Ag-2": {
+      "types": {
+        "Raws": [
+          "Bulk Woods",
+          "Bulk Pelts",
+          "Bulk Herbs",
+          "Bulk Spices",
+          "Bulk Nitrates",
+          "Foodstuffs"
+        ],
+        "Consumables": [
+          "Flowers",
+          "Aromatics",
+          "Pheromones",
+          "Secretions",
+          "Adhesives",
+          "Novel Flavorings"
+        ],
+        "Pharma": [
+          "Antifungals",
+          "Antivirals",
+          "Panacea",
+          "Pseudomones",
+          "Anagathics",
+          "Slow Drug"
+        ],
+        "Novelties": [
+          "Strange Seeds",
+          "Motile Plants",
+          "Reactive Plants",
+          "Reactive Woods",
+          "IR Emitters",
+          "Lek Emitters"
+        ],
+        "Rares": [
+          "Spices",
+          "Organic Gems",
+          "Flavorings",
+          "Aged Meats",
+          "Fermented Fluids",
+          "Fine Aromatics"
+        ],
+        "Imbalances": [
+          {
+            "type": "imbalance",
+            "reroll_classification": "Po"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ri"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Va"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ic"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Na"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "In"
+          }
+        ]
+      }
+    },
+    "As": {
+      "types": {
+        "Raws": [
+          "Bulk Nitrates",
+          "Bulk Carbon",
+          "Bulk Iron",
+          "Bulk Copper",
+          "Radioactive Ores",
+          "Bulk Ices"
+        ],
+        "Samples": [
+          "Ores",
+          "Ices",
+          "Carbons",
+          "Metals",
+          "Uranium",
+          "Chelates"
+        ],
+        "Valuata": [
+          "Platinum",
+          "Gold",
+          "Gallium",
+          "Silver",
+          "Thorium",
+          "Radium"
+        ],
+        "Novelties": [
+          "Unusual Rocks",
+          "Fused Metals",
+          "Strange Crystals",
+          "Fine Dusts",
+          "Magnetics",
+          "Light-Sensitives"
+        ],
+        "Rares": [
+          "Gemstones",
+          "Alloys",
+          "Iridium Sponge",
+          "Lanthanum",
+          "Isotopes",
+          "Anti-Matter"
+        ],
+        "Imbalances": [
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ag"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "De"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Na"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Po"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ri"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ic"
+          }
+        ]
+      }
+    },
+    "De": {
+      "types": {
+        "Raws": [
+          "Bulk Nitrates",
+          "Bulk Minerals",
+          "Bulk Abrasives",
+          "Bulk Particulates",
+          "Exotic Fauna",
+          "Exotic Flora"
+        ],
+        "Samples": [
+          "Archeologicals",
+          "Fauna",
+          "Flora",
+          "Minerals",
+          "Ephemerals",
+          "Polymers"
+        ],
+        "Pharma": [
+          "Stimulants",
+          "Bulk Herbs",
+          "Paliatives",
+          "Pheromones",
+          "Antibiotics",
+          "Combat Drug"
+        ],
+        "Novelties": [
+          "Envirosuits",
+          "Reclamation Suits",
+          "Navigators",
+          "Dupe Masterpieces",
+          "ShimmerCloth",
+          "ANIFX Blocker"
+        ],
+        "Rares": [
+          "Excretions",
+          "Flavorings",
+          "Nectars",
+          "Pelts",
+          "ANIFX Dyes",
+          "Seedstock"
+        ],
+        "Uniques": [
+          "Pheromones",
+          "Artifacts",
+          "Sparx",
+          "Repulsant",
+          "Dominants",
+          "Fossils"
+        ]
+      }
+    },
+    "Fl": {
+      "types": {
+        "Raws": [
+          "Bulk Carbon",
+          "Bulk Petros",
+          "Bulk Precipiates",
+          "Exotic Fluids",
+          "Organic Polymers",
+          "Bulk Synthetics"
+        ],
+        "Samples": [
+          "Archeologicals",
+          "Fauna",
+          "Flora",
+          "Germanes",
+          "Flill",
+          "Chelates"
+        ],
+        "Pharma": [
+          "Antifungals",
+          "Antivirals",
+          "Paliatives",
+          "Counter-prions",
+          "Antibiotics",
+          "Cold Sleep Pills"
+        ],
+        "Novelties": [
+          "Silanes",
+          "Lek Emitters",
+          "Aware Blockers",
+          "Soothants",
+          "Self-Solving Puzzles",
+          "Fluidic Timepieces"
+        ],
+        "Rares": [
+          "Flavorings",
+          "Unusual Fluids",
+          "Encapsulants",
+          "Insidiants",
+          "Corrosives",
+          "Exotic Aromatics"
+        ],
+        "Imbalances": [
+          {
+            "type": "imbalance",
+            "reroll_classification": "In"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ri"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ic"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Na"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ag"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Po"
+          }
+        ]
+      }
+    },
+    "Ic": {
+      "types": {
+        "Raws": [
+          "Bulk Ices",
+          "Bulk Precipitates",
+          "Bulk Ephemerals",
+          "Exotic Flora",
+          "Bulk Gases",
+          "Bulk Oxygen"
+        ],
+        "Samples": [
+          "Archeologicals",
+          "Fauna",
+          "Flora",
+          "Minerals",
+          "Luminescents",
+          "Polymers"
+        ],
+        "Pharma": [
+          "Antifungals",
+          "Antivirals",
+          "Palliatives",
+          "Restoratives",
+          "Antibiotics",
+          "Antiseptics"
+        ],
+        "Novelties": [
+          "Heat Pumps",
+          "Mag Emitters",
+          "Percept Blockers",
+          "Silanes",
+          "Cold Light Blocks",
+          "VHDUS Blocker"
+        ],
+        "Rares": [
+          "Unusual Ices",
+          "Cyro Alloys",
+          "Rare Minerals",
+          "Unusual Fluids",
+          "Cryogems",
+          "VHDUS Dyes"
+        ],
+        "Uniques": [
+          "Fossils",
+          "Cyrogems",
+          "Vision Suppressant",
+          "Fission Suppressant",
+          "Wafers",
+          "Cold Sleep Pills"
+        ]
+      }
+    },
+    "Na": {
+      "types": {
+        "Raws": [
+          "Bulk Abrasives",
+          "Bulk Gases",
+          "Bulk Minerals",
+          "Bulk Precipitates",
+          "Exotic Fauna",
+          "Exotic Flora"
+        ],
+        "Samples": [
+          "Archeologicals",
+          "Fauna",
+          "Flora",
+          "Minerals",
+          "Ephemerals",
+          "Polymers"
+        ],
+        "Novelties": [
+          "Branded Tools",
+          "Drinkable Lymphs",
+          "Strange Seeds",
+          "Pattern Creators",
+          "Pigments",
+          "Warm Leather"
+        ],
+        "Rares": [
+          "Hummingsand",
+          "Masterpieces",
+          "Fine Carpets",
+          "Isotopes",
+          "Pelts",
+          "Seedstock"
+        ],
+        "Uniques": [
+          "Masterpieces",
+          "Unusual Rocks",
+          "Artifacts",
+          "Non-Fossil Carca",
+          "Replicating Clays",
+          "ANIFX Emitter"
+        ],
+        "Imbalances": [
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ag"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ri"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "In"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ic"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "De"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Fl"
+          }
+        ]
+      }
+    },
+    "In": {
+      "types": {
+        "Manufactureds1": [
+          "Electronics",
+          "Photonics",
+          "Magnetics",
+          "Fluidics",
+          "Polymers",
+          "Gravitics"
+        ],
+        "Scrap / Waste": [
+          "Obsoletes",
+          "Used Goods",
+          "Reparables",
+          "Radioactives",
+          "Metals",
+          "Sludges"
+        ],
+        "Manufactureds2": [
+          "Biologics",
+          "Mechanicals",
+          "Textiles",
+          "Weapons",
+          "Armor",
+          "Robots"
+        ],
+        "Pharma": [
+          "Nostrums",
+          "Restoratives",
+          "Palliatives",
+          "Chelates",
+          "Antidotes",
+          "Antitoxins"
+        ],
+        "Data": [
+          "Software",
+          "Databases",
+          "Expert Systems",
+          "Upgrades",
+          "Backups",
+          "Raw Sensings"
+        ],
+        "Consumables": [
+          "Disposables",
+          "Respirators",
+          "Filter Masks",
+          "Combination",
+          "Parts",
+          "Improvements"
+        ]
+      }
+    },
+    "Po": {
+      "types": {
+        "Raws": [
+          "Bulk Nutrients",
+          "Bulk Fibers",
+          "Bulk Organics",
+          "Bulk Minerals",
+          "Bulk Textiles",
+          "Exotic Flora"
+        ],
+        "Entertainments": [
+          "Art",
+          "Recordings",
+          "Writings",
+          "Tactiles",
+          "Osmancies",
+          "Wafers"
+        ],
+        "Novelties": [
+          "Strange Crystals",
+          "Strange Seeds",
+          "Pigments",
+          "Emotion Lighting",
+          "Silanes",
+          "Flora"
+        ],
+        "Rares": [
+          "Gemstones",
+          "Antiques",
+          "Collectibles",
+          "Allotropes",
+          "Spices",
+          "Seedstock"
+        ],
+        "Uniques": [
+          "Masterpieces",
+          "Exotic Flora",
+          "Antiques",
+          "Incomprehensibles",
+          "Fossiles",
+          "VHDUS Emitter"
+        ],
+        "Imbalances": [
+          {
+            "type": "imbalance",
+            "reroll_classification": "In"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ri"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Fl"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ic"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Ag"
+          },
+          {
+            "type": "imbalance",
+            "reroll_classification": "Va"
+          }
+        ]
+      }
+    },
+    "Ri": {
+      "types": {
+        "Raws": [
+          "Bulk Foodstuffs",
+          "Bulk Protein",
+          "Bulk Carbs",
+          "Bulk Fats",
+          "Exotic Flora",
+          "Exotic Fauna"
+        ],
+        "Novelties": [
+          "Echostones",
+          "Self-Defenders",
+          "Attractants",
+          "Sophont Cuisine",
+          "Sophont Hats",
+          "Variable Tattoos"
+        ],
+        "Consumables": [
+          "Branded Foods",
+          "Branded Drinks",
+          "Branded Clothes",
+          "Branded Drinks",
+          "Flowers",
+          "Music"
+        ],
+        "Rares": [
+          "Delicacies",
+          "Spices",
+          "Tisanes",
+          "Nectars",
+          "Pelts",
+          "Variable Tattoos"
+        ],
+        "Uniques": [
+          "Antique Art",
+          "Masterpieces",
+          "Artifacts",
+          "Fine Art",
+          "Meson Barriers",
+          "Famous Wafers"
+        ],
+        "Entertainments": [
+          "Edutainments",
+          "Recordings",
+          "Writings",
+          "Tactiles",
+          "Osmancies",
+          "Wafers"
+        ]
+      }
+    },
+    "Va": {
+      "types": {
+        "Raws": [
+          "Bulk Dusts",
+          "Bulk Minerals",
+          "Bulk Metals",
+          "Radioactive Ores",
+          "Bulk Particulates",
+          "Ephemerals"
+        ],
+        "Novelties": [
+          "Branded Vacc Suits",
+          "Awareness Pinger",
+          "Strange Seeds",
+          "Pigments",
+          "Unusual Minerals",
+          "Exotic Crystals"
+        ],
+        "Consumables": [
+          "Branded Foods",
+          "Branded Drinks",
+          "Branded Clothes",
+          "Flavored Drinks",
+          "Flowers",
+          "Music"
+        ],
+        "Rares": [
+          "Delicacies",
+          "Spices",
+          "Tisanes",
+          "Nectars",
+          "Pelts",
+          "Variable Tattoos"
+        ],
+        "Samples": [
+          "Archeologicals",
+          "Fauna",
+          "Flora",
+          "Minerals",
+          "Ephemerals",
+          "Polymers"
+        ],
+        "Scrap / Waste": [
+          "Obsoletes",
+          "Used Goods",
+          "Reparables",
+          "Plutonium",
+          "Metals",
+          "Sludges"
+        ]
+      }
+    },
+    "Cp": {
+      "types": {
+        "Data": [
+          "Software",
+          "Expert Systems",
+          "Databases",
+          "Upgrades",
+          "Backups",
+          "Raw Sensings"
+        ],
+        "Novelties": [
+          "Incenses",
+          "Contemplatives",
+          "Cold Welders",
+          "Polymer Sheets",
+          "Hats",
+          "Skin Tones"
+        ],
+        "Consumables": [
+          "Branded Clothes",
+          "Branded Devices",
+          "Flavored Drinks",
+          "Flavorings",
+          "Decorations",
+          "Group Symbols"
+        ],
+        "Rares": [
+          "Monumental Art",
+          "Holo Scripture",
+          "Collectible Books",
+          "Jewelry",
+          "Museum Items",
+          "Monumental Art"
+        ],
+        "Valuata": [
+          "Coinage",
+          "Currency",
+          "Money Cards",
+          "Gold",
+          "Silver",
+          "Platinum"
+        ],
+        "Red Tape": [
+          "Regulations",
+          "Synchronizations",
+          "Expert Systems",
+          "Educationals",
+          "Mandates",
+          "Accountings"
+        ]
+      }
+    }
+  },
+  "aliases": {
+    "Ga": "Ag-1",
+    "Fa": "Ag-2",
+    "Cs": "Cp",
+    "Cx": "Cp"
+  }
+}
