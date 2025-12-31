@@ -41,7 +41,7 @@ def test_load_from_json():
     # we'll just verify it's an ImbalanceTradeGood
     from t5code.T5RandomTradeGoods import ImbalanceTradeGood
     assert isinstance(as_imbalance, ImbalanceTradeGood)
-    assert as_imbalance.reroll_classification == "Ag"
+    assert as_imbalance.reroll_classification[0:2] == "Ag"
 
     # Test alias points to same data structure
     ga_table = table.classifications["Ga"]

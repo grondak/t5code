@@ -185,7 +185,7 @@
         "Imbalances": [
           {
             "type": "imbalance",
-            "reroll_classification": "Ag"
+            "reroll_classification": "Ag-1"
           },
           {
             "type": "imbalance",
@@ -323,7 +323,7 @@
           },
           {
             "type": "imbalance",
-            "reroll_classification": "Ag"
+            "reroll_classification": "Ag-2"
           },
           {
             "type": "imbalance",
@@ -429,7 +429,7 @@
         "Imbalances": [
           {
             "type": "imbalance",
-            "reroll_classification": "Ag"
+            "reroll_classification": "Ag-1"
           },
           {
             "type": "imbalance",
@@ -567,7 +567,7 @@
           },
           {
             "type": "imbalance",
-            "reroll_classification": "Ag"
+            "reroll_classification": "Ag-2"
           },
           {
             "type": "imbalance",
