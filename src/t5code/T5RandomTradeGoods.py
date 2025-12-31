@@ -81,7 +81,8 @@ class TradeClassificationGoodsTable:
     ):
         if len(self.type_order) >= TABLE_SIZE:
             raise ValueError(
-                f"Each classification may only have {TABLE_SIZE} TradeGoodsTypeTables."
+                f"Each classification may only "
+                f"have {TABLE_SIZE} TradeGoodsTypeTables."
             )
         self.type_tables[type_name] = TradeGoodsTypeTable(type_name, goods)
         self.type_order.append(type_name)
@@ -117,7 +118,7 @@ class RandomTradeGoodsTable:
     def from_json(cls, json_path: Path) -> "RandomTradeGoodsTable":
         """
         Load trade goods tables from a JSON file.
-        
+
         Expected JSON structure:
         {
           "classifications": {
@@ -140,18 +141,25 @@ class RandomTradeGoodsTable:
         """
         with open(json_path, 'r', encoding='utf-8') as f:
             data: Dict[str, Any] = json.load(f)
-        
+
         table = cls()
-        
+
         # First pass: Create all classification tables
-        for classification_code, classification_data in data["classifications"].items():
-            classification_table = TradeClassificationGoodsTable(classification_code)
-            
+        for (
+            classification_code,
+            classification_data
+        ) in data["classifications"].items():
+            classification_table = TradeClassificationGoodsTable(
+                classification_code)
+
             for type_name, goods_data in classification_data["types"].items():
                 goods: List[Union[str, TradeGood]] = []
-                
+
                 for item in goods_data:
-                    if isinstance(item, dict) and item.get("type") == "imbalance":
+                    if (
+                        isinstance(item, dict)
+                        and item.get("type") == "imbalance"
+                    ):
                         # Create ImbalanceTradeGood for special entries
                         goods.append(ImbalanceTradeGood(
                             item["reroll_classification"],
@@ -160,17 +168,20 @@ class RandomTradeGoodsTable:
                     else:
                         # Regular string goods
                         goods.append(item)
-                
+
                 classification_table.add_type_table(type_name, goods)
-            
-            table.add_classification_table(classification_code, classification_table)
-        
+
+            table.add_classification_table(
+                classification_code,
+                classification_table
+            )
+
         # Second pass: Handle aliases (clones)
         if "aliases" in data:
             for alias_code, source_code in data["aliases"].items():
                 source_table = table.classifications[source_code]
                 clone_classification_table(alias_code, source_table, table)
-        
+
         return table
 
 
@@ -194,5 +205,6 @@ def clone_classification_table(
 
 
 # Load trade goods data from JSON file
-_DATA_PATH = Path(__file__).parent.parent.parent / "resources" / "trade_goods_tables.json"
+_DATA_PATH = Path(__file__).parent.parent.parent / \
+    "resources" / "trade_goods_tables.json"
 T5RTGTable = RandomTradeGoodsTable.from_json(_DATA_PATH)
