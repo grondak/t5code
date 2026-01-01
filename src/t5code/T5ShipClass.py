@@ -1,17 +1,45 @@
 """Ship class definitions for Traveller 5 starships.
 
-Defines the T5ShipClass class for representing starship types with
-jump rating, maneuver rating, and cargo capacity.
+Defines the T5ShipClass class for representing starship design specifications
+including performance ratings and capacity limits.
 """
 
 from typing import Dict, Any
 
 
 class T5ShipClass:
-    """A starship class intended to implement just enough of the
-    T5 Starship concepts to function in the simulator"""
+    """Starship design specification with performance and capacity.
+
+    Represents a class of starship (e.g., "Free Trader", "Scout") with
+    standard specifications for jump capability, maneuverability, and
+    cargo/passenger capacity.
+
+    Attributes:
+        class_name: Ship class designation
+        jump_rating: Jump drive rating (parsecs per jump, typically 1-6)
+        maneuver_rating: Maneuver drive rating (typically 1-6)
+        cargo_capacity: Hold size in tons
+        staterooms: Number of passenger/crew staterooms
+        low_berths: Number of low berth pods
+
+    Example:
+        >>> ship_class = T5ShipClass("Free Trader", {
+        ...     "jump_rating": 1,
+        ...     "maneuver_rating": 1,
+        ...     "cargo_capacity": 82,
+        ...     "staterooms": 10,
+        ...     "low_berths": 20
+        ... })
+    """
 
     def __init__(self, class_name: str, ship_data: Dict[str, Any]) -> None:
+        """Create ship class from specification data.
+
+        Args:
+            class_name: Name/designation of ship class
+            ship_data: Dictionary with required keys: jump_rating,
+                maneuver_rating, cargo_capacity, staterooms, low_berths
+        """
         self.class_name: str = class_name
         self.jump_rating: int = ship_data["jump_rating"]
         self.maneuver_rating: float = ship_data["maneuver_rating"]
@@ -20,6 +48,11 @@ class T5ShipClass:
         self.low_berths: int = ship_data["low_berths"]
 
     def usp(self) -> str:
+        """Generate Universal Ship Profile string.
+
+        Returns:
+            Multi-line string with class name, ratings, and cargo capacity
+        """
         return (
             f"{self.class_name} "
             f"{self.jump_rating}"
@@ -32,6 +65,14 @@ class T5ShipClass:
         ship_data: Dict[str,
                         Dict[str,
                              Any]]) -> Dict[str, "T5ShipClass"]:
+        """Load all ship classes from data dictionary.
+
+        Args:
+            ship_data: Dictionary mapping class names to specification dicts
+
+        Returns:
+            Dictionary mapping class names to T5ShipClass instances
+        """
         return {
             class_name: T5ShipClass(class_name, data)
             for class_name, data in ship_data.items()

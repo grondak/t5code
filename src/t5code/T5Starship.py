@@ -25,10 +25,34 @@ if TYPE_CHECKING:
 
 
 class _BestCrewSkillDict:
+    """Dictionary-like interface for finding best crew skill levels.
+
+    Provides a convenient way to query the maximum skill level across all
+    crew members for any given skill. Used via T5Starship.best_crew_skill.
+
+    Example:
+        # Returns highest pilot skill on crew
+        >>> ship.best_crew_skill["pilot"]
+        3
+    """
+
     def __init__(self, crew_dict: Dict[str, T5NPC]) -> None:
+        """Initialize with crew dictionary.
+
+        Args:
+            crew_dict: Dictionary mapping crew positions to T5NPC instances
+        """
         self.crew: Dict[str, T5NPC] = crew_dict
 
     def __getitem__(self, skill_name: str) -> int:
+        """Get highest skill level for this skill across all crew.
+
+        Args:
+            skill_name: Name of skill (case insensitive)
+
+        Returns:
+            Highest skill level among crew (0 if no crew has the skill)
+        """
         skill_name = skill_name.lower()
         return max(
             (member.get_skill(skill_name) for member in self.crew.values()),
@@ -37,13 +61,59 @@ class _BestCrewSkillDict:
 
 
 class T5Starship:
-    """A starship class intended to implement just enough of the
-    T5 Starship concepts to function in the simulator"""
+    """Starship with cargo, passengers, crew, and financial operations.
+
+    Implements T5 starship operations including:
+    - Passenger and crew management with capacity limits
+    - Cargo and freight loading with hold size constraints
+    - Mail transport with locker capacity
+    - Financial tracking (credits in/out)
+    - Navigation (location and destination)
+
+    Capacity is managed realistically:
+    - High/mid passengers share staterooms
+    - Low passengers use separate low berths
+    - Cargo and freight share hold space (measured in tons)
+    - Mail uses dedicated locker slots
+
+    Attributes:
+        ship_name: Ship's name
+        location: Current world name
+        hold_size: Cargo capacity in tons
+        staterooms: Number of staterooms (for high/mid passengers)
+        low_berths: Number of low berth slots
+        passengers: Dict of passenger sets by class ('high', 'mid', 'low')
+        mail: Dict of mail bundles by serial
+        crew: Dict of crew NPCs by position
+        cargo: Dict of cargo/freight lots by type
+        cargo_size: Current cargo tonnage
+        mail_locker_size: Maximum mail bundles
+
+    Properties:
+        destination: Destination world name
+        mail_bundles: Current mail containers
+        cargo_manifest: Current cargo/freight lots
+        balance: Current credits
+        best_crew_skill: Query interface for max crew skill levels
+
+    Example:
+        >>> ship = T5Starship("Beowulf", "Rhylanor", ship_class)
+        >>> ship.credit(100000)  # Starting funds
+        >>> ship.hire_crew("pilot", pilot_npc)
+        >>> ship.set_course_for("Jae Tellona")
+    """
 
     def __init__(self,
                  ship_name: str,
                  ship_location: str,
                  ship_class: T5ShipClass) -> None:
+        """Create a new starship.
+
+        Args:
+            ship_name: Name of the ship
+            ship_location: Starting world/location
+            ship_class: T5ShipClass instance defining ship specifications
+        """
         # Core identity
         self.ship_name: str = ship_name
         self.location: str = ship_location
@@ -79,7 +149,9 @@ class T5Starship:
         self._balance: float = 0.0
 
     def set_course_for(self, destination: str) -> None:
-        """Set the ship's destination.
+        """Set the ship's destination world.
+
+        Updates the destination property to the specified world name.
 
         Args:
             destination: Name of the destination world
@@ -179,6 +251,19 @@ class T5Starship:
                              npc: T5NPC,
                              medic,
                              roll_override_in: int = None):
+        """Awaken a low passage passenger from cold sleep.
+
+        Low passage has a risk of death (5+ on 2d6 to survive). A medic's
+        Medicine skill provides DM bonus to the survival roll.
+
+        Args:
+            npc: The passenger to awaken
+            medic: Medic NPC (or None if no medic available)
+            roll_override_in: Override for survival roll (testing only)
+
+        Note:
+            Calls npc.kill() if survival roll fails
+        """
         if check_success(roll_override=roll_override_in,
                          skills_override=medic.skills):
             return True
@@ -187,11 +272,26 @@ class T5Starship:
             return False
 
     def onload_mail(self, mail_item: "T5Mail") -> None:
+        """Load a mail container onto the ship.
+
+        Args:
+            mail_item: Mail container to load
+
+        Raises:
+            ValueError: If mail locker is full
+        """
         if len(self.mail.keys()) >= self.mail_locker_size:
             raise ValueError("Starship mail locker size exceeded.")
         self.mail[mail_item.serial] = mail_item
 
     def offload_mail(self) -> None:
+        """Offload all mail from the ship.
+
+        Clears the mail dictionary, removing all mail containers.
+
+        Raises:
+            ValueError: If ship has no mail to offload
+        """
         if len(self.mail.keys()) == 0:
             raise ValueError("Starship has no mail to offload.")
         self.mail = {}
@@ -221,6 +321,11 @@ class T5Starship:
 
     @property
     def best_crew_skill(self):
+        """Helper for finding best crew skill values.
+
+        Returns:
+            _BestCrewSkillDict that looks up highest skill level across crew
+        """
         return _BestCrewSkillDict(self.crew)
 
     ALLOWED_LOT_TYPES = ("cargo", "freight")
@@ -260,11 +365,37 @@ class T5Starship:
         return True  # explicitly returns True if all checks pass
 
     def onload_lot(self, in_lot, lot_type):
+        """Load a cargo lot onto the ship.
+
+        Args:
+            in_lot: The lot to load
+            lot_type: Type of lot ('cargo' or 'freight')
+
+        Raises:
+            Same as can_onload_lot()
+
+        Note:
+            Calls can_onload_lot() which performs all validation
+        """
         if self.can_onload_lot(in_lot, lot_type):
             self.cargo[lot_type].append(in_lot)
             self.cargo_size += in_lot.mass
 
     def offload_lot(self, in_serial: str, lot_type: str) -> "T5Lot":
+        """Offload a specific cargo lot by serial number.
+
+        Args:
+            in_serial: UUID serial number of the lot
+            lot_type: Type of lot ('cargo' or 'freight')
+
+        Returns:
+            The offloaded lot
+
+        Raises:
+            ValueError: If serial number is invalid UUID
+            InvalidLotTypeError: If lot_type is invalid
+            ValueError: If lot not found
+        """
         try:
             uuid.UUID(in_serial)
         except ValueError:
@@ -293,10 +424,23 @@ class T5Starship:
 
     @property
     def balance(self):
+        """Ship's current credit balance.
+
+        Returns:
+            Current balance in credits (float)
+        """
         return self._balance
 
     def credit(self, amount):
-        """Add money to the ship's balance."""
+        """Add credits to the ship's balance.
+
+        Args:
+            amount: Credits to add (int or float)
+
+        Raises:
+            TypeError: If amount is not a number
+            ValueError: If amount is negative
+        """
         if not isinstance(amount, (int, float)):
             raise TypeError("Amount must be a number")
         if amount < 0:

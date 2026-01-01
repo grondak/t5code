@@ -1,4 +1,10 @@
-"""A class that represents one World from Traveller 5."""
+"""World representation and trade operations for Traveller 5.
+
+This module provides the T5World class for representing planets and starports,
+including passenger availability,
+freight capacity, and speculative cargo generation.
+Also includes utilities for finding the best broker at a given starport.
+"""
 
 from typing import Dict, Any, List, TYPE_CHECKING
 from t5code.T5Basics import roll_flux
@@ -10,6 +16,29 @@ if TYPE_CHECKING:
 
 
 def find_best_broker(starport_tier: str) -> Dict[str, Any]:
+    """Find the best available broker at a starport.
+
+    Brokers have different skill modifiers and fee rates depending on starport
+    quality. This function returns the broker with the highest skill modifier
+    available at the given starport tier.
+
+    Args:
+        starport_tier: Starport quality class ('A', 'B', 'C', or 'D')
+
+    Returns:
+        Dictionary with keys:
+            - name (str): Broker's title
+            - mod (int): Skill modifier
+            - rate (float): Fee rate as decimal (e.g., 0.05 for 5%)
+
+    Raises:
+        ValueError: If starport_tier is not one of 'A', 'B', 'C', 'D'
+
+    Example:
+        >>> broker = find_best_broker('A')
+        >>> print(f"{broker['name']} charges {broker['rate']*100}% fees")
+        Master Merchant charges 5.0% fees
+    """
     if starport_tier not in {"A", "B", "C", "D"}:
         raise ValueError("Tier must be one of: 'A', 'B', 'C', 'D'")
 
@@ -31,9 +60,38 @@ def find_best_broker(starport_tier: str) -> Dict[str, Any]:
 
 
 class T5World:
+    """Represents a world in the Traveller 5 universe.
+
+    A world includes its Universal World Profile (UWP), trade classifications,
+    importance rating, and methods for generating passengers, freight, and
+    speculative cargo based on T5 rules.
+
+    Attributes:
+        name: World name
+        world_data: Dictionary containing UWP,
+           trade classifications, and importance
+
+    Example:
+        >>> world_data = {"Rhylanor": {"UWP": "A788899-A", ...}}
+        >>> world = T5World("Rhylanor", world_data)
+        >>> print(world.get_starport())  # 'A'
+        >>> print(world.get_population())  # 8
+    """
+
     def __init__(self,
                  name: str,
                  world_data: Dict[str, Dict[str, Any]]) -> None:
+        """Initialize a T5World instance.
+
+        Args:
+            name: Name of the world
+            world_data: Dictionary mapping world names to their data dicts,
+                which must include 'UWP',
+                'TradeClassifications', and 'Importance'
+
+        Raises:
+            ValueError: If the specified world name is not in world_data
+        """
         self.name: str = name
         if name in world_data:
             self.world_data: Dict[str, Any] = world_data[name]
@@ -42,12 +100,28 @@ class T5World:
                              "not in provided worlds table")
 
     def uwp(self) -> str:
+        """Get the Universal World Profile string.
+
+        Returns:
+            UWP string (e.g., 'A788899-A' for a high-tech industrial world)
+        """
         return self.world_data["UWP"]
 
     def trade_classifications(self) -> str:
+        """Get trade classification codes.
+
+        Returns:
+            Space-separated trade codes
+            (e.g., 'Ag Ri' for agricultural rich world)
+        """
         return self.world_data["TradeClassifications"]
 
     def importance(self) -> str:
+        """Get world importance rating.
+
+        Returns:
+            Importance value as string (e.g., '+2', '-1')
+        """
         return self.world_data["Importance"]
 
     @staticmethod
@@ -55,33 +129,67 @@ class T5World:
         world_data: Dict[str,
                          Dict[str,
                               Any]]) -> Dict[str, "T5World"]:
+        """Create T5World instances for all worlds in the data.
+
+        Args:
+            world_data: Dictionary mapping world names to their data
+
+        Returns:
+            Dictionary mapping world names to T5World instances
+        """
         return {name: T5World(name, world_data) for name,
                 data in world_data.items()}
 
     def get_starport(self) -> str:
+        """Extract starport class from UWP.
+
+        Returns:
+            Starport class letter ('A' through 'E', or 'X' for no starport)
+        """
         return self.uwp()[0:1]
 
     def get_population(self) -> int:
+        """Extract population digit from UWP.
+
+        Returns:
+            Population code (0-9+), where higher values indicate more people
+        """
         return int(self.uwp()[4:5])
 
     TRADE_CODE_MULTIPLIER_TAGS = {
-        "Ag",
-        "As",
-        "Ba",
-        "De",
-        "Fl",
-        "Hi",
-        "Ic",
-        "In",
-        "Lo",
-        "Na",
-        "Ni",
-        "Po",
-        "Ri",
-        "Va",
+        "Ag",  # Agricultural
+        "As",  # Asteroid
+        "Ba",  # Barren
+        "De",  # Desert
+        "Fl",  # Fluid Oceans
+        "Hi",  # High Population
+        "Ic",  # Ice-Capped
+        "In",  # Industrial
+        "Lo",  # Low Population
+        "Na",  # Non-Agricultural
+        "Ni",  # Non-Industrial
+        "Po",  # Poor
+        "Ri",  # Rich
+        "Va",  # Vacuum
     }
 
     def freight_lot_mass(self, liaison_bonus: int) -> int:
+        """Calculate available freight lot mass in tons.
+
+        Uses flux + population, doubled if world has certain trade codes.
+        Represents how much freight is available on a given day.
+
+        Args:
+            liaison_bonus: Modifier from crew's Liaison skill
+
+        Returns:
+            Mass of freight lot in tons (minimum 0)
+
+        Example:
+            >>> world = T5World("Rhylanor", world_data)
+            >>> mass = world.freight_lot_mass(liaison_bonus=2)
+            >>> print(f"Available freight: {mass} tons")
+        """
         flux = roll_flux()
         population = self.get_population()
         tags = set(self.trade_classifications())

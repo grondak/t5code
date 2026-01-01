@@ -1,5 +1,9 @@
-"""A class that represents one lot from Traveller 5.
-   A lot is a batch of goods for sale from one world, p209."""
+"""Trade lot representation for Traveller 5 speculative cargo.
+
+A lot represents a batch of trade goods from one world, with origin value,
+market value, tech level, and trade classifications. Implements T5 Book 2 p209
+rules for speculative cargo trading.
+"""
 
 import uuid
 import random
@@ -22,7 +26,30 @@ if TYPE_CHECKING:
 
 
 class T5Lot:
-    """100% RAW T5 Lot, see T5Book 2 p209."""
+    """Speculative cargo lot for trading between worlds.
+
+    Implements 100% RAW (Rules As Written)
+    T5 lot mechanics from T5 Book 2 p209.
+    Each lot has an origin world, value, mass, and trade characteristics that
+    determine purchase cost and sale price at different markets.
+
+    Attributes:
+        serial: Unique UUID identifier for this lot
+        origin_name: Name of world where lot originates
+        origin_uwp: Universal World Profile of origin world
+        origin_tech_level: Tech level of origin (0-15+)
+        origin_trade_classifications: Space-separated trade codes
+        origin_value: Base value per ton in credits
+        mass: Size of lot in tons
+        lot_id: Human-readable identifier (format: "TL-Codes Value")
+
+    Example:
+        >>> from t5code import T5Lot, GameState
+        >>> game_state = GameState(...)
+        >>> lot = T5Lot("Rhylanor", game_state)
+        >>> lot.mass = 10
+        >>> print(f"Lot value: Cr{lot.origin_value * lot.mass:,}")
+    """
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, T5Lot) and self.serial == other.serial
@@ -31,6 +58,18 @@ class T5Lot:
         return hash(self.serial)
 
     def __init__(self, origin_name: str, game_state: "GameState") -> None:
+        """Create a new trade lot from an origin world.
+
+        Automatically determines tech level, trade codes, and base value
+        from the origin world's data.
+
+        Args:
+            origin_name: Name of the world producing this lot
+            game_state: GameState instance with initialized world_data
+
+        Raises:
+            ValueError: If GameState.world_data is not initialized
+        """
         # Basic identity
         self.size: int = 10
         self.origin_name: str = origin_name
@@ -71,7 +110,18 @@ class T5Lot:
     def determine_sale_value_on(self,
                                 market_world: str,
                                 game_state: "GameState") -> int:
-        """10% x Source TL minus Market TL + table effects"""
+        """Calculate sale value of this lot on a specific market world.
+
+        Uses T5 formula: Base value × (1 + 0.1 × (Origin TL - Market TL))
+        then applies trade classification bonuses/penalties from selling table.
+
+        Args:
+            market_world: Name of world where lot is being sold
+            game_state: GameState with initialized world_data
+
+        Returns:
+            Sale value in credits for the entire lot
+        """
         tl_adjustment: float = 0.1 * (
             self.origin_tech_level
             - letter_to_tech_level(
@@ -91,6 +141,14 @@ class T5Lot:
         return result
 
     def generate_lot_id(self) -> str:
+        """Generate human-readable lot identifier.
+
+        Format: "TL-TradeCodes Value"
+        Example: "A-Ag Ri 8500" (Tech level A, Agricultural Rich, Cr8500/ton)
+
+        Returns:
+            Lot ID string
+        """
         result = (
             tech_level_to_letter(self.origin_tech_level)
             + (
@@ -108,6 +166,23 @@ class T5Lot:
                           sigma: float = 0.7,
                           min_mass: int = 1,
                           max_mass: int = 100) -> int:
+        """Generate random lot mass using log-normal distribution.
+
+        Uses log-normal distribution to create realistic cargo lot sizes,
+        with most lots being small but occasional large shipments.
+
+        Args:
+            mu: Mean of underlying normal distribution (default 2.6)
+            sigma: Standard deviation of underlying normal (default 0.7)
+            min_mass: Minimum lot size in tons (default 1)
+            max_mass: Maximum lot size in tons (default 100)
+
+        Returns:
+            Lot mass in tons (integer)
+
+        Note:
+            Blocks until a value within [min_mass, max_mass] is generated.
+        """
         while True:
             # random.lognormvariate provides similar behaviour without
             # requiring the numpy dependency
@@ -121,6 +196,19 @@ class T5Lot:
         trade_classifictions_table: Dict[str, int],
         tech_level: int
     ) -> int:
+        """Calculate base cost per ton of a lot.
+
+        Combines base cost (Cr3000) with modifiers from trade classifications
+        and tech level.
+
+        Args:
+            trade_classifications: Space-separated trade codes (e.g., "Ag Ri")
+            trade_classifictions_table: Modifier table for buying
+            tech_level: Tech level of origin world (0-15+)
+
+        Returns:
+            Cost per ton in credits
+        """
         result = (
             3000
             + T5Lot.determine_buying_trade_classifications_effects(
@@ -134,6 +222,17 @@ class T5Lot:
     def determine_buying_trade_classifications_effects(
         trade_classifications: str, trade_classifictions_table: Dict[str, int]
     ) -> int:
+        """Calculate total modifier from trade classifications when buying.
+
+        Sums up all modifiers from matching trade codes in the buying table.
+
+        Args:
+            trade_classifications: Space-separated trade codes
+            trade_classifictions_table: Buying modifiers table
+
+        Returns:
+            Total credit modifier (can be positive or negative)
+        """
         effect = 0
         for classification in trade_classifications.split():
             if classification in trade_classifictions_table:
@@ -146,6 +245,21 @@ class T5Lot:
         origin_trade_classifications: str,
         selling_goods_trade_classifications_table: Dict[str, str],
     ) -> int:
+        """Calculate selling bonus when origin goods match market needs.
+
+        Awards Cr1000 per matching pair: origin trade code → market needs.
+        Uses the selling table to determine which origin goods are valuable
+        on which destination markets.
+
+        Args:
+            market_world: Destination market world
+            origin_trade_classifications: Trade codes from lot's origin
+            selling_goods_trade_classifications_table:
+                Origin→Destination mapping
+
+        Returns:
+            Total credit bonus (Cr1000 per match)
+        """
         effect = 0
         table = selling_goods_trade_classifications_table
         for origin_classification in origin_trade_classifications.split():
@@ -164,19 +278,19 @@ class T5Lot:
     def filter_trade_classifications(
         provided_trade_classifications: str, allowed_trade_classifications: str
     ) -> str:
-        """
-        Filters provided trade classifications based
-        on the allowed trade classifications.
+        """Filter trade classifications to only allowed codes.
+
+        Keeps only those trade codes that appear in both the provided
+        list and the allowed list. Used to exclude certain trade codes
+        from lot value calculations.
 
         Args:
-            provided_trade_classifications (str): A space-separated string
-               of provided classifications.
-            allowed_trade_classifications (str): A space-separated string
-               of allowed classifications.
+            provided_trade_classifications: Space-separated
+            trade codes from world
+            allowed_trade_classifications: Space-separated allowed codes
 
         Returns:
-            str: A space-separated string of classifications that
-               are both provided and allowed.
+            Space-separated string of codes present in both lists
         """
         provided_set = set(
             provided_trade_classifications.split()

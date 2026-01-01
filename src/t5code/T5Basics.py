@@ -54,6 +54,22 @@ def tech_level_to_letter(value: int) -> str:
 
 def check_success(roll_override: Optional[int] = None,
                   skills_override: Optional[Dict[str, int]] = None) -> bool:
+    """Perform a T5 ability check (roll 2d6, apply modifiers, target 8+).
+
+    This is the core task resolution mechanic in Traveller 5. Characters roll
+    2d6, add their skill levels, and try to meet or exceed a target number (8).
+
+    Args:
+        roll_override: Fixed dice value for testing (instead of rolling 2d6)
+        skills_override: Dictionary of skill modifiers to apply
+
+    Returns:
+        True if (2d6 + skills) >= 8, False otherwise
+
+    Example:
+        >>> check_success(skills_override={"pilot": 2, "dexterity": 1})
+        True  # If roll was 5+ (5+3 = 8)
+    """
     mod = sum(skills_override.values()) if skills_override is not None else 0
     roll = (
         roll_override
@@ -64,6 +80,18 @@ def check_success(roll_override: Optional[int] = None,
 
 
 def roll_flux() -> int:
+    """Roll flux (1d6 - 1d6) for random variation.
+
+    Flux is used throughout T5 for random modifiers with a bell curve
+    centered on zero. Results range from -5 to +5.
+
+    Returns:
+        Integer from -5 to +5, with 0 being most common
+
+    Example:
+        >>> flux = roll_flux()
+        >>> passenger_count = base_count + flux + population_mod
+    """
     die1 = random.randint(1, 6)
     die2 = random.randint(1, 6)
     return die1 - die2

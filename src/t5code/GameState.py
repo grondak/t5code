@@ -9,19 +9,55 @@ from typing import Dict, Any, Optional
 
 
 class GameState:
+    """Global game state container for world and ship data.
+
+    Provides shared storage for loaded world and ship class data that
+    can be accessed across the application. Typically initialized once
+    at startup with data from CSV files.
+
+    Attributes:
+        worlds: Legacy world storage (deprecated)
+        world_data: Dictionary of T5World instances by name
+        ship_data: Dictionary of T5ShipClass instances by class name
+    """
     worlds: Dict[str, Any] = {}
     world_data: Optional[Dict[str, Any]] = None
     ship_data: Optional[Dict[str, Any]] = None
 
-    # Parse T5 map file
 
+def load_and_parse_t5_map(file_path: str) -> Dict[str, Dict[str, Any]]:
+    """Load and parse Traveller 5 world data from TSV file.
 
-def load_and_parse_t5_map(file_path):
+    Args:
+        file_path: Path to tab-separated map file
+
+    Returns:
+        Dictionary mapping world names to world data dicts with keys:
+            - Name: World name
+            - UWP: Universal World Profile string
+            - Zone: Travel zone (Red/Amber/Green)
+            - Coordinates: (x, y) hex tuple
+            - TradeClassifications: Space-separated trade codes
+            - Importance: Importance rating string
+
+    Example:
+        >>> worlds = load_and_parse_t5_map("resources/t5_map.txt")
+        >>> print(worlds["Rhylanor"]["UWP"])
+        A788899-A
+    """
     with open(file_path, mode="r") as mapfile:
         return load_and_parse_t5_map_filelike(mapfile)
 
 
-def load_and_parse_t5_map_filelike(mapfile):
+def load_and_parse_t5_map_filelike(mapfile) -> Dict[str, Dict[str, Any]]:
+    """Load and parse T5 world data from file-like object.
+
+    Args:
+        mapfile: File-like object with tab-separated world data
+
+    Returns:
+        Dictionary mapping world names to world data dicts
+    """
     worlds = {}
     reader = csv.DictReader(mapfile, delimiter="\t")
     for row in reader:
@@ -36,12 +72,42 @@ def load_and_parse_t5_map_filelike(mapfile):
     return worlds
 
 
-def load_and_parse_t5_ship_classes(file_path):
+def load_and_parse_t5_ship_classes(
+        file_path: str) -> Dict[str, Dict[str, Any]]:
+    """Load and parse starship class data from CSV file.
+
+    Args:
+        file_path: Path to CSV file with ship class specifications
+
+    Returns:
+        Dictionary mapping class names to specification dicts with keys:
+            - class_name: Ship class name
+            - jump_rating: Jump drive rating
+            - maneuver_rating: Maneuver drive rating
+            - cargo_capacity: Hold size in tons
+            - staterooms: Number of staterooms
+            - low_berths: Number of low berth pods
+
+    Example:
+        >>> ships = load_and_parse_t5_ship_classes(
+                "resources/t5_ship_classes.csv")
+        >>> print(ships["Free Trader"]["cargo_capacity"])
+        82
+    """
     with open(file_path, mode="r") as shipFile:
         return load_and_parse_t5_ship_classes_filelike(shipFile)
 
 
-def load_and_parse_t5_ship_classes_filelike(ship_file):
+def load_and_parse_t5_ship_classes_filelike(
+        ship_file) -> Dict[str, Dict[str, Any]]:
+    """Load and parse ship class data from file-like object.
+
+    Args:
+        ship_file: File-like object with CSV ship class data
+
+    Returns:
+        Dictionary mapping class names to specification dicts
+    """
     ships = {}
     reader = csv.DictReader(ship_file)
     for row in reader:
