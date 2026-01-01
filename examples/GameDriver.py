@@ -314,7 +314,7 @@ def search_and_load_cargo(ship: T5Starship, gd: GameDriver) -> None:
                 f"\tLoaded cargo lot {lot.serial} of {lot.mass} tons, "
                 f"lot id: {lot.lot_id}.")
         except ValueError as e:
-            print(f"\tCould not load lot {lot.serial}"
+            print(f"\tCould not load lot {lot.serial} "
                   f"mass {lot.mass}: {e}")
 
     print(
