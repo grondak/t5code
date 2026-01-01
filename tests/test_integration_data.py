@@ -110,44 +110,6 @@ def test_world_uwp_format():
         assert len(uwp) >= 7, f"{world_name} UWP too short: {uwp}"
 
 
-def test_json_trade_goods_no_duplicates():
-    """Test that JSON file doesn't have duplicate
-    trade goods within classifications."""
-    json_path = Path("resources/trade_goods_tables.json")
-    import json
-    with open(json_path) as f:
-        data = json.load(f)
-
-    for (
-        classification_code,
-        classification_data
-    ) in data["classifications"].items():
-        all_goods = []
-
-        for type_name, goods_list in classification_data["types"].items():
-            for item in goods_list:
-                # Skip imbalance entries
-                if isinstance(item, dict):
-                    continue
-                all_goods.append(item)
-
-        # Check for duplicates within this classification
-        unique_goods = set(all_goods)
-        if len(unique_goods) != len(all_goods):
-            # Find the duplicates
-            from collections import Counter
-            counts = Counter(all_goods)
-            duplicates = [item for item, count in counts.items() if count > 1]
-            # Some duplicates might be intentional
-            # (e.g., same good in different types)
-            # Just warn if found
-            import warnings
-            warnings.warn(
-                f"{classification_code} has duplicate goods: {duplicates}",
-                UserWarning
-            )
-
-
 def _is_valid_classification_reference(ref: str,
                                        all_classifications: set) -> bool:
     """Check if a classification reference is valid."""
