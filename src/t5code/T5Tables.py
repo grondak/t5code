@@ -77,8 +77,11 @@ SELLING_GOODS_TRADE_CLASSIFICATIONS_TABLE = {
     "De": "De",
     "Fl": "Fl In",
     "Hi": "Hi",
+    "Ic": "",  # Ice-capped: no special selling advantages
     "In": "Ag As De Fl Hi In Ri Va",
+    "Lo": "",  # Low Population: no special selling advantages
     "Na": "As De Va",
+    "Ni": "",  # Non-Industrial: no special selling advantages
     "Po": "Ag Hi In Ri",
     "Ri": "Ag De Hi In Ri",
     "Va": "As In Va",
