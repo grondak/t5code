@@ -225,7 +225,7 @@ def main() -> None:
 
     dest = "Rhylanor"
     ship.set_course_for(dest)
-    
+
     # Phase D: Search for and load freight until 80% full
     print(f"Starship {ship.ship_name} preparing for departure from "
           f"{ship.location} starport bound for {ship.destination()} starport "

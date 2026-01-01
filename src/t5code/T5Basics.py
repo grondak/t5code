@@ -67,3 +67,73 @@ def roll_flux() -> int:
     die1 = random.randint(1, 6)
     die2 = random.randint(1, 6)
     return die1 - die2
+
+
+class SequentialFlux:
+    """A two-stage flux roll where the first die is rolled immediately
+    and the second die can be optionally rolled later.
+
+    This allows for conditional logic between the two rolls.
+
+    Example:
+        flux = SequentialFlux()
+        print(f"First die: {flux.first_die}")
+
+        if some_condition:
+            result = flux.roll_second()
+            print(f"Final flux: {result}")
+    """
+
+    def __init__(self, first_die: Optional[int] = None):
+        """Initialize with a first die roll.
+
+        Args:
+            first_die: Optional fixed value for first die (for testing).
+                      If None, rolls 1d6.
+        """
+        self.first_die: int = (
+            first_die if first_die is not None
+            else random.randint(1, 6)
+        )
+        self.second_die: Optional[int] = None
+        self._result: Optional[int] = None
+
+    def roll_second(self, second_die: Optional[int] = None) -> int:
+        """Roll the second die and compute the flux result.
+
+        Args:
+            second_die: Optional fixed value for second die (for testing).
+                       If None, rolls 1d6.
+
+        Returns:
+            The flux result (first_die - second_die)
+        """
+        self.second_die = (
+            second_die if second_die is not None
+            else random.randint(1, 6)
+        )
+        self._result = self.first_die - self.second_die
+        return self._result
+
+    @property
+    def result(self) -> Optional[int]:
+        """Get the computed flux result, "
+        "or None if second die not rolled yet."""
+        return self._result
+
+    @property
+    def potential_range(self) -> tuple[int, int]:
+        """Get the possible range of outcomes if second die is rolled.
+
+        Returns:
+            (min_possible, max_possible) tuple
+        """
+        min_flux = self.first_die - 6  # Best case for second die
+        max_flux = self.first_die - 1  # Worst case for second die
+        return (min_flux, max_flux)
+
+    def __repr__(self) -> str:
+        if self.second_die is None:
+            return f"SequentialFlux(first={self.first_die}, pending)"
+        return f"SequentialFlux(first={self.first_die}, " \
+               f"second={self.second_die}, result={self._result})"
