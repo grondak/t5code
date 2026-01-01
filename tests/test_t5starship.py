@@ -19,12 +19,16 @@ def test_ship_data():
             "jump_rating": 1,
             "maneuver_rating": 2,
             "cargo_capacity": 10,
+            "staterooms": 2,
+            "low_berths": 0,
         },
         "large": {
             "class_name": "large",
             "jump_rating": 3,
             "maneuver_rating": 3,
             "cargo_capacity": 200,
+            "staterooms": 10,
+            "low_berths": 50,
         },
     }
 
@@ -102,7 +106,9 @@ def test_onload_passenger(test_ship_data):
 
 def test_offload_passengers(test_ship_data):
     """Verify passenger offloading by class with medic requirement."""
-    starship = get_me_a_starship("Pequod", "Nantucket", test_ship_data)
+    # Use large ship with 10 staterooms and 50 low berths
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    starship = T5Starship("Pequod", "Nantucket", ship_class)
     npc1 = T5NPC("Bob")
     starship.onload_passenger(npc1, "high")
     npc2 = T5NPC("Doug")
@@ -168,7 +174,9 @@ def test_offload_mail(test_ship_data, setup_gamestate):
 
 def test_awaken_passenger(test_ship_data):
     """Verify low berth awakening with medic skill check."""
-    starship = get_me_a_starship("Steamboat", "Rhylanor", test_ship_data)
+    # Use large ship with 50 low berths
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    starship = T5Starship("Steamboat", "Rhylanor", ship_class)
     npc1 = T5NPC("Bones")
     npc1.set_skill("medic", 3)
     starship.hire_crew("medic", npc1)
@@ -362,3 +370,118 @@ def test_can_onload_rejects_duplicate_lot(crewed_ship, setup_gamestate):
     crewed_ship.cargo["cargo"].append(lot)
     with pytest.raises(ValueError, match="load same lot twice"):
         crewed_ship.can_onload_lot(lot, "cargo")
+
+
+def test_stateroom_capacity_initialization(test_ship_data, setup_gamestate):
+    """Verify ship initializes with correct
+    stateroom and low berth capacity."""
+    small_class = T5ShipClass("small", test_ship_data["small"])
+    small_ship = T5Starship("Tiny", "Rhylanor", small_class)
+    assert small_ship.staterooms == 2
+    assert small_ship.low_berths == 0
+
+    large_class = T5ShipClass("large", test_ship_data["large"])
+    large_ship = T5Starship("Big", "Rhylanor", large_class)
+    assert large_ship.staterooms == 10
+    assert large_ship.low_berths == 50
+
+
+def test_high_passenger_capacity_limit(test_ship_data, setup_gamestate):
+    """Verify high passengers are limited by stateroom capacity."""
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    ship = T5Starship("Overcrowded", "Rhylanor", ship_class)
+
+    # Should be able to board 2 high passengers (2 staterooms)
+    passenger1 = T5NPC("High Roller 1")
+    passenger2 = T5NPC("High Roller 2")
+    ship.onload_passenger(passenger1, "high")
+    ship.onload_passenger(passenger2, "high")
+
+    # Third high passenger should fail
+    passenger3 = T5NPC("High Roller 3")
+    with pytest.raises(ValueError, match="has only 2 staterooms"):
+        ship.onload_passenger(passenger3, "high")
+
+
+def test_mid_passenger_capacity_limit(test_ship_data, setup_gamestate):
+    """Verify mid passengers are limited by stateroom capacity."""
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    ship = T5Starship("Cramped", "Rhylanor", ship_class)
+
+    # Should be able to board 2 mid passengers
+    passenger1 = T5NPC("Mid Traveler 1")
+    passenger2 = T5NPC("Mid Traveler 2")
+    ship.onload_passenger(passenger1, "mid")
+    ship.onload_passenger(passenger2, "mid")
+
+    # Third mid passenger should fail
+    passenger3 = T5NPC("Mid Traveler 3")
+    with pytest.raises(ValueError, match="has only 2 staterooms"):
+        ship.onload_passenger(passenger3, "mid")
+
+
+def test_high_and_mid_passengers_share_staterooms(
+        test_ship_data,
+        setup_gamestate):
+    """Verify high and mid passengers both count against stateroom limit."""
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    ship = T5Starship("Mixed", "Rhylanor", ship_class)
+
+    # Board 1 high and 1 mid passenger (uses 2 staterooms)
+    high_pass = T5NPC("VIP Guest")
+    mid_pass = T5NPC("Regular Traveler")
+    ship.onload_passenger(high_pass, "high")
+    ship.onload_passenger(mid_pass, "mid")
+
+    # No more staterooms available
+    another_high = T5NPC("Another VIP")
+    with pytest.raises(ValueError, match="has only 2 staterooms"):
+        ship.onload_passenger(another_high, "high")
+
+    another_mid = T5NPC("Another Traveler")
+    with pytest.raises(ValueError, match="has only 2 staterooms"):
+        ship.onload_passenger(another_mid, "mid")
+
+
+def test_low_passenger_capacity_limit(test_ship_data, setup_gamestate):
+    """Verify low passengers are limited by low berth capacity."""
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Budget Cruiser", "Rhylanor", ship_class)
+
+    # Board 50 low passengers (50 low berths available)
+    for i in range(50):
+        passenger = T5NPC(f"Low Passenger {i+1}")
+        ship.onload_passenger(passenger, "low")
+
+    # 51st should fail
+    extra_passenger = T5NPC("One Too Many")
+    with pytest.raises(ValueError, match="has only 50 low berths"):
+        ship.onload_passenger(extra_passenger, "low")
+
+
+def test_low_passengers_independent_of_staterooms(
+        test_ship_data,
+        setup_gamestate):
+    """Verify low passengers don't affect stateroom capacity."""
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Flexible", "Rhylanor", ship_class)
+
+    # Fill all 10 staterooms with high/mid passengers
+    for i in range(10):
+        passenger = T5NPC(f"Stateroom Guest {i+1}")
+        ship.onload_passenger(passenger, "high" if i < 5 else "mid")
+
+    # Should still be able to board low passengers
+    low_pass = T5NPC("Budget Traveler")
+    ship.onload_passenger(low_pass, "low")
+    assert len(ship.passengers["low"]) == 1
+
+
+def test_ship_with_no_low_berths(test_ship_data, setup_gamestate):
+    """Verify ship with no low berths rejects low passengers."""
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    ship = T5Starship("No Budget", "Rhylanor", ship_class)
+
+    passenger = T5NPC("Hopeful Budget Traveler")
+    with pytest.raises(ValueError, match="has only 0 low berths"):
+        ship.onload_passenger(passenger, "low")

@@ -49,6 +49,10 @@ class T5Starship:
         self.location: str = ship_location
         self.hold_size: int = ship_class.cargo_capacity
 
+        # Passenger capacity (high and mid use staterooms, low uses low berths)
+        self.staterooms: int = ship_class.staterooms
+        self.low_berths: int = ship_class.low_berths
+
         # Passenger system
         self.high_passengers: Set[T5NPC] = set()
         self.passengers: Dict[str, Set[T5NPC]] = {
@@ -90,6 +94,24 @@ class T5Starship:
             error_result = "Cannot load same passenger " + \
                 f"{npc.character_name} twice."
             raise DuplicateItemError(error_result)
+
+        # Check capacity - high and mid use staterooms, low uses low berths
+        if passage_class in ["high", "mid"]:
+            stateroom_passengers = (len(self.passengers["high"])
+                                    + len(self.passengers["mid"]))
+            if stateroom_passengers >= self.staterooms:
+                raise ValueError(
+                    f"Ship has only {self.staterooms} staterooms. "
+                    f"Already occupied by {stateroom_passengers} passengers."
+                )
+        elif passage_class == "low":
+            if len(self.passengers["low"]) >= self.low_berths:
+                raise ValueError(
+                    f"Ship has only {self.low_berths} low berths. "
+                    "Already occupied by "
+                    f"{len(self.passengers['low'])} passengers."
+                )
+
         self.passengers["all"].add(npc)
         self.passengers[passage_class].add(npc)
         npc.location = self.ship_name

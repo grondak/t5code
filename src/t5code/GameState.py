@@ -50,5 +50,7 @@ def load_and_parse_t5_ship_classes_filelike(ship_file):
             "jump_rating": int(row["jump_rating"]),
             "maneuver_rating": int(row["maneuver_rating"]),
             "cargo_capacity": float(row["cargo_capacity"]),
+            "staterooms": int(row["staterooms"]),
+            "low_berths": int(row["low_berths"]),
         }
     return ships

@@ -342,6 +342,80 @@ def search_and_load_mail(ship: T5Starship, gd: GameDriver) -> None:
           f"mail bundles on board.")
 
 
+def search_and_load_passengers(ship: T5Starship, gd: GameDriver) -> None:
+    """Search for passengers and fill all available berths to capacity."""
+    world = gd.world_data.get(ship.location)
+    if not world:
+        print(f"World {ship.location} not found in data.")
+        return
+
+    print(f"Searching for passengers at {ship.location} to load onto ship:")
+    print(f"  Ship capacity: {ship.staterooms} staterooms "
+          f"(high/mid), {ship.low_berths} low berths")
+
+    # Calculate available capacity
+    current_stateroom_passengers = (len(ship.passengers["high"]) +
+                                    len(ship.passengers["mid"]))
+    available_staterooms = ship.staterooms - current_stateroom_passengers
+    available_low_berths = ship.low_berths - len(ship.passengers["low"])
+
+    print(f"  Available: {available_staterooms} staterooms, "
+          f"{available_low_berths} low berths")
+
+    # Load high passengers (fill half of available staterooms)
+    high_to_load = available_staterooms // 2
+    for i in range(high_to_load):
+        try:
+            npc = T5NPC(f"High Passenger {i+1}")
+            ship.onload_passenger(npc, "high")
+            print(f"\tLoaded high passenger {npc.character_name}.")
+        except ValueError as e:
+            print(f"\tCould not load high passenger: {e}")
+            break
+
+    # Load mid passengers (fill remaining staterooms)
+    current_stateroom_passengers = (len(ship.passengers["high"]) +
+                                    len(ship.passengers["mid"]))
+    mid_to_load = ship.staterooms - current_stateroom_passengers
+    for i in range(mid_to_load):
+        try:
+            npc = T5NPC(f"Mid Passenger {i+1}")
+            ship.onload_passenger(npc, "mid")
+            print(f"\tLoaded mid passenger {npc.character_name}.")
+        except ValueError as e:
+            print(f"\tCould not load mid passenger: {e}")
+            break
+
+    # Load low passengers (fill all available low berths)
+    low_to_load = available_low_berths
+    for i in range(low_to_load):
+        try:
+            npc = T5NPC(f"Low Passenger {i+1}")
+            ship.onload_passenger(npc, "low")
+            print(f"\tLoaded low passenger {npc.character_name}.")
+        except ValueError as e:
+            print(f"\tCould not load low passenger: {e}")
+            break
+
+    passenger_classes = ["high", "mid", "low"]
+    total_passengers = sum(
+        len(list(ship.passengers[p_class])) for p_class in passenger_classes
+    )
+    print(f"\tStarship {ship.ship_name} now has {total_passengers} "
+          f"passengers on board:")
+    print(f"\t  {len(ship.passengers['high'])} high, "
+          f"{len(ship.passengers['mid'])} mid, "
+          f"{len(ship.passengers['low'])} low")
+    stateroom_percent_occupied = ((len(ship.passengers['high']) +
+                                  len(ship.passengers['mid']))
+                                  / ship.staterooms * 100
+                                  if ship.staterooms > 0 else 0)
+    print(f"\t  Staterooms: "
+          f"{stateroom_percent_occupied} occupied")
+    print(f"\t  Low berths: "
+          f"{len(ship.passengers['low'])}/{ship.low_berths} occupied")
+
+
 def report_ship_status(ship):
     print(
         f"Starship {ship.ship_name} now has "
@@ -409,6 +483,9 @@ def main() -> None:
     search_and_load_mail(ship, gd)
 
     report_ship_status(ship)
+
+    # phase C: load passengers
+    search_and_load_passengers(ship, gd)
 
     print("End simulation version 0.5")
 

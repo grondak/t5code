@@ -16,6 +16,8 @@ class T5ShipClass:
         self.jump_rating: int = ship_data["jump_rating"]
         self.maneuver_rating: float = ship_data["maneuver_rating"]
         self.cargo_capacity: int = ship_data["cargo_capacity"]
+        self.staterooms: int = ship_data["staterooms"]
+        self.low_berths: int = ship_data["low_berths"]
 
     def usp(self) -> str:
         return (

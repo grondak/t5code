@@ -9,12 +9,16 @@ test_ship_data = {
         "jump_rating": 1,
         "maneuver_rating": 2,
         "cargo_capacity": 10,
+        "staterooms": 2,
+        "low_berths": 0,
     },
     "large": {
         "class_name": "large",
         "jump_rating": 3,
         "maneuver_rating": 3,
         "cargo_capacity": 200,
+        "staterooms": 10,
+        "low_berths": 50,
     },
 }
 

@@ -23,9 +23,10 @@ def test_load_and_parse_t5_map_filelike():
 def test_load_and_parse_t5_ship_classes_filelike():
     """Verify ship class CSV parsing from file-like object."""
     mock_data = (
-        "class_name,jump_rating,maneuver_rating,cargo_capacity\n"
-        "test_ship_class,5,3,20000\n"
-        "test_nothing_class,2,3,53\n"
+        "class_name,jump_rating,maneuver_rating,"
+        "cargo_capacity,staterooms,low_berths\n"
+        "test_ship_class,5,3,20000,5,9\n"
+        "test_nothing_class,2,3,53,29,3\n"
     )
     fake_file = io.StringIO(mock_data)
     result = load_and_parse_t5_ship_classes_filelike(fake_file)
