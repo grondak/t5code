@@ -49,11 +49,32 @@ def setup_departure(origin: str, gd: GameDriver) -> T5Starship:
     trader = T5NPC("Merchant Marcus")
     trader.set_skill("trader", 4)
 
+    # Add crew with passenger-related skills
+    steward = T5NPC("Steward Smith")
+    steward.set_skill("Steward", 2)
+
+    admin = T5NPC("Admin Jones")
+    admin.set_skill("Admin", 1)
+
+    fixer = T5NPC("Streetwise Sam")
+    fixer.set_skill("Streetwise", 3)
+
+    liaison = T5NPC("Liaison Lee")
+    liaison.set_skill("Liaison", 2)
+
     ship_class = gd.ship_data.get("Freighter") or next(
         iter(gd.ship_data.values()))
     ship = T5Starship("Paprika", origin, ship_class)
     ship.hire_crew("medic", medic)
     ship.hire_crew("crew1", trader)
+    ship.hire_crew("crew2", steward)
+    ship.hire_crew("crew3", admin)
+    # Store other skilled NPCs as additional crew (use crew positions)
+    fixer.location = ship.ship_name
+    liaison.location = ship.ship_name
+    # Manually add their skills to demonstrate they're on board
+    ship.crew["fixer"] = fixer  # Custom position for demo
+    ship.crew["liaison_officer"] = liaison  # Custom position for demo
     ship.onload_passenger(npc_high, "high")
     ship.onload_passenger(npc_mid, "mid")
     ship.onload_passenger(npc_low, "low")
@@ -115,7 +136,7 @@ def _complete_trader_roll(flux, broker_mod: int) -> float:
     clamped = max(-5, min(8, final_flux + broker_mod))
     modifier = ACTUAL_VALUE[clamped]
     print(
-        f"  Second die: {flux.second_die} → Final multiplier: {modifier:.1%}")
+        f"  Second die: {flux.second_die} -> Final multiplier: {modifier:.1%}")
 
     return modifier
 
@@ -221,6 +242,30 @@ def _get_liaison_skill(ship: T5Starship) -> int:
     """Safely retrieve the Liaison skill from crew."""
     try:
         return ship.best_crew_skill["Liaison"]
+    except (KeyError, AttributeError):
+        return 0
+
+
+def _get_steward_skill(ship: T5Starship) -> int:
+    """Safely retrieve the Steward skill from crew."""
+    try:
+        return ship.best_crew_skill["Steward"]
+    except (KeyError, AttributeError):
+        return 0
+
+
+def _get_admin_skill(ship: T5Starship) -> int:
+    """Safely retrieve the Admin skill from crew."""
+    try:
+        return ship.best_crew_skill["Admin"]
+    except (KeyError, AttributeError):
+        return 0
+
+
+def _get_streetwise_skill(ship: T5Starship) -> int:
+    """Safely retrieve the Streetwise skill from crew."""
+    try:
+        return ship.best_crew_skill["Streetwise"]
     except (KeyError, AttributeError):
         return 0
 
@@ -343,7 +388,7 @@ def search_and_load_mail(ship: T5Starship, gd: GameDriver) -> None:
 
 
 def search_and_load_passengers(ship: T5Starship, gd: GameDriver) -> None:
-    """Search for passengers and fill all available berths to capacity."""
+    """Search for passengers based on crew skills and world population."""
     world = gd.world_data.get(ship.location)
     if not world:
         print(f"World {ship.location} not found in data.")
@@ -362,37 +407,55 @@ def search_and_load_passengers(ship: T5Starship, gd: GameDriver) -> None:
     print(f"  Available: {available_staterooms} staterooms, "
           f"{available_low_berths} low berths")
 
-    # Load high passengers (fill half of available staterooms)
-    high_to_load = available_staterooms // 2
+    # Roll for passenger availability
+    steward_skill = _get_steward_skill(ship)
+    admin_skill = _get_admin_skill(ship)
+    streetwise_skill = _get_streetwise_skill(ship)
+
+    high_available = world.high_passenger_availability(steward_skill)
+    mid_available = world.mid_passenger_availability(admin_skill)
+    low_available = world.low_passenger_availability(streetwise_skill)
+
+    print(f"\n  Passenger availability (Flux + Pop + Skill):")
+    print(f"    High: {high_available} available (Steward: {steward_skill})")
+    print(f"    Mid: {mid_available} available (Admin: {admin_skill})")
+    print(f"    Low: {low_available} available (Streetwise: {streetwise_skill})")
+
+    # Load high passengers (limited by availability AND ship capacity)
+    high_to_load = min(high_available, available_staterooms)
     for i in range(high_to_load):
         try:
             npc = T5NPC(f"High Passenger {i+1}")
             ship.onload_passenger(npc, "high")
-            print(f"\tLoaded high passenger {npc.character_name}.")
+            ship.credit(10000)  # Cr10,000 per high passenger
+            print(f"\tLoaded high passenger {npc.character_name} (Cr10,000).")
         except ValueError as e:
             print(f"\tCould not load high passenger: {e}")
             break
 
-    # Load mid passengers (fill remaining staterooms)
+    # Load mid passengers (limited by availability AND remaining staterooms)
     current_stateroom_passengers = (len(ship.passengers["high"]) +
                                     len(ship.passengers["mid"]))
-    mid_to_load = ship.staterooms - current_stateroom_passengers
+    remaining_staterooms = ship.staterooms - current_stateroom_passengers
+    mid_to_load = min(mid_available, remaining_staterooms)
     for i in range(mid_to_load):
         try:
             npc = T5NPC(f"Mid Passenger {i+1}")
             ship.onload_passenger(npc, "mid")
-            print(f"\tLoaded mid passenger {npc.character_name}.")
+            ship.credit(8000)  # Cr8,000 per mid passenger
+            print(f"\tLoaded mid passenger {npc.character_name} (Cr8,000).")
         except ValueError as e:
             print(f"\tCould not load mid passenger: {e}")
             break
 
-    # Load low passengers (fill all available low berths)
-    low_to_load = available_low_berths
+    # Load low passengers (limited by availability AND low berth capacity)
+    low_to_load = min(low_available, available_low_berths)
     for i in range(low_to_load):
         try:
             npc = T5NPC(f"Low Passenger {i+1}")
             ship.onload_passenger(npc, "low")
-            print(f"\tLoaded low passenger {npc.character_name}.")
+            ship.credit(1000)  # Cr1,000 per low passenger
+            print(f"\tLoaded low passenger {npc.character_name} (Cr1,000).")
         except ValueError as e:
             print(f"\tCould not load low passenger: {e}")
             break
@@ -486,6 +549,8 @@ def main() -> None:
 
     # phase C: load passengers
     search_and_load_passengers(ship, gd)
+
+    # phase 
 
     print("End simulation version 0.5")
 

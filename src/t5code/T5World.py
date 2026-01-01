@@ -90,6 +90,48 @@ class T5World:
         mass = (flux + population) * multiplier + liaison_bonus
         return max(mass, 0)
 
+    def high_passenger_availability(self, steward_skill: int) -> int:
+        """Determine number of available high passengers.
+        
+        Args:
+            steward_skill: Steward skill modifier
+            
+        Returns:
+            Number of high passengers available (Cr10,000 each)
+        """
+        flux = roll_flux()
+        population = self.get_population()
+        available = flux + population + steward_skill
+        return max(available, 0)
+
+    def mid_passenger_availability(self, admin_skill: int) -> int:
+        """Determine number of available mid passengers.
+        
+        Args:
+            admin_skill: Admin skill modifier
+            
+        Returns:
+            Number of mid passengers available (Cr8,000 each)
+        """
+        flux = roll_flux()
+        population = self.get_population()
+        available = flux + population + admin_skill
+        return max(available, 0)
+
+    def low_passenger_availability(self, streetwise_skill: int) -> int:
+        """Determine number of available low passengers.
+        
+        Args:
+            streetwise_skill: Streetwise skill modifier
+            
+        Returns:
+            Number of low passengers available (Cr1,000 each)
+        """
+        flux = roll_flux()
+        population = self.get_population()
+        available = flux + population + streetwise_skill
+        return max(available, 0)
+
     def generate_speculative_cargo(
         self,
         game_state: "GameState",
