@@ -201,3 +201,66 @@ def test_flux_above_max_bounds(mock_randint, lot):
     """Verify actual value table clamps maximum to 4.0."""
     mock_randint.side_effect = [6, 2]
     assert lot.consult_actual_value_table(5) == pytest.approx(4.0)
+
+
+def test_predict_actual_value_range_no_modifier(lot):
+    """Test predict_actual_value_range with no broker modifier."""
+    from t5code.T5Basics import SequentialFlux
+
+    # Pre-roll first die as 4
+    flux = SequentialFlux(first_die=4)
+
+    min_val, max_val, returned_flux = lot.predict_actual_value_range(0, flux)
+
+    # With first die=4, flux ranges from -2 (4-6) to +3 (4-1)
+    # With mod=0: flux ranges from -2 to +3
+    # ACTUAL_VALUE[-2] = 0.8, ACTUAL_VALUE[3] = 1.3
+    assert min_val == pytest.approx(0.8)
+    assert max_val == pytest.approx(1.3)
+    assert returned_flux is flux
+
+
+def test_predict_actual_value_range_with_positive_modifier(lot):
+    """Test predict_actual_value_range with positive broker modifier."""
+    from t5code.T5Basics import SequentialFlux
+
+    # Pre-roll first die as 3
+    flux = SequentialFlux(first_die=3)
+
+    min_val, max_val, returned_flux = lot.predict_actual_value_range(2, flux)
+
+    # With first die=3, flux ranges from -3 (3-6) to +2 (3-1)
+    # With mod=2: flux ranges from -1 to +4
+    # ACTUAL_VALUE[-1] = 0.9, ACTUAL_VALUE[4] = 1.5
+    assert min_val == pytest.approx(0.9)
+    assert max_val == pytest.approx(1.5)
+    assert returned_flux is flux
+
+
+def test_predict_actual_value_range_with_clamping(lot):
+    """Test predict_actual_value_range clamps to table bounds."""
+    from t5code.T5Basics import SequentialFlux
+
+    # Pre-roll first die as 6 (max)
+    flux = SequentialFlux(first_die=6)
+
+    min_val, max_val, returned_flux = lot.predict_actual_value_range(5, flux)
+
+    # With first die=6, flux ranges from 0 (6-6) to +5 (6-1)
+    # With mod=5: flux ranges from +5 to +10, but clamped to [+5, +8]
+    # ACTUAL_VALUE[5] = 1.7, ACTUAL_VALUE[8] = 4.0 (max)
+    assert min_val == pytest.approx(1.7)
+    assert max_val == pytest.approx(4.0)
+    assert returned_flux is flux
+
+
+def test_predict_actual_value_range_creates_flux_if_none(lot):
+    """Test predict_actual_value_range creates
+    SequentialFlux if not provided."""
+    with patch("random.randint", return_value=3):
+        _, _, flux = lot.predict_actual_value_range(0)
+
+    # Should have created a new SequentialFlux and rolled first die
+    from t5code.T5Basics import SequentialFlux
+    assert isinstance(flux, SequentialFlux)
+    assert flux.first_die == 3

@@ -114,6 +114,16 @@ ACTUAL_VALUE = {
     8: 4.0,
 }
 
+# Passenger fares (Credits per passenger)
+PASSENGER_FARES = {
+    "high": 10000,
+    "mid": 8000,
+    "low": 1000,
+}
+
+# Freight payment rate (Credits per ton)
+FREIGHT_RATE_PER_TON = 1000
+
 SKILLS_BY_GROUP = {
     "DEFAULT_SKILLS": [
         "Actor",

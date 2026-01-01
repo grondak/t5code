@@ -34,6 +34,15 @@ def test_ship_data():
 
 
 @pytest.fixture
+def setup_test_gamestate():
+    """Setup GameState for tests that need T5Lot or T5Mail."""
+    MAP_FILE = "tests/t5_test_map.txt"
+    GameState.world_data = T5World.load_all_worlds(
+        load_and_parse_t5_map(MAP_FILE))
+    return GameState
+
+
+@pytest.fixture
 def setup_gamestate():
     MAP_FILE = "tests/t5_test_map.txt"
     GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(
@@ -485,3 +494,660 @@ def test_ship_with_no_low_berths(test_ship_data, setup_gamestate):
     passenger = T5NPC("Hopeful Budget Traveler")
     with pytest.raises(ValueError, match="has only 0 low berths"):
         ship.onload_passenger(passenger, "low")
+
+
+def test_load_passengers(test_ship_data):
+    """Test the load_passengers method integrates skills and capacity."""
+    from t5code.T5World import T5World
+
+    # Set up world data
+    test_world_data = {
+        "Rhylanor": {
+            "UWP": "A788899-C",
+            "TradeClassifications": "Ri",
+            "Importance": 4,
+        }
+    }
+
+    # Create ship with capacity
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Liner", "Rhylanor", ship_class)
+
+    # Add crew with skills
+    steward = T5NPC("Chief Steward")
+    steward.set_skill("Steward", 3)
+    admin = T5NPC("Purser")
+    admin.set_skill("Admin", 2)
+    fixer = T5NPC("Fixer")
+    fixer.set_skill("Streetwise", 4)
+
+    ship.hire_crew("crew1", steward)
+    ship.hire_crew("crew2", admin)
+    ship.hire_crew("crew3", fixer)
+
+    # Load passengers at a world
+    world = T5World("Rhylanor", test_world_data)
+    initial_balance = ship.balance
+    loaded = ship.load_passengers(world)
+
+    # Verify passengers were loaded
+    assert isinstance(loaded, dict)
+    assert "high" in loaded and "mid" in loaded and "low" in loaded
+    assert loaded["high"] >= 0
+    assert loaded["mid"] >= 0
+    assert loaded["low"] >= 0
+
+    # Verify passengers are on ship
+    total_loaded = loaded["high"] + loaded["mid"] + loaded["low"]
+    assert len(ship.passengers["high"]) == loaded["high"]
+    assert len(ship.passengers["mid"]) == loaded["mid"]
+    assert len(ship.passengers["low"]) == loaded["low"]
+
+    # Verify ship was credited for passengers
+    if total_loaded > 0:
+        assert ship.balance > initial_balance
+
+
+def test_load_passengers_exception_handling_high(test_ship_data):
+    """Test that ValueError exception is
+    caught when loading high passengers."""
+    from t5code.T5World import T5World
+    from unittest.mock import patch
+
+    test_world_data = {
+        "Rhylanor": {
+            "UWP": "A788899-C",
+            "TradeClassifications": "Ri",
+            "Importance": 4,
+        }
+    }
+
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    ship.staterooms = 10
+
+    steward = T5NPC("Chief Steward")
+    steward.set_skill("Steward", 5)
+    ship.hire_crew("crew1", steward)
+
+    world = T5World("Rhylanor", test_world_data)
+
+    # Mock onload_passenger to raise ValueError
+    # on the 3rd call for high passengers
+    original_onload = ship.onload_passenger
+    call_count = [0]
+
+    def mock_onload(npc, passage_class):
+        if passage_class == "high":
+            call_count[0] += 1
+            if call_count[0] > 2:
+                raise ValueError("Simulated capacity error")
+        return original_onload(npc, passage_class)
+
+    with patch.object(world,
+                      'high_passenger_availability',
+                      return_value=10), \
+            patch.object(world,
+                         'mid_passenger_availability',
+                         return_value=0), \
+            patch.object(world,
+                         'low_passenger_availability',
+                         return_value=0), \
+            patch.object(ship,
+                         'onload_passenger',
+                         side_effect=mock_onload):
+        loaded = ship.load_passengers(world)
+
+    # Should have loaded 2 high passengers before ValueError was raised
+    assert loaded["high"] == 2
+    assert loaded["mid"] == 0
+    assert loaded["low"] == 0
+
+
+def test_load_passengers_exception_handling_mid(test_ship_data):
+    """Test that ValueError exception is caught when loading mid passengers."""
+    from t5code.T5World import T5World
+    from unittest.mock import patch
+
+    test_world_data = {
+        "Rhylanor": {
+            "UWP": "A788899-C",
+            "TradeClassifications": "Ri",
+            "Importance": 4,
+        }
+    }
+
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    ship.staterooms = 10
+
+    admin = T5NPC("Purser")
+    admin.set_skill("Admin", 5)
+    ship.hire_crew("crew1", admin)
+
+    world = T5World("Rhylanor", test_world_data)
+
+    # Mock onload_passenger to raise ValueError
+    # on the 2nd call for mid passengers
+    original_onload = ship.onload_passenger
+    call_count = [0]
+
+    def mock_onload(npc, passage_class):
+        if passage_class == "mid":
+            call_count[0] += 1
+            if call_count[0] > 1:
+                raise ValueError("Simulated capacity error")
+        return original_onload(npc, passage_class)
+
+    with patch.object(world,
+                      'high_passenger_availability', return_value=0), \
+            patch.object(world,
+                         'mid_passenger_availability', return_value=10), \
+            patch.object(world,
+                         'low_passenger_availability', return_value=0), \
+            patch.object(ship,
+                         'onload_passenger', side_effect=mock_onload):
+        loaded = ship.load_passengers(world)
+
+    # Should have loaded 1 mid passenger before ValueError was raised
+    assert loaded["high"] == 0
+    assert loaded["mid"] == 1
+    assert loaded["low"] == 0
+
+
+def test_load_passengers_exception_handling_low(test_ship_data):
+    """Test that ValueError exception is caught when loading low passengers."""
+    from t5code.T5World import T5World
+    from unittest.mock import patch
+
+    test_world_data = {
+        "Rhylanor": {
+            "UWP": "A788899-C",
+            "TradeClassifications": "Ri",
+            "Importance": 4,
+        }
+    }
+
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    ship.low_berths = 10
+
+    fixer = T5NPC("Fixer")
+    fixer.set_skill("Streetwise", 5)
+    ship.hire_crew("crew1", fixer)
+
+    world = T5World("Rhylanor", test_world_data)
+
+    # Mock onload_passenger to raise ValueError
+    # on the 4th call for low passengers
+    original_onload = ship.onload_passenger
+    call_count = [0]
+
+    def mock_onload(npc, passage_class):
+        if passage_class == "low":
+            call_count[0] += 1
+            if call_count[0] > 3:
+                raise ValueError("Simulated capacity error")
+        return original_onload(npc, passage_class)
+
+    with patch.object(world,
+                      'high_passenger_availability', return_value=0), \
+            patch.object(world,
+                         'mid_passenger_availability', return_value=0), \
+            patch.object(world,
+                         'low_passenger_availability', return_value=20), \
+            patch.object(ship,
+                         'onload_passenger', side_effect=mock_onload):
+        loaded = ship.load_passengers(world)
+
+    # Should have loaded 3 low passengers before ValueError was raised
+    assert loaded["high"] == 0
+    assert loaded["mid"] == 0
+    assert loaded["low"] == 3
+
+
+def test_sell_cargo_lot_without_trader(test_ship_data, setup_test_gamestate):
+    """Test selling cargo lot without trader skill."""
+    from t5code.T5Lot import T5Lot
+    from unittest.mock import patch
+
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Trader", "Rhylanor", ship_class)
+
+    # Create and load a cargo lot
+    lot = T5Lot("Rhylanor", game_state)
+    lot.mass = 5
+    ship.credit(lot.origin_value * lot.mass)  # Get funds to buy
+    ship.buy_cargo_lot(lot)
+
+    initial_balance = ship.balance
+
+    # Mock the actual value roll to be predictable
+    with patch.object(lot, 'consult_actual_value_table', return_value=1.2):
+        result = ship.sell_cargo_lot(lot, game_state, use_trader_skill=False)
+
+    # Verify result structure
+    assert 'final_amount' in result
+    assert 'gross_amount' in result
+    assert 'broker_fee' in result
+    assert 'profit' in result
+    assert 'purchase_cost' in result
+    assert 'modifier' in result
+    assert 'flux_info' in result
+
+    # flux_info should be None when trader skill not used
+    assert result['flux_info'] is None
+    assert result['modifier'] == pytest.approx(1.2)
+
+    # Verify lot was removed from cargo
+    assert lot not in ship.get_cargo()["cargo"]
+
+    # Verify balance increased
+    assert ship.balance > initial_balance
+
+
+def test_sell_cargo_lot_with_trader(test_ship_data, setup_test_gamestate):
+    """Test selling cargo lot with trader skill."""
+    from t5code.T5Lot import T5Lot
+
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Trader", "Rhylanor", ship_class)
+
+    # Add trader to crew
+    trader = T5NPC("Merchant Marcus")
+    trader.set_skill("trader", 3)
+    ship.hire_crew("crew1", trader)
+
+    # Create and load a cargo lot
+    lot = T5Lot("Rhylanor", game_state)
+    lot.mass = 5
+    ship.credit(lot.origin_value * lot.mass)
+    ship.buy_cargo_lot(lot)
+
+    result = ship.sell_cargo_lot(lot, game_state, use_trader_skill=True)
+
+    # Verify flux_info is present when trader skill used
+    assert result['flux_info'] is not None
+    assert 'trader_skill' in result['flux_info']
+    assert result['flux_info']['trader_skill'] == 3
+    assert 'first_die' in result['flux_info']
+    assert 'second_die' in result['flux_info']
+    assert 'min_multiplier' in result['flux_info']
+    assert 'max_multiplier' in result['flux_info']
+
+    # Verify lot was removed
+    assert lot not in ship.get_cargo()["cargo"]
+
+
+def test_sell_cargo_lot_not_in_hold(test_ship_data, setup_test_gamestate):
+    """Test selling cargo lot that's not in hold raises error."""
+    from t5code.T5Lot import T5Lot
+
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Trader", "Rhylanor", ship_class)
+
+    # Create a lot but don't load it
+    lot = T5Lot("Rhylanor", game_state)
+    lot.mass = 5
+
+    with pytest.raises(ValueError, match="not in cargo hold"):
+        ship.sell_cargo_lot(lot, game_state)
+
+
+def test_buy_cargo_lot(test_ship_data, setup_test_gamestate):
+    """Test buying cargo lot debits and loads correctly."""
+    from t5code.T5Lot import T5Lot
+
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Trader", "Rhylanor", ship_class)
+
+    lot = T5Lot("Rhylanor", game_state)
+    lot.mass = 5
+    cost = lot.origin_value * lot.mass
+
+    # Give ship enough funds
+    ship.credit(cost)
+    initial_balance = ship.balance
+    ship.buy_cargo_lot(lot)
+
+    # Verify balance decreased by cost
+    assert ship.balance == initial_balance - cost
+
+    # Verify lot is in cargo
+    assert lot in ship.get_cargo()["cargo"]
+
+
+def test_buy_cargo_lot_insufficient_funds(
+        test_ship_data,
+        setup_test_gamestate):
+    """Test buying cargo lot with insufficient funds."""
+    from t5code.T5Lot import T5Lot
+
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Trader", "Rhylanor", ship_class)
+
+    # Set balance too low
+    ship._balance = 100
+
+    lot = T5Lot("Rhylanor", game_state)
+    lot.mass = 500  # Very expensive
+
+    with pytest.raises(ValueError, match="Insufficient funds"):
+        ship.buy_cargo_lot(lot)
+
+    # Verify lot is NOT in cargo
+    assert lot not in ship.get_cargo()["cargo"]
+
+
+def test_buy_cargo_lot_rollback_on_capacity_error(
+        test_ship_data,
+        setup_test_gamestate):
+    """Test that buy_cargo_lot rolls back debit if loading fails."""
+    from t5code.T5Lot import T5Lot
+
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    ship = T5Starship("Tiny Trader", "Rhylanor", ship_class)
+
+    lot = T5Lot("Rhylanor", game_state)
+    lot.mass = 1000  # Too big for small ship
+
+    initial_balance = ship.balance
+
+    with pytest.raises(ValueError):
+        ship.buy_cargo_lot(lot)
+
+    # Balance should be unchanged (rolled back)
+    assert ship.balance == initial_balance
+
+
+def test_load_freight_lot(test_ship_data, setup_test_gamestate):
+    """Test loading freight lot credits ship correctly."""
+    from t5code.T5Lot import T5Lot
+    from t5code.T5Tables import FREIGHT_RATE_PER_TON
+
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Freighter", "Rhylanor", ship_class)
+
+    lot = T5Lot("Rhylanor", game_state)
+    lot.mass = 10
+
+    initial_balance = ship.balance
+    payment = ship.load_freight_lot(lot)
+
+    # Verify payment amount
+    assert payment == FREIGHT_RATE_PER_TON * lot.mass
+
+    # Verify balance increased
+    assert ship.balance == initial_balance + payment
+
+    # Verify lot is in freight
+    assert lot in ship.get_cargo()["freight"]
+
+
+def test_load_freight_lot_no_capacity(test_ship_data, setup_test_gamestate):
+    """Test loading freight lot with no capacity raises error."""
+    from t5code.T5Lot import T5Lot
+
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    ship = T5Starship("Tiny Ship", "Rhylanor", ship_class)
+
+    lot = T5Lot("Rhylanor", game_state)
+    lot.mass = 1000  # Too big
+
+    initial_balance = ship.balance
+
+    with pytest.raises(ValueError):
+        ship.load_freight_lot(lot)
+
+    # Balance should be unchanged
+    assert ship.balance == initial_balance
+
+
+def test_load_mail(test_ship_data, setup_test_gamestate):
+    """Test loading mail creates and loads bundle correctly."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Courier", "Rhylanor", ship_class)
+    ship.set_course_for("Jae Tellona")
+
+    mail_lot = ship.load_mail(game_state, "Jae Tellona")
+
+    # Verify mail bundle created
+    assert mail_lot is not None
+    assert mail_lot.origin_name == "Rhylanor"
+    assert mail_lot.destination_name == "Jae Tellona"
+
+    # Verify mail is on ship
+    assert len(ship.get_mail()) == 1
+    assert mail_lot in ship.get_mail().values()
+
+
+def test_sell_cargo_lot_world_not_found(test_ship_data, setup_test_gamestate):
+    """Test sell_cargo_lot raises ValueError when world not found."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Merchant", "NonExistentWorld", ship_class)
+
+    # Create a cargo lot using valid GameState
+    lot = T5Lot("Rhylanor", game_state)
+    ship.onload_lot(lot, "cargo")
+
+    # Create a game state with no world data for NonExistentWorld
+    class EmptyGameState:
+        def __init__(self):
+            self.world_data = {}
+
+    empty_game_state = EmptyGameState()
+
+    # Attempt to sell cargo at non-existent world should raise ValueError
+    with pytest.raises(ValueError, match="World NonExistentWorld not found"):
+        ship.sell_cargo_lot(lot, empty_game_state, use_trader_skill=False)
+
+
+def test_buy_cargo_lot_rollback_preserves_balance(
+        test_ship_data,
+        setup_test_gamestate):
+    """Test buy_cargo_lot rollback on
+    capacity error preserves original balance."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+    initial_balance = 500000  # Large balance to avoid insufficient funds
+    ship.credit(initial_balance)
+
+    # Create a lot
+    lot = T5Lot("Rhylanor", game_state)
+
+    # Mock onload_lot to raise ValueError (simulating capacity error)
+    original_onload = ship.onload_lot
+
+    def mock_onload_error(lot, lot_type):
+        raise ValueError("Simulated capacity error")
+
+    ship.onload_lot = mock_onload_error
+
+    # Attempt to buy cargo that will fail to load should raise ValueError
+    with pytest.raises(ValueError):
+        ship.buy_cargo_lot(lot)
+
+    # Restore original method
+    ship.onload_lot = original_onload
+
+    # Balance should be unchanged (rollback happened)
+    assert ship.balance == initial_balance
+
+
+def test_is_hold_mostly_full_default_threshold(
+        test_ship_data,
+        setup_test_gamestate):
+    """Test is_hold_mostly_full with default 80% threshold."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+
+    # Ship starts empty
+    assert ship.is_hold_mostly_full() is False
+
+    # Load cargo to 79% capacity (hold_size = 200)
+    from t5code.T5Lot import T5Lot
+    lot = T5Lot("Rhylanor", game_state)
+    lot.mass = 158  # 79% of 200
+    ship.onload_lot(lot, "cargo")
+    assert ship.is_hold_mostly_full() is False
+
+    # Load more to reach exactly 80%
+    lot2 = T5Lot("Rhylanor", game_state)
+    lot2.mass = 2  # Total = 160 = 80% of 200
+    ship.onload_lot(lot2, "cargo")
+    assert ship.is_hold_mostly_full() is True
+
+
+def test_is_hold_mostly_full_custom_threshold(
+        test_ship_data,
+        setup_test_gamestate):
+    """Test is_hold_mostly_full with custom threshold."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+
+    # Load to 50% capacity (hold_size = 200)
+    from t5code.T5Lot import T5Lot
+    lot = T5Lot("Rhylanor", game_state)
+    lot.mass = 100
+    ship.onload_lot(lot, "cargo")
+
+    # Should be full at 50% threshold
+    assert ship.is_hold_mostly_full(threshold=0.5) is True
+
+    # Should not be full at 60% threshold
+    assert ship.is_hold_mostly_full(threshold=0.6) is False
+
+
+def test_is_hold_mostly_full_invalid_threshold(test_ship_data):
+    """Test is_hold_mostly_full raises ValueError for invalid threshold."""
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+
+    with pytest.raises(ValueError, match="Threshold must be between 0 and 1"):
+        ship.is_hold_mostly_full(threshold=-0.1)
+
+    with pytest.raises(ValueError, match="Threshold must be between 0 and 1"):
+        ship.is_hold_mostly_full(threshold=1.5)
+
+
+def test_execute_jump(test_ship_data):
+    """Test execute_jump performs correct status transitions."""
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+
+    # Execute jump to Jae Tellona
+    ship.execute_jump("Jae Tellona")
+
+    # Verify final state
+    assert ship.location == "Jae Tellona"
+    assert ship.destination() == "Jae Tellona"
+    assert ship.status == "docked"
+
+
+def test_execute_jump_updates_location(test_ship_data):
+    """Test execute_jump updates location correctly."""
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+
+    initial_location = ship.location
+    assert initial_location == "Rhylanor"
+
+    ship.execute_jump("Mora")
+
+    # Location should have changed
+    assert ship.location == "Mora"
+    assert ship.location != initial_location
+
+
+def test_offload_all_freight_empty_hold(test_ship_data):
+    """Test offload_all_freight with no freight on board."""
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+
+    offloaded = ship.offload_all_freight()
+
+    assert len(offloaded) == 0
+    assert len(list(ship.get_cargo().get("freight", []))) == 0
+
+
+def test_offload_all_freight_with_lots(test_ship_data, setup_test_gamestate):
+    """Test offload_all_freight removes all freight."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+
+    # Load multiple freight lots
+    from t5code.T5Lot import T5Lot
+    lot1 = T5Lot("Rhylanor", game_state)
+    lot1.mass = 10
+    lot2 = T5Lot("Rhylanor", game_state)
+    lot2.mass = 20
+    lot3 = T5Lot("Rhylanor", game_state)
+    lot3.mass = 15
+
+    ship.onload_lot(lot1, "freight")
+    ship.onload_lot(lot2, "freight")
+    ship.onload_lot(lot3, "freight")
+
+    # Verify freight is loaded
+    assert len(list(ship.get_cargo().get("freight", []))) == 3
+    assert ship.cargo_size == 45
+
+    # Offload all freight
+    offloaded = ship.offload_all_freight()
+
+    # Verify all freight was offloaded
+    assert len(offloaded) == 3
+    assert len(list(ship.get_cargo().get("freight", []))) == 0
+    assert ship.cargo_size == 0
+
+    # Verify returned list contains the correct lots
+    assert lot1 in offloaded
+    assert lot2 in offloaded
+    assert lot3 in offloaded
+
+
+def test_offload_all_freight_leaves_cargo(
+        test_ship_data,
+        setup_test_gamestate):
+    """Test offload_all_freight only removes freight, not cargo."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+
+    # Load freight and cargo
+    from t5code.T5Lot import T5Lot
+    freight_lot = T5Lot("Rhylanor", game_state)
+    freight_lot.mass = 10
+    cargo_lot = T5Lot("Rhylanor", game_state)
+    cargo_lot.mass = 5
+
+    ship.onload_lot(freight_lot, "freight")
+    ship.onload_lot(cargo_lot, "cargo")
+
+    # Verify both are loaded
+    assert len(list(ship.get_cargo().get("freight", []))) == 1
+    assert len(list(ship.get_cargo().get("cargo", []))) == 1
+    assert ship.cargo_size == 15
+
+    # Offload all freight
+    offloaded = ship.offload_all_freight()
+
+    # Verify only freight was offloaded
+    assert len(offloaded) == 1
+    assert len(list(ship.get_cargo().get("freight", []))) == 0
+    assert len(list(ship.get_cargo().get("cargo", []))) == 1
+    assert ship.cargo_size == 5

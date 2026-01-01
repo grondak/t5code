@@ -235,3 +235,283 @@ class T5Starship:
         if amount > self._balance:
             raise ValueError("Insufficient funds")
         self._balance -= amount
+
+    def load_passengers(self, world) -> Dict[str, int]:
+        """Search for and load passengers based on crew skills and capacity.
+
+        Rolls for passenger availability using:
+        - High passengers: Steward skill modifier
+        - Mid passengers: Admin skill modifier
+        - Low passengers: Streetwise skill modifier
+
+        Loads passengers up to ship capacity and available numbers.
+        Ship is credited with passenger fares.
+
+        Args:
+            world: T5World instance for the current location
+
+        Returns:
+            Dictionary with counts: {"high": n, "mid": n, "low": n}
+        """
+        from t5code.T5Tables import PASSENGER_FARES
+
+        # Calculate available capacity
+        current_stateroom_passengers = (len(self.passengers["high"]) +
+                                        len(self.passengers["mid"]))
+        available_staterooms = self.staterooms - current_stateroom_passengers
+        available_low_berths = self.low_berths - len(self.passengers["low"])
+
+        # Roll for passenger availability using crew skills
+        high_available = world.high_passenger_availability(
+            self.best_crew_skill["Steward"]
+        )
+        mid_available = world.mid_passenger_availability(
+            self.best_crew_skill["Admin"]
+        )
+        low_available = world.low_passenger_availability(
+            self.best_crew_skill["Streetwise"]
+        )
+
+        loaded = {"high": 0, "mid": 0, "low": 0}
+
+        # Load high passengers (limited by availability AND ship capacity)
+        high_to_load = min(high_available, available_staterooms)
+        for i in range(high_to_load):
+            try:
+                npc = T5NPC(f"High Passenger {i+1}")
+                self.onload_passenger(npc, "high")
+                self.credit(PASSENGER_FARES["high"])
+                loaded["high"] += 1
+            except ValueError:
+                break
+
+        # Load mid passengers (limited by
+        # availability AND remaining staterooms)
+        current_stateroom_passengers = (len(self.passengers["high"]) +
+                                        len(self.passengers["mid"]))
+        remaining_staterooms = self.staterooms - current_stateroom_passengers
+        mid_to_load = min(mid_available, remaining_staterooms)
+        for i in range(mid_to_load):
+            try:
+                npc = T5NPC(f"Mid Passenger {i+1}")
+                self.onload_passenger(npc, "mid")
+                self.credit(PASSENGER_FARES["mid"])
+                loaded["mid"] += 1
+            except ValueError:
+                break
+
+        # Load low passengers (limited by availability AND low berth capacity)
+        low_to_load = min(low_available, available_low_berths)
+        for i in range(low_to_load):
+            try:
+                npc = T5NPC(f"Low Passenger {i+1}")
+                self.onload_passenger(npc, "low")
+                self.credit(PASSENGER_FARES["low"])
+                loaded["low"] += 1
+            except ValueError:
+                break
+
+        return loaded
+
+    def sell_cargo_lot(self, lot: "T5Lot", game_state,
+                       use_trader_skill: bool = True) -> dict:
+        """Sell a cargo lot at the current
+        world using broker and trader skills.
+
+        Args:
+            lot: The cargo lot to sell
+            game_state: GameState object with world_data
+            use_trader_skill: Whether to use trader skill for prediction
+
+        Returns:
+            Dictionary with keys:
+                'final_amount': Final credits received after broker fee
+                'gross_amount': Amount before broker fee
+                'broker_fee': Broker fee amount
+                'profit': Net profit/loss
+                'purchase_cost': Original purchase cost
+                'modifier': Final price multiplier
+                'flux_info': Dict with flux details
+                  if trader skill used, else None
+
+        Raises:
+            ValueError: If lot is not in cargo hold
+        """
+        from t5code import find_best_broker
+        from t5code.T5Tables import ACTUAL_VALUE
+
+        # Verify lot is in cargo
+        if lot not in self.get_cargo()["cargo"]:
+            raise ValueError(f"Lot {lot.serial} is not in cargo hold")
+
+        # Get world
+        world = game_state.world_data.get(self.location)
+        if not world:
+            raise ValueError(f"World {self.location} not found")
+
+        # Get broker info
+        broker = find_best_broker(world.get_starport())
+        broker_mod = broker["mod"]
+        broker_rate = broker["rate"]
+
+        # Calculate sale value at destination
+        value = lot.determine_sale_value_on(self.location, game_state)
+
+        # Get trader skill if available
+        trader = self.crew.get("crew1")
+        has_trader = (use_trader_skill and trader and
+                      trader.get_skill("trader") > 0)
+        trader_skill = trader.get_skill("trader") if has_trader else 0
+
+        flux_info = None
+
+        # Get price multiplier
+        if has_trader:
+            # Use trader skill to predict market
+            min_mult, max_mult, flux = lot.predict_actual_value_range(
+                broker_mod)
+
+            # Complete the roll
+            final_flux = flux.roll_second()
+            clamped = max(-5, min(8, final_flux + broker_mod))
+            modifier = ACTUAL_VALUE[clamped]
+
+            flux_info = {
+                'trader_skill': trader_skill,
+                'first_die': flux.first_die,
+                'second_die': flux.second_die,
+                'min_multiplier': min_mult,
+                'max_multiplier': max_mult,
+                'final_flux': final_flux,
+                'final_multiplier': modifier
+            }
+        else:
+            # No trader skill, roll normally
+            modifier = lot.consult_actual_value_table(broker_mod)
+
+        # Calculate amounts
+        gross_amount = value * modifier
+        broker_fee = gross_amount * broker_rate
+        final_amount = gross_amount - broker_fee
+        purchase_cost = lot.origin_value * lot.mass
+        profit = final_amount - purchase_cost
+
+        # Execute transaction
+        self.credit(final_amount)
+        self.offload_lot(lot.serial, "cargo")
+
+        return {
+            'final_amount': final_amount,
+            'gross_amount': gross_amount,
+            'broker_fee': broker_fee,
+            'profit': profit,
+            'purchase_cost': purchase_cost,
+            'modifier': modifier,
+            'flux_info': flux_info
+        }
+
+    def buy_cargo_lot(self, lot: "T5Lot") -> None:
+        """Purchase and load a speculative cargo lot.
+
+        Debits the ship's balance and loads the lot into cargo hold.
+
+        Args:
+            lot: The cargo lot to purchase
+
+        Raises:
+            ValueError: If insufficient funds or hold space
+        """
+        cost = lot.origin_value * lot.mass
+        self.debit(cost)
+        try:
+            self.onload_lot(lot, "cargo")
+        except ValueError:
+            # Rollback debit if loading fails
+            self.credit(cost)
+            raise
+
+    def load_freight_lot(self, lot: "T5Lot") -> float:
+        """Load a freight lot and receive payment.
+
+        Args:
+            lot: The freight lot to load
+
+        Returns:
+            The freight payment amount
+
+        Raises:
+            ValueError: If hold space insufficient
+        """
+        from t5code.T5Tables import FREIGHT_RATE_PER_TON
+
+        self.onload_lot(lot, "freight")
+        payment = FREIGHT_RATE_PER_TON * lot.mass
+        self.credit(payment)
+        return payment
+
+    def load_mail(self, game_state, destination: str) -> "T5Mail":
+        """Create and load a mail bundle for the destination.
+
+        Args:
+            game_state: GameState object with world_data
+            destination: Destination world name
+
+        Returns:
+            The loaded mail bundle
+
+        Raises:
+            ValueError: If mail capacity exceeded
+        """
+        from t5code import T5Mail
+
+        mail_lot = T5Mail(self.location, destination, game_state)
+        self.onload_mail(mail_lot)
+        return mail_lot
+
+    def is_hold_mostly_full(self, threshold: float = 0.8) -> bool:
+        """Check if cargo hold is at or above a threshold percentage.
+
+        Args:
+            threshold: Percentage of hold capacity (default 0.8 = 80%)
+
+        Returns:
+            True if cargo_size >= threshold * hold_size, False otherwise
+        """
+        if threshold < 0 or threshold > 1:
+            raise ValueError("Threshold must be between 0 and 1")
+        return self.cargo_size >= threshold * self.hold_size
+
+    def execute_jump(self, destination: str) -> None:
+        """Execute a jump to destination with proper status transitions.
+
+        This method encapsulates the complete jump sequence:
+        1. Set course for destination
+        2. Maneuver to jump point (status: maneuvering)
+        3. Jump to destination system (status: traveling)
+        4. Arrive and maneuver to starport (status: maneuvering)
+        5. Dock at starport (status: docked)
+
+        Args:
+            destination: Name of destination world
+        """
+        self.set_course_for(destination)
+        self.status = "maneuvering"
+        # Ship is now maneuvering to jump point
+        self.status = "traveling"
+        # Ship is now jumping
+        self.location = self.destination()
+        self.status = "maneuvering"
+        # Ship is now maneuvering to starport
+        self.status = "docked"
+        # Ship has docked at starport
+
+    def offload_all_freight(self) -> List[T5Lot]:
+        """Offload all freight lots from the ship.
+
+        Returns:
+            List of offloaded freight lots
+        """
+        freight_lots = list(self.get_cargo().get("freight", []))
+        for lot in freight_lots:
+            self.offload_lot(lot.serial, "freight")
+        return freight_lots

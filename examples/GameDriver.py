@@ -12,7 +12,6 @@ from t5code import (
     T5ShipClass,
     T5Starship,
     T5World,
-    find_best_broker,
     load_and_parse_t5_map,
     load_and_parse_t5_ship_classes,
 )
@@ -94,7 +93,9 @@ def perform_arrival(ship: T5Starship) -> None:
     print(f"Mail locker now has {len(ship.get_mail())} bundles")
     for p in ship.offload_passengers("mid"):
         print(f"Offloaded mid passenger: {p.character_name}")
-    offload_freight(ship)
+    # Use ship's offload_all_freight method
+    for lot in ship.offload_all_freight():
+        print(f"Offloaded freight lot {lot.serial} of {lot.mass} tons")
     for p in ship.offload_passengers("low"):
         print(f"Offloaded low passenger: {p.character_name}")
 
@@ -191,10 +192,10 @@ def _print_trader_benefit_analysis(trader_skill: int, total_profit: float):
 def sell_cargo(ship: T5Starship, gd: GameDriver) -> None:
     """Sell all cargo items through the best broker, "
     "using Trader skill if available."""
-    # Get broker information
     world = gd.world_data.get(ship.location)
-    broker = (find_best_broker(world.get_starport()) if world
-              else {"mod": 0, "rate": 0.0})
+    if not world:
+        print(f"World {ship.location} not found in data.")
+        return
 
     # Check for trader in crew
     trader = ship.crew.get("crew1")
@@ -203,79 +204,45 @@ def sell_cargo(ship: T5Starship, gd: GameDriver) -> None:
 
     # Process each cargo lot
     total_profit = 0.0
-    for lot in ship.get_cargo().get("cargo", []):
-        value = lot.determine_sale_value_on(ship.location, gd)
+    cargo_lots = list(ship.get_cargo().get("cargo", []))
 
-        # Get price multiplier (with or without Trader skill)
-        if has_trader:
-            min_mult, max_mult, flux = _get_trader_prediction(
-                lot, broker.get("mod", 0)
-            )
-            _evaluate_market_conditions(min_mult, max_mult, value)
-            modifier = _complete_trader_roll(flux, broker.get("mod", 0))
-        else:
-            modifier = lot.consult_actual_value_table(broker.get("mod", 0))
+    for lot in cargo_lots:
+        # Use the ship's sell_cargo_lot method - pass gd which has world_data
+        result = ship.sell_cargo_lot(lot, gd, use_trader_skill=has_trader)
 
-        # Calculate and execute sale
-        final, fee, profit, purchase_cost = _calculate_sale_proceeds(
-            lot, value, modifier, broker.get("rate", 0.0)
-        )
-        total_profit += profit
+        # Extract results
+        flux_info = result['flux_info']
 
-        ship.credit(final)
-        ship.offload_lot(lot.serial, "cargo")
-        _print_sale_summary(lot, final, fee, profit, purchase_cost)
+        # Display trader prediction if used
+        if flux_info:
+            print(f"\nMerchant Marcus checks market for lot {lot.serial}:")
+            print(f"  First die: {flux_info['first_die']}")
+            print(f"  Predicted range: {flux_info['min_multiplier']:.1%} "
+                  f"to {flux_info['max_multiplier']:.1%}")
+
+            value = lot.determine_sale_value_on(ship.location, gd)
+            _evaluate_market_conditions(flux_info['min_multiplier'],
+                                        flux_info['max_multiplier'], value)
+
+            print(f"  Second die: {flux_info['second_die']} -> "
+                  f"Final multiplier: {flux_info['final_multiplier']:.1%}")
+
+        # Print sale summary
+        _print_sale_summary(lot, result['final_amount'], result['broker_fee'],
+                            result['profit'], result['purchase_cost'])
+
+        total_profit += result['profit']
 
     # Show Trader skill benefit analysis
     if has_trader:
         _print_trader_benefit_analysis(trader_skill, total_profit)
 
 
-def offload_freight(ship: T5Starship) -> None:
-    """Offload all freight without selling."""
-    for lot in ship.get_cargo().get("freight", []):
-        ship.offload_lot(lot.serial, "freight")
-        print(f"Offloaded freight lot {lot.serial} of {lot.mass} tons")
-
-
-def _get_liaison_skill(ship: T5Starship) -> int:
-    """Safely retrieve the Liaison skill from crew."""
-    try:
-        return ship.best_crew_skill["Liaison"]
-    except (KeyError, AttributeError):
-        return 0
-
-
-def _get_steward_skill(ship: T5Starship) -> int:
-    """Safely retrieve the Steward skill from crew."""
-    try:
-        return ship.best_crew_skill["Steward"]
-    except (KeyError, AttributeError):
-        return 0
-
-
-def _get_admin_skill(ship: T5Starship) -> int:
-    """Safely retrieve the Admin skill from crew."""
-    try:
-        return ship.best_crew_skill["Admin"]
-    except (KeyError, AttributeError):
-        return 0
-
-
-def _get_streetwise_skill(ship: T5Starship) -> int:
-    """Safely retrieve the Streetwise skill from crew."""
-    try:
-        return ship.best_crew_skill["Streetwise"]
-    except (KeyError, AttributeError):
-        return 0
-
-
 def _try_onload_freight_lot(ship: T5Starship, lot: T5Lot) -> bool:
     """Attempt to load a freight lot.
     Return False if hold is too small (stop searching)."""
     try:
-        ship.onload_lot(lot, "freight")
-        ship.credit(1000 * lot.mass)
+        ship.load_freight_lot(lot)
         return True
     except ValueError as e:
         if "Lot will not fit" in str(e):
@@ -298,7 +265,7 @@ def _report_hold_status(ship: T5Starship) -> None:
 
 def _should_depart(ship: T5Starship) -> bool:
     """Check if hold is 80% full; ready to depart."""
-    if ship.cargo_size > 0.8 * ship.hold_size:
+    if ship.is_hold_mostly_full():
         print(
             "Met 80% or more criteria for departure at "
             f"{ship.cargo_size / ship.hold_size * 100.0:.1f}%.")
@@ -317,7 +284,7 @@ def search_and_load_freight(ship: T5Starship, gd: GameDriver) -> None:
             print(f"\tWorld {ship.location} not found in data.")
             break
 
-        liaison_skill = _get_liaison_skill(ship)
+        liaison_skill = ship.best_crew_skill["Liaison"]
         freight_lot_mass = world.freight_lot_mass(liaison_skill)
         if freight_lot_mass > 0:
             lot = T5Lot(ship.location, gd)
@@ -353,8 +320,7 @@ def search_and_load_cargo(ship: T5Starship, gd: GameDriver) -> None:
     print(f"Searching for cargo at {ship.location} to fill hold:")
     for lot in available_lots:
         try:
-            ship.onload_lot(lot, "cargo")
-            ship.debit(lot.origin_value * lot.mass)
+            ship.buy_cargo_lot(lot)
             print(
                 f"\tLoaded cargo lot {lot.serial} of {lot.mass} tons, "
                 f"lot id: {lot.lot_id}.")
@@ -377,8 +343,7 @@ def search_and_load_mail(ship: T5Starship, gd: GameDriver) -> None:
 
     print(f"Searching for mail at {ship.location} to load onto ship:")
     try:
-        mail_lot = T5Mail(ship.location, ship.destination(), gd)
-        ship.onload_mail(mail_lot)
+        mail_lot = ship.load_mail(gd, ship.destination())
         print(f"\tLoaded mail bundle {mail_lot.serial}.")
     except ValueError as e:
         print(f"\tCould not load mail bundle: {e}")
@@ -398,7 +363,7 @@ def search_and_load_passengers(ship: T5Starship, gd: GameDriver) -> None:
     print(f"  Ship capacity: {ship.staterooms} staterooms "
           f"(high/mid), {ship.low_berths} low berths")
 
-    # Calculate available capacity
+    # Calculate available capacity for display
     current_stateroom_passengers = (len(ship.passengers["high"]) +
                                     len(ship.passengers["mid"]))
     available_staterooms = ship.staterooms - current_stateroom_passengers
@@ -407,60 +372,22 @@ def search_and_load_passengers(ship: T5Starship, gd: GameDriver) -> None:
     print(f"  Available: {available_staterooms} staterooms, "
           f"{available_low_berths} low berths")
 
-    # Roll for passenger availability
-    steward_skill = _get_steward_skill(ship)
-    admin_skill = _get_admin_skill(ship)
-    streetwise_skill = _get_streetwise_skill(ship)
-
-    high_available = world.high_passenger_availability(steward_skill)
-    mid_available = world.mid_passenger_availability(admin_skill)
-    low_available = world.low_passenger_availability(streetwise_skill)
+    # Display crew skills
+    steward_skill = ship.best_crew_skill["Steward"]
+    admin_skill = ship.best_crew_skill["Admin"]
+    streetwise_skill = ship.best_crew_skill["Streetwise"]
 
     print("\n  Passenger availability (Flux + Pop + Skill):")
-    print(f"    High: {high_available} available (Steward: {steward_skill})")
-    print(f"    Mid: {mid_available} available (Admin: {admin_skill})")
-    print(
-        f"    Low: {low_available} available (Streetwise: {streetwise_skill})")
+    print(f"    Steward: {steward_skill}, Admin: {admin_skill}, "
+          f"Streetwise: {streetwise_skill}")
 
-    # Load high passengers (limited by availability AND ship capacity)
-    high_to_load = min(high_available, available_staterooms)
-    for i in range(high_to_load):
-        try:
-            npc = T5NPC(f"High Passenger {i+1}")
-            ship.onload_passenger(npc, "high")
-            ship.credit(10000)  # Cr10,000 per high passenger
-            print(f"\tLoaded high passenger {npc.character_name} (Cr10,000).")
-        except ValueError as e:
-            print(f"\tCould not load high passenger: {e}")
-            break
+    # Use the T5Starship method to load passengers
+    loaded = ship.load_passengers(world)
 
-    # Load mid passengers (limited by availability AND remaining staterooms)
-    current_stateroom_passengers = (len(ship.passengers["high"]) +
-                                    len(ship.passengers["mid"]))
-    remaining_staterooms = ship.staterooms - current_stateroom_passengers
-    mid_to_load = min(mid_available, remaining_staterooms)
-    for i in range(mid_to_load):
-        try:
-            npc = T5NPC(f"Mid Passenger {i+1}")
-            ship.onload_passenger(npc, "mid")
-            ship.credit(8000)  # Cr8,000 per mid passenger
-            print(f"\tLoaded mid passenger {npc.character_name} (Cr8,000).")
-        except ValueError as e:
-            print(f"\tCould not load mid passenger: {e}")
-            break
+    print(f"\n  Loaded: {loaded['high']} high, {loaded['mid']} mid, "
+          f"{loaded['low']} low passengers")
 
-    # Load low passengers (limited by availability AND low berth capacity)
-    low_to_load = min(low_available, available_low_berths)
-    for i in range(low_to_load):
-        try:
-            npc = T5NPC(f"Low Passenger {i+1}")
-            ship.onload_passenger(npc, "low")
-            ship.credit(1000)  # Cr1,000 per low passenger
-            print(f"\tLoaded low passenger {npc.character_name} (Cr1,000).")
-        except ValueError as e:
-            print(f"\tCould not load low passenger: {e}")
-            break
-
+    # Display final status
     passenger_classes = ["high", "mid", "low"]
     total_passengers = sum(
         len(list(ship.passengers[p_class])) for p_class in passenger_classes
@@ -475,7 +402,7 @@ def search_and_load_passengers(ship: T5Starship, gd: GameDriver) -> None:
                                   / ship.staterooms * 100
                                   if ship.staterooms > 0 else 0)
     print(f"\t  Staterooms: "
-          f"{stateroom_percent_occupied} occupied")
+          f"{stateroom_percent_occupied:.1f}% occupied")
     print(f"\t  Low berths: "
           f"{len(ship.passengers['low'])}/{ship.low_berths} occupied")
 
@@ -506,18 +433,17 @@ def main() -> None:
 
     # Phase 2: Jump to destination
     ship.set_course_for(dest)
-    ship.status = "maneuvering"
     print(f"Starship {ship.ship_name} is maneuvering to {ship.location}"
           f" jump point to {ship.destination()}...")
-    ship.status = "traveling"
     print(f"Starship {ship.ship_name} is jumping to "
           f"{ship.destination()} system "
           f"from {ship.location}...")
-    ship.location = ship.destination()
-    ship.status = "maneuvering"
     print(f"Starship {ship.ship_name} is maneuvering to "
           f"{ship.destination()} starport...")
-    ship.status = "docked"
+
+    # Execute the jump using ship method
+    ship.execute_jump(dest)
+
     print(f"Starship {ship.ship_name} arrived at {ship.location} starport; "
           "performing offload and local business")
 
