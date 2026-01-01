@@ -42,13 +42,18 @@ def setup_departure(origin: str, gd: GameDriver) -> T5Starship:
     npc_high = T5NPC("Admiral Miller")
     npc_mid = T5NPC("Colonel Mustard")
     npc_low = T5NPC("Civilian Joe")
+
     medic = T5NPC("Dr. Bones")
     medic.set_skill("medic", 5)
+
+    trader = T5NPC("Merchant Marcus")
+    trader.set_skill("trader", 4)
 
     ship_class = gd.ship_data.get("Freighter") or next(
         iter(gd.ship_data.values()))
     ship = T5Starship("Paprika", origin, ship_class)
     ship.hire_crew("medic", medic)
+    ship.hire_crew("crew1", trader)
     ship.onload_passenger(npc_high, "high")
     ship.onload_passenger(npc_mid, "mid")
     ship.onload_passenger(npc_low, "low")
@@ -73,24 +78,136 @@ def perform_arrival(ship: T5Starship) -> None:
         print(f"Offloaded low passenger: {p.character_name}")
 
 
-def sell_cargo(ship: T5Starship, gd: GameDriver) -> None:
-    """Sell all cargo items through the best broker."""
-    world = gd.world_data.get(ship.location)
-    if world:
-        starport = world.get_starport()
-        broker = find_best_broker(starport)
-    else:
-        broker = {"mod": 0, "rate": 0.0}
+def _get_trader_prediction(lot, broker_mod: int):
+    """Use Trader skill to predict market and get multiplier."""
 
+    min_mult, max_mult, flux = lot.predict_actual_value_range(broker_mod)
+
+    print(f"\nMerchant Marcus checks market for lot {lot.serial}:")
+    print(f"  First die: {flux.first_die}")
+    print(f"  Predicted range: {min_mult:.1%} to {max_mult:.1%}")
+
+    return min_mult, max_mult, flux
+
+
+def _evaluate_market_conditions(
+        min_mult: float,
+        max_mult: float,
+        value: float):
+    """Print market evaluation based on predicted multiplier range."""
+    print(f"  Value estimate: Cr{value * min_mult:,.0f} "
+          f"to Cr{value * max_mult:,.0f}")
+
+    if min_mult >= 1.0:
+        print("  Good market! Selling now.")
+    elif min_mult >= 0.8:
+        print("  Acceptable. Proceeding with sale.")
+    else:
+        print(f"  Poor market (risk of {(1-min_mult)*100:.0f}% loss).")
+        print("  Selling anyway (no storage).")
+
+
+def _complete_trader_roll(flux, broker_mod: int) -> float:
+    """Complete the flux roll and return final multiplier."""
+    from t5code.T5Tables import ACTUAL_VALUE
+
+    final_flux = flux.roll_second()
+    clamped = max(-5, min(8, final_flux + broker_mod))
+    modifier = ACTUAL_VALUE[clamped]
+    print(
+        f"  Second die: {flux.second_die} → Final multiplier: {modifier:.1%}")
+
+    return modifier
+
+
+def _calculate_sale_proceeds(lot, value: float, modifier: float,
+                             broker_rate: float):
+    """Calculate actual sale value, fees, and profit."""
+    actual = value * modifier
+    fee = actual * broker_rate
+    final = actual - fee
+    purchase_cost = lot.origin_value * lot.mass
+    profit = final - purchase_cost
+
+    return final, fee, profit, purchase_cost
+
+
+def _print_sale_summary(lot, final: float, fee: float, profit: float,
+                        purchase_cost: float):
+    """Print sale transaction summary."""
+    print(f"Sold cargo lot {lot.serial} for Cr{final:,.2f} (fee Cr{fee:,.2f})")
+    print(
+        f"  Profit: Cr{profit:,.2f} ({(profit/purchase_cost)*100:+.1f}% ROI)")
+
+
+def _print_trader_benefit_analysis(trader_skill: int, total_profit: float):
+    """Print comprehensive Trader skill benefit analysis."""
+    print(f"\n{'='*60}")
+    print("TRADER SKILL BENEFIT ANALYSIS")
+    print(f"{'='*60}")
+    print(
+        f"Merchant Marcus (Trader-{trader_skill}) "
+        "provided market intelligence")
+    print("that enabled informed decision-making. The early die roll showed")
+    print("market conditions BEFORE committing to the sale.")
+    print(f"\nTotal cargo result this sale: Cr{total_profit:,.2f}")
+
+    if total_profit > 0:
+        print("\nThe prediction showed favorable odds and paid off!")
+    else:
+        print("\nEven with a loss, Marcus showed the risk BEFORE selling.")
+        print("Without Trader skill, this would have been a blind gamble.")
+        print("The skill's value is preventing WORSE losses by revealing")
+        print("risk levels before commitment.")
+
+    print("\nKey Value: RISK MANAGEMENT - seeing the first die lets captains")
+    print("hold cargo when markets are terrible (< 0.8x) and sell when")
+    print("conditions are acceptable or good. This prevents catastrophic")
+    print("losses over time.")
+    print(f"{'='*60}")
+
+
+def sell_cargo(ship: T5Starship, gd: GameDriver) -> None:
+    """Sell all cargo items through the best broker, "
+    "using Trader skill if available."""
+    # Get broker information
+    world = gd.world_data.get(ship.location)
+    broker = (find_best_broker(world.get_starport()) if world
+              else {"mod": 0, "rate": 0.0})
+
+    # Check for trader in crew
+    trader = ship.crew.get("crew1")
+    has_trader = trader and trader.get_skill("trader") > 0
+    trader_skill = trader.get_skill("trader") if has_trader else 0
+
+    # Process each cargo lot
+    total_profit = 0.0
     for lot in ship.get_cargo().get("cargo", []):
         value = lot.determine_sale_value_on(ship.location, gd)
-        modifier = lot.consult_actual_value_table(broker.get("mod", 0))
-        actual = value * modifier
-        fee = actual * broker.get("rate", 0.0)
-        final = actual - fee
+
+        # Get price multiplier (with or without Trader skill)
+        if has_trader:
+            min_mult, max_mult, flux = _get_trader_prediction(
+                lot, broker.get("mod", 0)
+            )
+            _evaluate_market_conditions(min_mult, max_mult, value)
+            modifier = _complete_trader_roll(flux, broker.get("mod", 0))
+        else:
+            modifier = lot.consult_actual_value_table(broker.get("mod", 0))
+
+        # Calculate and execute sale
+        final, fee, profit, purchase_cost = _calculate_sale_proceeds(
+            lot, value, modifier, broker.get("rate", 0.0)
+        )
+        total_profit += profit
+
         ship.credit(final)
         ship.offload_lot(lot.serial, "cargo")
-        print(f"Sold cargo lot {lot.serial} for Cr{final} (fee Cr{fee})")
+        _print_sale_summary(lot, final, fee, profit, purchase_cost)
+
+    # Show Trader skill benefit analysis
+    if has_trader:
+        _print_trader_benefit_analysis(trader_skill, total_profit)
 
 
 def offload_freight(ship: T5Starship) -> None:
@@ -185,7 +302,7 @@ def report_ship_status(ship):
         f"{len(list(ship.passengers['mid']))} mid, "
         f"{len(list(ship.passengers['low']))} low passengers), and "
         f"{len(ship.get_mail())} mail bundles."
-        )
+    )
 
 
 def main() -> None:

@@ -3,14 +3,18 @@
 
 import uuid
 import random
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, Tuple
 
 from t5code.T5Tables import (
     BUYING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
     SELLING_GOODS_TRADE_CLASSIFICATIONS_TABLE,
     ACTUAL_VALUE,
 )
-from t5code.T5Basics import letter_to_tech_level, tech_level_to_letter
+from t5code.T5Basics import (
+    letter_to_tech_level,
+    tech_level_to_letter,
+    SequentialFlux
+)
 
 if TYPE_CHECKING:
     from t5code.GameState import GameState
@@ -199,3 +203,48 @@ class T5Lot:
 
         clamped_flux = max(-5, min(8, modded_flux))
         return ACTUAL_VALUE[clamped_flux]
+
+    def predict_actual_value_range(
+        self, mod: int, sequential_flux: SequentialFlux = None
+    ) -> Tuple[float, float, SequentialFlux]:
+        """
+        Use Trader skill to predict the range of actual values by rolling
+        one die early. This implements the T5 Trader skill mechanic from
+        p221: "Use of Trader skill allows one die on the Actual Value Table
+        to be thrown early."
+
+        Args:
+            mod: Broker modifier to apply to flux roll
+            sequential_flux: Optional pre-rolled SequentialFlux. If None,
+                           rolls a new first die.
+
+        Returns:
+            Tuple of (min_multiplier, max_multiplier, sequential_flux)
+            where multipliers are from ACTUAL_VALUE table and sequential_flux
+            can be used to complete the roll later.
+
+        Example:
+            # Trader checks market before selling
+            min_val, max_val, flux = lot.predict_actual_value_range(broker_mod)
+            print(f"Price will be {min_val*100}% to {max_val*100}%")
+
+            if min_val >= 1.0:
+                # Good deal, complete the sale
+                final_flux = flux.roll_second()
+                actual = ACTUAL_VALUE[max(-5, min(8, final_flux + broker_mod))]
+        """
+        if sequential_flux is None:
+            sequential_flux = SequentialFlux()
+
+        # Get the potential flux range from the first die
+        min_flux, max_flux = sequential_flux.potential_range
+
+        # Apply modifier and clamp to ACTUAL_VALUE table bounds
+        min_flux_modded = max(-5, min(8, min_flux + mod))
+        max_flux_modded = max(-5, min(8, max_flux + mod))
+
+        # Look up multipliers in ACTUAL_VALUE table
+        min_multiplier = ACTUAL_VALUE[min_flux_modded]
+        max_multiplier = ACTUAL_VALUE[max_flux_modded]
+
+        return (min_multiplier, max_multiplier, sequential_flux)
