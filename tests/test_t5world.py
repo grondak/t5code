@@ -3,6 +3,8 @@ populations, and broker selection."""
 
 import pytest
 from t5code.T5World import T5World, find_best_broker
+from t5code.GameState import GameState
+from t5code.T5Lot import T5Lot
 
 test_world_data = {
     "Earth": {
@@ -99,3 +101,133 @@ def test_trade_classifications_mars():
 def test_get_starport_type_mars():
     test_world = T5World("Mars", test_world_data)
     assert test_world.get_starport() == "B"
+
+
+def test_generate_speculative_cargo_total_tonnage():
+    """Verify speculative cargo totals exactly 100 tons."""
+    gs = GameState()
+    gs.world_data = T5World.load_all_worlds(test_world_data)
+
+    world = T5World("Earth", test_world_data)
+    lots = world.generate_speculative_cargo(gs)
+
+    total_mass = sum(lot.mass for lot in lots)
+    assert total_mass == 100, f"Expected 100 tons, got {total_mass}"
+
+
+def test_generate_speculative_cargo_lot_size_limit():
+    """Verify individual lots don't exceed 10 tons."""
+    gs = GameState()
+    gs.world_data = T5World.load_all_worlds(test_world_data)
+
+    world = T5World("Earth", test_world_data)
+    lots = world.generate_speculative_cargo(gs)
+
+    for lot in lots:
+        assert lot.mass <= 10, f"Lot {lot.serial} exceeds 10 tons: {lot.mass}"
+
+
+def test_generate_speculative_cargo_minimum_lot_size():
+    """Verify all lots have at least 1 ton."""
+    gs = GameState()
+    gs.world_data = T5World.load_all_worlds(test_world_data)
+
+    world = T5World("Earth", test_world_data)
+    lots = world.generate_speculative_cargo(gs)
+
+    for lot in lots:
+        assert lot.mass >= 1, f"Lot {lot.serial} "
+        f"is less than 1 ton: {lot.mass}"
+
+
+def test_generate_speculative_cargo_custom_max_total():
+    """Verify custom max_total_tons parameter works."""
+    gs = GameState()
+    gs.world_data = T5World.load_all_worlds(test_world_data)
+
+    world = T5World("Earth", test_world_data)
+    lots = world.generate_speculative_cargo(gs, max_total_tons=50)
+
+    total_mass = sum(lot.mass for lot in lots)
+    assert total_mass == 50, f"Expected 50 tons, got {total_mass}"
+
+
+def test_generate_speculative_cargo_custom_max_lot_size():
+    """Verify custom max_lot_size parameter works."""
+    gs = GameState()
+    gs.world_data = T5World.load_all_worlds(test_world_data)
+
+    world = T5World("Earth", test_world_data)
+    lots = world.generate_speculative_cargo(gs, max_lot_size=5)
+
+    for lot in lots:
+        assert lot.mass <= 5, f"Lot {lot.serial} exceeds 5 tons: {lot.mass}"
+
+    total_mass = sum(lot.mass for lot in lots)
+    assert total_mass == 100
+
+
+def test_generate_speculative_cargo_lot_properties():
+    """Verify generated lots have correct origin properties."""
+    gs = GameState()
+    gs.world_data = T5World.load_all_worlds(test_world_data)
+
+    world = T5World("Earth", test_world_data)
+    lots = world.generate_speculative_cargo(gs)
+
+    for lot in lots:
+        assert lot.origin_name == "Earth"
+        assert lot.origin_uwp == "A123456-A"
+        assert isinstance(lot, T5Lot)
+        assert lot.serial  # Has unique ID
+
+
+def test_generate_speculative_cargo_multiple_worlds():
+    """Integration test: verify speculative cargo from different worlds."""
+    gs = GameState()
+    gs.world_data = T5World.load_all_worlds(test_world_data)
+
+    # Generate from Earth
+    earth = T5World("Earth", test_world_data)
+    earth_lots = earth.generate_speculative_cargo(gs, max_total_tons=30)
+
+    # Generate from Mars
+    mars = T5World("Mars", test_world_data)
+    mars_lots = mars.generate_speculative_cargo(gs, max_total_tons=30)
+
+    # Verify origins are correct
+    assert all(lot.origin_name == "Earth" for lot in earth_lots)
+    assert all(lot.origin_name == "Mars" for lot in mars_lots)
+
+    # Verify totals
+    assert sum(lot.mass for lot in earth_lots) == 30
+    assert sum(lot.mass for lot in mars_lots) == 30
+
+
+def test_generate_speculative_cargo_realistic_scenario():
+    """Integration test: realistic captain buying scenario."""
+    gs = GameState()
+    gs.world_data = T5World.load_all_worlds(test_world_data)
+
+    # Captain at Earth wants to leave soon, buys speculative cargo
+    world = T5World("Earth", test_world_data)
+    available_cargo = world.generate_speculative_cargo(gs)
+
+    # Captain has 82 ton cargo hold
+    ship_capacity = 82
+    purchased_lots = []
+    total_purchased = 0
+
+    for lot in available_cargo:
+        if total_purchased + lot.mass <= ship_capacity:
+            purchased_lots.append(lot)
+            total_purchased += lot.mass
+
+    # Verify captain can purchase lots without exceeding capacity
+    assert total_purchased <= ship_capacity
+    assert len(purchased_lots) > 0
+
+    # Verify all purchased lots have valid properties
+    for lot in purchased_lots:
+        assert lot.origin_value > 0
+        assert 1 <= lot.mass <= 10

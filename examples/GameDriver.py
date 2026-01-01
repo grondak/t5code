@@ -291,6 +291,38 @@ def search_and_load_freight(ship: T5Starship, gd: GameDriver) -> None:
             searching = False
 
 
+def search_and_load_cargo(ship: T5Starship, gd: GameDriver) -> None:
+    """Search for cargo to fill remainder of hold from up to 100
+    tons of speculative cargo created on the ship's current world."""
+    world = gd.world_data.get(ship.location)
+    if not world:
+        print(f"World {ship.location} not found in data.")
+        return
+
+    available_lots = world.generate_speculative_cargo(
+        gd,
+        max_total_tons=100,
+        max_lot_size=ship.hold_size - ship.cargo_size
+    )
+
+    print(f"Searching for cargo at {ship.location} to fill hold:")
+    for lot in available_lots:
+        try:
+            ship.onload_lot(lot, "cargo")
+            ship.debit(lot.origin_value * lot.mass)
+            print(
+                f"\tLoaded cargo lot {lot.serial} of {lot.mass} tons, "
+                f"lot id: {lot.lot_id}.")
+        except ValueError as e:
+            print(f"\tCould not load lot {lot.serial}"
+                  f"mass {lot.mass}: {e}")
+
+    print(
+        f"\tStarship {ship.ship_name} now has "
+        f"{len(list(ship.get_cargo()['cargo']))} cargo items on board, "
+        f"with total mass {ship.cargo_size}.")
+
+
 def report_ship_status(ship):
     print(
         f"Starship {ship.ship_name} now has "
@@ -350,7 +382,13 @@ def main() -> None:
     search_and_load_freight(ship, gd)
 
     report_ship_status(ship)
-    print("End simulation version 0.4")
+
+    # phase D: Load cargo to fill remaining hold space
+    search_and_load_cargo(ship, gd)
+
+    report_ship_status(ship)
+
+    print("End simulation version 0.5")
 
 
 if __name__ == "__main__":
