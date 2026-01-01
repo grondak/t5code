@@ -551,9 +551,13 @@ def main() -> None:
     # phase C: load passengers
     search_and_load_passengers(ship, gd)
 
-    # phase
+    report_ship_status(ship)
 
-    print("End simulation version 0.5")
+    # phase D: Departure
+    print(f"Starship {ship.ship_name} departing {ship.location} "
+          f"for {ship.destination()} starport.")
+
+    print("End simulation version 1.0")
 
 
 if __name__ == "__main__":
