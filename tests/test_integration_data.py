@@ -167,37 +167,6 @@ def test_aliases_reference_valid_sources():
             f"Alias {alias} references non-existent source: {source}"
 
 
-def test_constants_match_json_data():
-    """Test that module constants match what's in JSON data."""
-    from t5code.T5RandomTradeGoods import (
-        BULK_NITRATES, STRANGE_SEEDS, BULK_MINERALS,
-        EXOTIC_FAUNA, EXOTIC_FLORA, EXPERT_SYSTEMS,
-        VARIABLE_TATTOOS, BRANDED_DRINKS, BRANDED_CLOTHES
-    )
-
-    json_path = Path("resources/trade_goods_tables.json")
-    import json
-    with open(json_path) as f:
-        data = json.load(f)
-
-    # Check that constants appear in the JSON data
-    all_goods = []
-    for classification_data in data["classifications"].values():
-        for goods_list in classification_data["types"].values():
-            for item in goods_list:
-                if isinstance(item, str):
-                    all_goods.append(item)
-
-    constants = {
-        BULK_NITRATES, STRANGE_SEEDS, BULK_MINERALS,
-        EXOTIC_FAUNA, EXOTIC_FLORA, EXPERT_SYSTEMS,
-        VARIABLE_TATTOOS, BRANDED_DRINKS, BRANDED_CLOTHES
-    }
-
-    for const in constants:
-        assert const in all_goods, f"Constant '{const}' not found in JSON data"
-
-
 def test_all_classifications_have_imbalances_or_are_special():
     """Test that most classifications have
     Imbalances type (or are special cases)."""

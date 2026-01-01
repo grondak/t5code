@@ -14,16 +14,6 @@ TABLE_SIZE = 6  # All T5 trade tables have exactly 6 entries
 DICE_MIN = 0
 DICE_MAX = 5  # Corresponds to d6 (1-6) mapped to 0-5 index
 
-BULK_NITRATES = "Bulk Nitrates"
-STRANGE_SEEDS = "Strange Seeds"
-BULK_MINERALS = "Bulk Minerals"
-EXOTIC_FAUNA = "Exotic Fauna"
-EXOTIC_FLORA = "Exotic Flora"
-EXPERT_SYSTEMS = "Expert Systems"
-VARIABLE_TATTOOS = "Variable Tattoos"
-BRANDED_DRINKS = "Branded Drinks"
-BRANDED_CLOTHES = "Branded Clothes"
-
 
 class TradeGood:
     def __init__(self, name: Union[str, Callable[[], str]]):
