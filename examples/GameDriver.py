@@ -12,6 +12,8 @@ from t5code import (
     T5ShipClass,
     T5Starship,
     T5World,
+    InsufficientFundsError,
+    CapacityExceededError,
     load_and_parse_t5_map,
     load_and_parse_t5_ship_classes,
 )
@@ -90,7 +92,7 @@ def perform_arrival(ship: T5Starship) -> None:
         print(f"Offloaded high passenger: {p.character_name}")
     print("Offloaded mail.")
     ship.offload_mail()
-    print(f"Mail locker now has {len(ship.get_mail())} bundles")
+    print(f"Mail locker now has {len(ship.mail_bundles)} bundles")
     for p in ship.offload_passengers("mid"):
         print(f"Offloaded mid passenger: {p.character_name}")
     # Use ship's offload_all_freight method
@@ -204,7 +206,7 @@ def sell_cargo(ship: T5Starship, gd: GameDriver) -> None:
 
     # Process each cargo lot
     total_profit = 0.0
-    cargo_lots = list(ship.get_cargo().get("cargo", []))
+    cargo_lots = list(ship.cargo_manifest.get("cargo", []))
 
     for lot in cargo_lots:
         # Use the ship's sell_cargo_lot method - pass gd which has world_data
@@ -253,7 +255,7 @@ def _try_onload_freight_lot(ship: T5Starship, lot: T5Lot) -> bool:
 
 def _report_hold_status(ship: T5Starship) -> None:
     """Print current freight status."""
-    ship_freight = list(ship.get_cargo().get("freight", []))
+    ship_freight = list(ship.cargo_manifest.get("freight", []))
     for lot in ship_freight:
         print(
             f"\tLot {lot.serial} aboard, {lot.mass} tons, "
@@ -324,13 +326,21 @@ def search_and_load_cargo(ship: T5Starship, gd: GameDriver) -> None:
             print(
                 f"\tLoaded cargo lot {lot.serial} of {lot.mass} tons, "
                 f"lot id: {lot.lot_id}.")
+        except InsufficientFundsError as e:
+            print(f"\tInsufficient funds to buy lot {lot.serial} "
+                  f"({lot.mass} tons): {e}")
+            break  # Stop searching when we run out of money
+        except CapacityExceededError as e:
+            print(f"\tNo capacity for lot {lot.serial} "
+                  f"({lot.mass} tons): {e}")
+            break  # Stop searching when hold is full
         except ValueError as e:
             print(f"\tCould not load lot {lot.serial} "
                   f"mass {lot.mass}: {e}")
 
     print(
         f"\tStarship {ship.ship_name} now has "
-        f"{len(list(ship.get_cargo()['cargo']))} cargo items on board, "
+        f"{len(list(ship.cargo_manifest['cargo']))} cargo items on board, "
         f"with total mass {ship.cargo_size}.")
 
 
@@ -343,12 +353,12 @@ def search_and_load_mail(ship: T5Starship, gd: GameDriver) -> None:
 
     print(f"Searching for mail at {ship.location} to load onto ship:")
     try:
-        mail_lot = ship.load_mail(gd, ship.destination())
+        mail_lot = ship.load_mail(gd, ship.destination)
         print(f"\tLoaded mail bundle {mail_lot.serial}.")
     except ValueError as e:
         print(f"\tCould not load mail bundle: {e}")
 
-    print(f"\tStarship {ship.ship_name} now has {len(ship.get_mail())} "
+    print(f"\tStarship {ship.ship_name} now has {len(ship.mail_bundles)} "
           f"mail bundles on board.")
 
 
@@ -412,12 +422,12 @@ def report_ship_status(ship):
         f"Starship {ship.ship_name} now has "
         f"balance={ship.balance}, "
         f"cargo_size={ship.cargo_size} with "
-        f"{len(list(ship.get_cargo()['cargo']))} cargo items, "
-        f"{len(list(ship.get_cargo()['freight']))} freight items, "
+        f"{len(list(ship.cargo_manifest['cargo']))} cargo items, "
+        f"{len(list(ship.cargo_manifest['freight']))} freight items, "
         f"({len(list(ship.passengers['high']))} high, "
         f"{len(list(ship.passengers['mid']))} mid, "
         f"{len(list(ship.passengers['low']))} low passengers), and "
-        f"{len(ship.get_mail())} mail bundles."
+        f"{len(ship.mail_bundles)} mail bundles."
     )
 
 
@@ -434,12 +444,12 @@ def main() -> None:
     # Phase 2: Jump to destination
     ship.set_course_for(dest)
     print(f"Starship {ship.ship_name} is maneuvering to {ship.location}"
-          f" jump point to {ship.destination()}...")
+          f" jump point to {ship.destination}...")
     print(f"Starship {ship.ship_name} is jumping to "
-          f"{ship.destination()} system "
+          f"{ship.destination} system "
           f"from {ship.location}...")
     print(f"Starship {ship.ship_name} is maneuvering to "
-          f"{ship.destination()} starport...")
+          f"{ship.destination} starport...")
 
     # Execute the jump using ship method
     ship.execute_jump(dest)
@@ -460,7 +470,7 @@ def main() -> None:
 
     # Phase D: Search for and load freight until 80% full
     print(f"Starship {ship.ship_name} preparing for departure from "
-          f"{ship.location} starport bound for {ship.destination()} starport "
+          f"{ship.location} starport bound for {ship.destination} starport "
           f"and performing local business")
     search_and_load_freight(ship, gd)
 
@@ -481,7 +491,7 @@ def main() -> None:
 
     # phase D: Departure
     print(f"Starship {ship.ship_name} departing {ship.location} "
-          f"for {ship.destination()} starport.")
+          f"for {ship.destination} starport.")
 
     print("End simulation version 1.0")
 

@@ -5,6 +5,7 @@ from t5code import (
     T5Lot, T5ShipClass, T5Starship, T5World,
     find_best_broker, load_and_parse_t5_map, load_and_parse_t5_ship_classes
 )
+from t5code.T5Exceptions import CapacityExceededError
 
 
 class MockGameState:
@@ -44,7 +45,7 @@ def test_complete_trade_journey(game_state, ship):
 
     ship.onload_lot(lot, "cargo")
     assert ship.cargo_size == 5
-    assert len(ship.get_cargo()["cargo"]) == 1
+    assert len(ship.cargo_manifest["cargo"]) == 1
 
     # Phase 2: Travel to destination
     ship.set_course_for(destination)
@@ -67,7 +68,7 @@ def test_complete_trade_journey(game_state, ship):
 
     # Phase 4: Verify results
     assert ship.cargo_size == 0
-    assert len(ship.get_cargo()["cargo"]) == 0
+    assert len(ship.cargo_manifest["cargo"]) == 0
     assert ship.balance > initial_balance  # Made money
 
 
@@ -81,7 +82,7 @@ def test_freight_workflow(game_state, ship):
 
     ship.onload_lot(lot, "freight")
     assert ship.cargo_size == 10
-    assert len(ship.get_cargo()["freight"]) == 1
+    assert len(ship.cargo_manifest["freight"]) == 1
 
     # Get payment for taking freight
     freight_payment = 1000 * lot.mass
@@ -93,7 +94,7 @@ def test_freight_workflow(game_state, ship):
     ship.offload_lot(lot.serial, "freight")
 
     assert ship.cargo_size == 0
-    assert len(ship.get_cargo()["freight"]) == 0
+    assert len(ship.cargo_manifest["freight"]) == 0
     assert ship.balance == initial_balance  # No additional money from offload
 
 
@@ -142,17 +143,17 @@ def test_multiple_lots_management(game_state, ship):
 
     # Verify all loaded correctly
     assert ship.cargo_size == 9
-    assert len(ship.get_cargo()["cargo"]) == 2
-    assert len(ship.get_cargo()["freight"]) == 1
+    assert len(ship.cargo_manifest["cargo"]) == 2
+    assert len(ship.cargo_manifest["freight"]) == 1
 
     # Offload specific lots
     ship.offload_lot(lot1.serial, "cargo")
     assert ship.cargo_size == 6
-    assert len(ship.get_cargo()["cargo"]) == 1
+    assert len(ship.cargo_manifest["cargo"]) == 1
 
     ship.offload_lot(lot3.serial, "freight")
     assert ship.cargo_size == 4
-    assert len(ship.get_cargo()["freight"]) == 0
+    assert len(ship.cargo_manifest["freight"]) == 0
 
 
 def test_cargo_capacity_limits(game_state, ship):
@@ -163,7 +164,7 @@ def test_cargo_capacity_limits(game_state, ship):
     oversized_lot = T5Lot(origin, game_state)
     oversized_lot.mass = ship.hold_size + 10
 
-    with pytest.raises(ValueError, match="Lot will not fit"):
+    with pytest.raises(CapacityExceededError):
         ship.onload_lot(oversized_lot, "cargo")
 
     # Verify nothing was loaded

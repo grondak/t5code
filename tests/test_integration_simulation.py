@@ -56,8 +56,8 @@ def test_two_ships_at_same_port(game_state, ship_class):
     assert ship2.cargo_size == 10
 
     # Both ships have cargo
-    assert len(ship1.get_cargo()["cargo"]) == 1
-    assert len(ship2.get_cargo()["cargo"]) == 1
+    assert len(ship1.cargo_manifest["cargo"]) == 1
+    assert len(ship2.cargo_manifest["cargo"]) == 1
 
     # Lots should be different
     assert lot1.serial != lot2.serial
@@ -133,8 +133,8 @@ def test_multiple_ships_different_routes(game_state, ship_class):
     assert ship2.location == "Jae Tellona"
     assert ship1.cargo_size == 5
     assert ship2.cargo_size == 6
-    assert ship1.destination() == "Jae Tellona"
-    assert ship2.destination() == "Rhylanor"
+    assert ship1.destination == "Jae Tellona"
+    assert ship2.destination == "Rhylanor"
 
 
 def test_concurrent_crew_hiring(game_state, ship_class):
@@ -186,7 +186,7 @@ def test_ship_status_transitions(game_state, ship_class):
 
     # Set course
     ship.set_course_for("Jae Tellona")
-    assert ship.destination() == "Jae Tellona"
+    assert ship.destination == "Jae Tellona"
 
     # Simulate arrival
     ship.location = "Jae Tellona"

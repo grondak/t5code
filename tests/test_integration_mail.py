@@ -47,7 +47,7 @@ def test_mail_generation_and_delivery(game_state, ship):
 
     # Load mail on ship
     ship.onload_mail(mail)
-    mail_dict = ship.get_mail()
+    mail_dict = ship.mail_bundles
     assert len(mail_dict) == 1
     assert mail.serial in mail_dict
 
@@ -60,7 +60,7 @@ def test_mail_generation_and_delivery(game_state, ship):
     ship.offload_mail()
 
     # Verify mail offloaded
-    assert len(ship.get_mail()) == 0
+    assert len(ship.mail_bundles) == 0
 
 
 def test_multiple_mail_bundles(game_state, ship):
@@ -74,7 +74,7 @@ def test_multiple_mail_bundles(game_state, ship):
     ship.onload_mail(mail1)
 
     # Verify loaded
-    mail_dict = ship.get_mail()
+    mail_dict = ship.mail_bundles
     assert len(mail_dict) == 1
 
     # Verify serial
@@ -123,15 +123,15 @@ def test_mail_locker_operations(game_state, ship):
     mail1 = T5Mail("Rhylanor", "Jae Tellona", game_state)
 
     # Start empty
-    assert len(ship.get_mail()) == 0
+    assert len(ship.mail_bundles) == 0
 
     # Add mail
     ship.onload_mail(mail1)
-    assert len(ship.get_mail()) == 1
+    assert len(ship.mail_bundles) == 1
 
     # Offload all
     ship.offload_mail()
-    assert len(ship.get_mail()) == 0
+    assert len(ship.mail_bundles) == 0
 
 
 def test_mail_from_different_origins(game_state, ship):
@@ -143,7 +143,7 @@ def test_mail_from_different_origins(game_state, ship):
 
     # Verify origin
     assert mail1.origin_name == "Rhylanor"
-    assert len(ship.get_mail()) == 1
+    assert len(ship.mail_bundles) == 1
 
 
 def test_mail_destination_tracking(game_state):
@@ -160,7 +160,7 @@ def test_mail_destination_tracking(game_state):
 def test_empty_mail_locker_offload(game_state, ship):
     """Test that offloading empty mail locker raises error."""
     # Verify empty
-    assert len(ship.get_mail()) == 0
+    assert len(ship.mail_bundles) == 0
 
     # Try to offload (should raise ValueError)
     with pytest.raises(ValueError, match="no mail to offload"):
@@ -184,14 +184,14 @@ def test_mail_and_cargo_coexist(game_state, ship):
 
     # Both should be present
     assert ship.cargo_size == 10
-    assert len(ship.get_mail()) == 1
+    assert len(ship.mail_bundles) == 1
 
     # Offload mail
     ship.offload_mail()
 
     # Cargo should remain
     assert ship.cargo_size == 10
-    assert len(ship.get_mail()) == 0
+    assert len(ship.mail_bundles) == 0
 
 
 def test_mail_world_compatibility(game_state):

@@ -6,6 +6,11 @@ from t5code import (
     T5Lot, T5Mail, T5NPC, T5ShipClass, T5Starship, T5World,
     load_and_parse_t5_map, load_and_parse_t5_ship_classes
 )
+from t5code.T5Exceptions import (
+    CapacityExceededError,
+    InvalidPassageClassError,
+    InsufficientFundsError,
+)
 from t5code.T5RandomTradeGoods import RandomTradeGoodsTable
 
 
@@ -68,7 +73,7 @@ def test_ship_overload_protection(game_state):
     huge_lot.mass = ship.hold_size + 100
 
     # Should raise ValueError
-    with pytest.raises(ValueError, match="Lot will not fit"):
+    with pytest.raises(CapacityExceededError):
         ship.onload_lot(huge_lot, "cargo")
 
 
@@ -103,7 +108,7 @@ def test_invalid_passenger_class(game_state):
 
     # Valid classes are "high", "mid", "low"
     # Invalid class should raise error
-    with pytest.raises((ValueError, KeyError)):
+    with pytest.raises(InvalidPassageClassError):
         ship.onload_passenger(passenger, "super-deluxe")
 
 
@@ -115,17 +120,6 @@ def test_offload_from_empty_passenger_berth(game_state):
     # Offload from empty berth (should return empty set)
     passengers = ship.offload_passengers("high")
     assert passengers == set()
-
-
-def test_hire_crew_with_invalid_role(game_state):
-    """Test hiring crew with invalid role."""
-    ship_class = next(iter(game_state.ship_data.values()))
-    ship = T5Starship("Crew Test", "Rhylanor", ship_class)
-    crew_member = T5NPC("Invalid Role Person")
-
-    # Try hiring with invalid role (should raise ValueError)
-    with pytest.raises(ValueError, match="Invalid crew position"):
-        ship.hire_crew("janitor", crew_member)
 
 
 def test_invalid_ship_class_data():
@@ -183,7 +177,7 @@ def test_debit_more_than_balance(game_state):
     initial_balance = ship.balance
 
     # Try to debit more than we have (should raise ValueError)
-    with pytest.raises(ValueError, match="Insufficient funds"):
+    with pytest.raises(InsufficientFundsError):
         ship.debit(initial_balance + 1000)
 
 

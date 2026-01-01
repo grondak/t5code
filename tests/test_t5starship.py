@@ -2,7 +2,16 @@
 cargo, and balance tracking."""
 
 import pytest
-from t5code.T5Starship import T5Starship, DuplicateItemError
+from t5code.T5Starship import T5Starship
+from t5code.T5Exceptions import (
+    InsufficientFundsError,
+    CapacityExceededError,
+    InvalidPassageClassError,
+    DuplicateItemError,
+    WorldNotFoundError,
+    InvalidLotTypeError,
+    InvalidThresholdError,
+)
 from t5code.T5ShipClass import T5ShipClass
 from t5code.T5NPC import T5NPC
 from t5code.GameState import GameState, load_and_parse_t5_map
@@ -83,12 +92,16 @@ def test_hire_crew(test_ship_data):
     """Verify crew hiring with validation."""
     starship = get_me_a_starship("Your mom", "Home", test_ship_data)
     npc1 = T5NPC("Bob")
-    with pytest.raises(ValueError, match="Invalid crew position."):
-        starship.hire_crew("a string", npc1)
+    # API is now flexible - allows any position string
+    starship.hire_crew("custom_position", npc1)
+    assert starship.crew == {"custom_position": npc1}
+
+    # But still validates NPC type
     with pytest.raises(TypeError, match="Invalid NPC."):
         starship.hire_crew("medic", "a something")
+
     starship.hire_crew("medic", npc1)
-    assert starship.crew == {"medic": npc1}
+    assert starship.crew["medic"] == npc1
 
 
 def test_onload_passenger(test_ship_data):
@@ -97,16 +110,14 @@ def test_onload_passenger(test_ship_data):
     with pytest.raises(TypeError, match="Invalid passenger type."):
         starship.onload_passenger("a string", "high")
     npc1 = T5NPC("Bob")
-    with pytest.raises(ValueError, match="Invalid passenger class."):
+    with pytest.raises(InvalidPassageClassError):
         starship.onload_passenger(npc1, "yourmom")
     starship.onload_passenger(npc1, "high")
     assert {npc1} == starship.passengers["high"]
     npc2 = T5NPC("Doug")
     starship.onload_passenger(npc2, "high")
     assert {npc1, npc2} == starship.passengers["high"]
-    with pytest.raises(
-        DuplicateItemError, match="Cannot load same passenger Bob twice."
-    ):
+    with pytest.raises(DuplicateItemError):
         starship.onload_passenger(npc1, "high")
     assert {npc1, npc2} == starship.passengers["high"]
     assert npc1.location == starship.ship_name
@@ -134,7 +145,7 @@ def test_offload_passengers(test_ship_data):
     assert starship.passengers["high"] == set()
     assert npc1.location == starship.location
     assert npc2.location == starship.location
-    with pytest.raises(ValueError, match="Invalid passenger class."):
+    with pytest.raises(InvalidPassageClassError):
         starship.offload_passengers("a something")
     offloaded_passengers = starship.offload_passengers("mid")
     assert offloaded_passengers == {npc3}
@@ -153,7 +164,7 @@ def test_set_course_for(test_ship_data, setup_gamestate):
     """Verify destination setting and retrieval."""
     starship = get_me_a_starship("Steamboat", "Rhylanor", test_ship_data)
     starship.set_course_for("Jae Tellona")
-    assert starship.destination() == "Jae Tellona"
+    assert starship.destination == "Jae Tellona"
 
 
 def test_onload_mail(test_ship_data, setup_gamestate):
@@ -161,7 +172,7 @@ def test_onload_mail(test_ship_data, setup_gamestate):
     starship = get_me_a_starship("Steamboat", "Rhylanor", test_ship_data)
     mail = T5Mail("Rhylanor", "Jae Tellona", GameState)
     starship.onload_mail(mail)
-    assert starship.get_mail()[mail.serial] == mail
+    assert starship.mail_bundles[mail.serial] == mail
     with pytest.raises(ValueError,
                        match="Starship mail locker size exceeded."):
         for _ in range(6):
@@ -175,7 +186,7 @@ def test_offload_mail(test_ship_data, setup_gamestate):
     mail = T5Mail("Rhylanor", "Jae Tellona", GameState)
     starship.onload_mail(mail)
     starship.offload_mail()
-    assert len(starship.get_mail().keys()) == 0
+    assert len(starship.mail_bundles.keys()) == 0
     with pytest.raises(ValueError,
                        match="Starship has no mail to offload."):
         starship.offload_mail()
@@ -208,29 +219,25 @@ def test_onload_lot(test_ship_data, setup_gamestate):
     starship = get_me_a_starship("Steamboat", "Rhylanor", test_ship_data)
     lot = T5Lot("Rhylanor", GameState)
     lot.mass = 5000  # tons
-    with pytest.raises(TypeError, match="Invalid lot type."):
+    with pytest.raises(TypeError):
         starship.onload_lot("a string", "cargo")
-    with pytest.raises(ValueError, match="Invalid lot value."):
+    with pytest.raises(InvalidLotTypeError):
         starship.onload_lot(lot, "your mom")
-    with pytest.raises(ValueError,
-                       match="Lot will not fit in remaining space."):
+    with pytest.raises(CapacityExceededError):
         starship.onload_lot(lot, "cargo")
     lot.mass = 5  # tons
     starship.onload_lot(lot, "freight")
-    assert lot in starship.get_cargo()["freight"]
-    with pytest.raises(ValueError,
-                       match="Attempt to load same lot twice."):
+    assert lot in starship.cargo_manifest["freight"]
+    with pytest.raises(DuplicateItemError):
         starship.onload_lot(lot, "freight")
-    with pytest.raises(ValueError,
-                       match="Attempt to load same lot twice."):
+    with pytest.raises(DuplicateItemError):
         starship.onload_lot(lot, "cargo")
     lot2 = T5Lot("Rhylanor", GameState)
     lot2.mass = 5  # tons
     starship.onload_lot(lot2, "cargo")
-    assert lot2 in starship.get_cargo()["cargo"]
+    assert lot2 in starship.cargo_manifest["cargo"]
     lot3 = T5Lot("Rhylanor", GameState)
-    with pytest.raises(ValueError,
-                       match="Lot will not fit in remaining space."):
+    with pytest.raises(CapacityExceededError):
         starship.onload_lot(lot3, "cargo")
 
 
@@ -243,21 +250,21 @@ def test_offload_lot(test_ship_data, setup_gamestate):
     lot2 = T5Lot("Rhylanor", GameState)
     lot2.mass = 5
     starship.onload_lot(lot2, "cargo")
-    assert lot in starship.get_cargo()["cargo"]
+    assert lot in starship.cargo_manifest["cargo"]
     with pytest.raises(ValueError, match="Invalid lot serial number."):
         starship.offload_lot("your mom", "cargo")
-    with pytest.raises(ValueError, match="Invalid lot value."):
+    with pytest.raises(InvalidLotTypeError):
         starship.offload_lot(lot.serial, "your mom")
     with pytest.raises(ValueError, match="Lot not found as specified type."):
         starship.offload_lot(lot.serial, "freight")
     lot3 = starship.offload_lot(lot.serial, "cargo")
     is_still_there = any(
         lotIndex.serial ==
-        lot3.serial for lotIndex in starship.get_cargo()["cargo"]
+        lot3.serial for lotIndex in starship.cargo_manifest["cargo"]
     )
     assert lot.serial == lot3.serial
     assert not is_still_there
-    assert len(starship.get_cargo()["cargo"]) == 1
+    assert len(starship.cargo_manifest["cargo"]) == 1
 
 
 @pytest.fixture
@@ -319,9 +326,9 @@ def test_debit_negative_amount(crewed_ship):
 
 
 def test_debit_insufficient_funds(crewed_ship):
-    """Verify debiting more than balance raises ValueError."""
+    """Verify debiting more than balance raises InsufficientFundsError."""
     crewed_ship.credit(50)
-    with pytest.raises(ValueError):
+    with pytest.raises(InsufficientFundsError):
         crewed_ship.debit(100)
 
 
@@ -360,7 +367,7 @@ def test_can_onload_rejects_invalid_lot_type(crewed_ship, setup_gamestate):
     """Verify invalid lot category raises ValueError."""
     lot = T5Lot("Rhylanor", GameState)
     lot.mass = 5
-    with pytest.raises(ValueError, match="Invalid lot value."):
+    with pytest.raises(InvalidLotTypeError):
         crewed_ship.can_onload_lot(lot, "contraband")
 
 
@@ -368,7 +375,7 @@ def test_can_onload_rejects_over_capacity(crewed_ship, setup_gamestate):
     """Verify oversized lot raises ValueError."""
     lot = T5Lot("Rhylanor", GameState)
     lot.mass = 150
-    with pytest.raises(ValueError, match="Lot will not fit"):
+    with pytest.raises(CapacityExceededError):
         crewed_ship.can_onload_lot(lot, "cargo")
 
 
@@ -377,7 +384,7 @@ def test_can_onload_rejects_duplicate_lot(crewed_ship, setup_gamestate):
     lot = T5Lot("Rhylanor", GameState)
     lot.mass = 5
     crewed_ship.cargo["cargo"].append(lot)
-    with pytest.raises(ValueError, match="load same lot twice"):
+    with pytest.raises(DuplicateItemError):
         crewed_ship.can_onload_lot(lot, "cargo")
 
 
@@ -408,7 +415,7 @@ def test_high_passenger_capacity_limit(test_ship_data, setup_gamestate):
 
     # Third high passenger should fail
     passenger3 = T5NPC("High Roller 3")
-    with pytest.raises(ValueError, match="has only 2 staterooms"):
+    with pytest.raises(CapacityExceededError):
         ship.onload_passenger(passenger3, "high")
 
 
@@ -425,7 +432,7 @@ def test_mid_passenger_capacity_limit(test_ship_data, setup_gamestate):
 
     # Third mid passenger should fail
     passenger3 = T5NPC("Mid Traveler 3")
-    with pytest.raises(ValueError, match="has only 2 staterooms"):
+    with pytest.raises(CapacityExceededError):
         ship.onload_passenger(passenger3, "mid")
 
 
@@ -444,11 +451,11 @@ def test_high_and_mid_passengers_share_staterooms(
 
     # No more staterooms available
     another_high = T5NPC("Another VIP")
-    with pytest.raises(ValueError, match="has only 2 staterooms"):
+    with pytest.raises(CapacityExceededError):
         ship.onload_passenger(another_high, "high")
 
     another_mid = T5NPC("Another Traveler")
-    with pytest.raises(ValueError, match="has only 2 staterooms"):
+    with pytest.raises(CapacityExceededError):
         ship.onload_passenger(another_mid, "mid")
 
 
@@ -464,7 +471,7 @@ def test_low_passenger_capacity_limit(test_ship_data, setup_gamestate):
 
     # 51st should fail
     extra_passenger = T5NPC("One Too Many")
-    with pytest.raises(ValueError, match="has only 50 low berths"):
+    with pytest.raises(CapacityExceededError):
         ship.onload_passenger(extra_passenger, "low")
 
 
@@ -492,7 +499,7 @@ def test_ship_with_no_low_berths(test_ship_data, setup_gamestate):
     ship = T5Starship("No Budget", "Rhylanor", ship_class)
 
     passenger = T5NPC("Hopeful Budget Traveler")
-    with pytest.raises(ValueError, match="has only 0 low berths"):
+    with pytest.raises(CapacityExceededError):
         ship.onload_passenger(passenger, "low")
 
 
@@ -741,7 +748,7 @@ def test_sell_cargo_lot_without_trader(test_ship_data, setup_test_gamestate):
     assert result['modifier'] == pytest.approx(1.2)
 
     # Verify lot was removed from cargo
-    assert lot not in ship.get_cargo()["cargo"]
+    assert lot not in ship.cargo_manifest["cargo"]
 
     # Verify balance increased
     assert ship.balance > initial_balance
@@ -778,7 +785,7 @@ def test_sell_cargo_lot_with_trader(test_ship_data, setup_test_gamestate):
     assert 'max_multiplier' in result['flux_info']
 
     # Verify lot was removed
-    assert lot not in ship.get_cargo()["cargo"]
+    assert lot not in ship.cargo_manifest["cargo"]
 
 
 def test_sell_cargo_lot_not_in_hold(test_ship_data, setup_test_gamestate):
@@ -818,7 +825,7 @@ def test_buy_cargo_lot(test_ship_data, setup_test_gamestate):
     assert ship.balance == initial_balance - cost
 
     # Verify lot is in cargo
-    assert lot in ship.get_cargo()["cargo"]
+    assert lot in ship.cargo_manifest["cargo"]
 
 
 def test_buy_cargo_lot_insufficient_funds(
@@ -837,11 +844,11 @@ def test_buy_cargo_lot_insufficient_funds(
     lot = T5Lot("Rhylanor", game_state)
     lot.mass = 500  # Very expensive
 
-    with pytest.raises(ValueError, match="Insufficient funds"):
+    with pytest.raises(InsufficientFundsError):
         ship.buy_cargo_lot(lot)
 
     # Verify lot is NOT in cargo
-    assert lot not in ship.get_cargo()["cargo"]
+    assert lot not in ship.cargo_manifest["cargo"]
 
 
 def test_buy_cargo_lot_rollback_on_capacity_error(
@@ -857,9 +864,11 @@ def test_buy_cargo_lot_rollback_on_capacity_error(
     lot = T5Lot("Rhylanor", game_state)
     lot.mass = 1000  # Too big for small ship
 
+    # Give ship enough money to buy
+    ship.credit(lot.origin_value * lot.mass + 1000000)
     initial_balance = ship.balance
 
-    with pytest.raises(ValueError):
+    with pytest.raises(CapacityExceededError):
         ship.buy_cargo_lot(lot)
 
     # Balance should be unchanged (rolled back)
@@ -888,7 +897,7 @@ def test_load_freight_lot(test_ship_data, setup_test_gamestate):
     assert ship.balance == initial_balance + payment
 
     # Verify lot is in freight
-    assert lot in ship.get_cargo()["freight"]
+    assert lot in ship.cargo_manifest["freight"]
 
 
 def test_load_freight_lot_no_capacity(test_ship_data, setup_test_gamestate):
@@ -904,7 +913,7 @@ def test_load_freight_lot_no_capacity(test_ship_data, setup_test_gamestate):
 
     initial_balance = ship.balance
 
-    with pytest.raises(ValueError):
+    with pytest.raises(CapacityExceededError):
         ship.load_freight_lot(lot)
 
     # Balance should be unchanged
@@ -926,8 +935,8 @@ def test_load_mail(test_ship_data, setup_test_gamestate):
     assert mail_lot.destination_name == "Jae Tellona"
 
     # Verify mail is on ship
-    assert len(ship.get_mail()) == 1
-    assert mail_lot in ship.get_mail().values()
+    assert len(ship.mail_bundles) == 1
+    assert mail_lot in ship.mail_bundles.values()
 
 
 def test_sell_cargo_lot_world_not_found(test_ship_data, setup_test_gamestate):
@@ -948,7 +957,7 @@ def test_sell_cargo_lot_world_not_found(test_ship_data, setup_test_gamestate):
     empty_game_state = EmptyGameState()
 
     # Attempt to sell cargo at non-existent world should raise ValueError
-    with pytest.raises(ValueError, match="World NonExistentWorld not found"):
+    with pytest.raises(WorldNotFoundError):
         ship.sell_cargo_lot(lot, empty_game_state, use_trader_skill=False)
 
 
@@ -966,16 +975,21 @@ def test_buy_cargo_lot_rollback_preserves_balance(
     # Create a lot
     lot = T5Lot("Rhylanor", game_state)
 
-    # Mock onload_lot to raise ValueError (simulating capacity error)
+    # Mock onload_lot to raise CapacityExceededError
+    # (simulating capacity error)
     original_onload = ship.onload_lot
 
     def mock_onload_error(lot, lot_type):
-        raise ValueError("Simulated capacity error")
+        raise CapacityExceededError(
+            required=100,
+            available=50,
+            capacity_type="cargo hold")
 
     ship.onload_lot = mock_onload_error
 
-    # Attempt to buy cargo that will fail to load should raise ValueError
-    with pytest.raises(ValueError):
+    # Attempt to buy cargo that will fail to load
+    # should raise CapacityExceededError
+    with pytest.raises(CapacityExceededError):
         ship.buy_cargo_lot(lot)
 
     # Restore original method
@@ -1032,14 +1046,15 @@ def test_is_hold_mostly_full_custom_threshold(
 
 
 def test_is_hold_mostly_full_invalid_threshold(test_ship_data):
-    """Test is_hold_mostly_full raises ValueError for invalid threshold."""
+    """Test is_hold_mostly_full raises
+    InvalidThresholdError for invalid threshold."""
     ship_class = T5ShipClass("large", test_ship_data["large"])
     ship = T5Starship("Merchant", "Rhylanor", ship_class)
 
-    with pytest.raises(ValueError, match="Threshold must be between 0 and 1"):
+    with pytest.raises(InvalidThresholdError):
         ship.is_hold_mostly_full(threshold=-0.1)
 
-    with pytest.raises(ValueError, match="Threshold must be between 0 and 1"):
+    with pytest.raises(InvalidThresholdError):
         ship.is_hold_mostly_full(threshold=1.5)
 
 
@@ -1053,7 +1068,7 @@ def test_execute_jump(test_ship_data):
 
     # Verify final state
     assert ship.location == "Jae Tellona"
-    assert ship.destination() == "Jae Tellona"
+    assert ship.destination == "Jae Tellona"
     assert ship.status == "docked"
 
 
@@ -1080,7 +1095,7 @@ def test_offload_all_freight_empty_hold(test_ship_data):
     offloaded = ship.offload_all_freight()
 
     assert len(offloaded) == 0
-    assert len(list(ship.get_cargo().get("freight", []))) == 0
+    assert len(list(ship.cargo_manifest.get("freight", []))) == 0
 
 
 def test_offload_all_freight_with_lots(test_ship_data, setup_test_gamestate):
@@ -1103,7 +1118,7 @@ def test_offload_all_freight_with_lots(test_ship_data, setup_test_gamestate):
     ship.onload_lot(lot3, "freight")
 
     # Verify freight is loaded
-    assert len(list(ship.get_cargo().get("freight", []))) == 3
+    assert len(list(ship.cargo_manifest.get("freight", []))) == 3
     assert ship.cargo_size == 45
 
     # Offload all freight
@@ -1111,7 +1126,7 @@ def test_offload_all_freight_with_lots(test_ship_data, setup_test_gamestate):
 
     # Verify all freight was offloaded
     assert len(offloaded) == 3
-    assert len(list(ship.get_cargo().get("freight", []))) == 0
+    assert len(list(ship.cargo_manifest.get("freight", []))) == 0
     assert ship.cargo_size == 0
 
     # Verify returned list contains the correct lots
@@ -1139,8 +1154,8 @@ def test_offload_all_freight_leaves_cargo(
     ship.onload_lot(cargo_lot, "cargo")
 
     # Verify both are loaded
-    assert len(list(ship.get_cargo().get("freight", []))) == 1
-    assert len(list(ship.get_cargo().get("cargo", []))) == 1
+    assert len(list(ship.cargo_manifest.get("freight", []))) == 1
+    assert len(list(ship.cargo_manifest.get("cargo", []))) == 1
     assert ship.cargo_size == 15
 
     # Offload all freight
@@ -1148,6 +1163,6 @@ def test_offload_all_freight_leaves_cargo(
 
     # Verify only freight was offloaded
     assert len(offloaded) == 1
-    assert len(list(ship.get_cargo().get("freight", []))) == 0
-    assert len(list(ship.get_cargo().get("cargo", []))) == 1
+    assert len(list(ship.cargo_manifest.get("freight", []))) == 0
+    assert len(list(ship.cargo_manifest.get("cargo", []))) == 1
     assert ship.cargo_size == 5

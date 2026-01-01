@@ -10,18 +10,18 @@ from t5code.T5Basics import check_success
 from t5code.T5Lot import T5Lot
 from t5code.T5NPC import T5NPC
 from t5code.T5ShipClass import T5ShipClass
+from t5code.T5Exceptions import (
+    InsufficientFundsError,
+    CapacityExceededError,
+    InvalidPassageClassError,
+    DuplicateItemError,
+    WorldNotFoundError,
+    InvalidLotTypeError,
+    InvalidThresholdError,
+)
 
 if TYPE_CHECKING:
     from t5code.T5Mail import T5Mail
-
-INVALID_PASSENGER_CLASS_ERROR = "Invalid passenger class."
-INVALID_CREW_POSITION_ERROR = "Invalid crew position."
-
-
-class DuplicateItemError(Exception):
-    """Custom exception for duplicate set items."""
-
-    pass
 
 
 class _BestCrewSkillDict:
@@ -74,42 +74,68 @@ class T5Starship:
 
         # Navigation
         # Destination world assigned when a flight plan is set
-        self.destination_world: str = "Unassigned"
+        self._destination: str = "Unassigned"
         # Financials # in credits (millions, thousands — your scale)
         self._balance: float = 0.0
 
     def set_course_for(self, destination: str) -> None:
-        self.destination_world = destination
+        """Set the ship's destination.
 
+        Args:
+            destination: Name of the destination world
+        """
+        self._destination = destination
+
+    @property
     def destination(self) -> str:
-        return self.destination_world
+        """Current destination world name.
+
+        Returns:
+            Name of the destination world, or 'Unassigned' if no course is set
+        """
+        return self._destination
 
     def onload_passenger(self, npc: T5NPC, passage_class: str) -> None:
-        if not (isinstance(npc, T5NPC)):
+        """Load a passenger onto the ship.
+
+        Args:
+            npc: The NPC passenger to load
+            passage_class: Passage class ('high', 'mid', or 'low')
+
+        Raises:
+            TypeError: If npc is not a T5NPC instance
+            InvalidPassageClassError: If passage_class is invalid
+            DuplicateItemError: If passenger is already on board
+            CapacityExceededError: If no capacity available
+        """
+        if not isinstance(npc, T5NPC):
             raise TypeError("Invalid passenger type.")
-        ALLOWED_PASSAGE_CLASSES = ["high", "mid", "low"]
+
+        ALLOWED_PASSAGE_CLASSES = ("high", "mid", "low")
         if passage_class not in ALLOWED_PASSAGE_CLASSES:
-            raise ValueError(INVALID_PASSENGER_CLASS_ERROR)
+            raise InvalidPassageClassError(
+                passage_class,
+                ALLOWED_PASSAGE_CLASSES)
+
         if npc in self.passengers["all"]:
-            error_result = "Cannot load same passenger " + \
-                f"{npc.character_name} twice."
-            raise DuplicateItemError(error_result)
+            raise DuplicateItemError(npc.character_name, "passenger")
 
         # Check capacity - high and mid use staterooms, low uses low berths
         if passage_class in ["high", "mid"]:
             stateroom_passengers = (len(self.passengers["high"])
                                     + len(self.passengers["mid"]))
             if stateroom_passengers >= self.staterooms:
-                raise ValueError(
-                    f"Ship has only {self.staterooms} staterooms. "
-                    f"Already occupied by {stateroom_passengers} passengers."
+                raise CapacityExceededError(
+                    required=1,
+                    available=self.staterooms - stateroom_passengers,
+                    capacity_type="staterooms"
                 )
         elif passage_class == "low":
             if len(self.passengers["low"]) >= self.low_berths:
-                raise ValueError(
-                    f"Ship has only {self.low_berths} low berths. "
-                    "Already occupied by "
-                    f"{len(self.passengers['low'])} passengers."
+                raise CapacityExceededError(
+                    required=1,
+                    available=self.low_berths - len(self.passengers["low"]),
+                    capacity_type="low berths"
                 )
 
         self.passengers["all"].add(npc)
@@ -117,11 +143,24 @@ class T5Starship:
         npc.location = self.ship_name
 
     def offload_passengers(self, passage_class: str) -> Set[T5NPC]:
+        """Offload all passengers of a specific class.
+
+        Args:
+            passage_class: Passage class to offload ('high', 'mid', or 'low')
+
+        Returns:
+            Set of offloaded NPC passengers
+
+        Raises:
+            InvalidPassageClassError: If passage_class is invalid
+        """
         offloaded_passengers: Set[T5NPC] = set()
-        allowed_passage_classes = {"high", "mid", "low"}
+        allowed_passage_classes = ("high", "mid", "low")
 
         if passage_class not in allowed_passage_classes:
-            raise ValueError(INVALID_PASSENGER_CLASS_ERROR)
+            raise InvalidPassageClassError(
+                passage_class,
+                allowed_passage_classes)
 
         for npc in set(self.passengers[passage_class]):
             if passage_class == "low":
@@ -157,14 +196,26 @@ class T5Starship:
             raise ValueError("Starship has no mail to offload.")
         self.mail = {}
 
-    def get_mail(self) -> Dict[str, "T5Mail"]:
+    @property
+    def mail_bundles(self) -> Dict[str, "T5Mail"]:
+        """Dictionary of mail bundles currently on board.
+
+        Returns:
+            Dict mapping mail serial numbers to T5Mail objects
+        """
         return self.mail
 
     def hire_crew(self, position: str, npc: T5NPC) -> None:
-        ALLOWED_CREW_POSITIONS = ["medic", "crew1", "crew2", "crew3"]
-        if position not in ALLOWED_CREW_POSITIONS:
-            raise ValueError("Invalid crew position.")
-        if not (isinstance(npc, T5NPC)):
+        """Hire a crew member for a specific position.
+
+        Args:
+            position: Crew position identifier
+            npc: The NPC to hire
+
+        Raises:
+            TypeError: If npc is not a T5NPC instance
+        """
+        if not isinstance(npc, T5NPC):
             raise TypeError("Invalid NPC.")
         self.crew[position] = npc
 
@@ -172,20 +223,39 @@ class T5Starship:
     def best_crew_skill(self):
         return _BestCrewSkillDict(self.crew)
 
-    ALLOWED_LOT_TYPES = {"cargo", "freight"}
+    ALLOWED_LOT_TYPES = ("cargo", "freight")
 
     def can_onload_lot(self, in_lot: T5Lot, lot_type: str) -> bool:
+        """Check if a lot can be loaded onto the ship.
+
+        Args:
+            in_lot: The lot to check
+            lot_type: Type of lot ('cargo' or 'freight')
+
+        Returns:
+            True if lot can be loaded
+
+        Raises:
+            TypeError: If in_lot is not a T5Lot instance
+            InvalidLotTypeError: If lot_type is invalid
+            CapacityExceededError: If lot won't fit
+            DuplicateItemError: If lot is already loaded
+        """
         if not isinstance(in_lot, T5Lot):
             raise TypeError("Invalid lot type.")
 
         if lot_type not in self.ALLOWED_LOT_TYPES:
-            raise ValueError("Invalid lot value.")
+            raise InvalidLotTypeError(lot_type, self.ALLOWED_LOT_TYPES)
 
         if in_lot.mass + self.cargo_size > self.hold_size:
-            raise ValueError("Lot will not fit in remaining space.")
+            raise CapacityExceededError(
+                required=in_lot.mass,
+                available=self.hold_size - self.cargo_size,
+                capacity_type="cargo hold"
+            )
 
         if in_lot in self.cargo["freight"] or in_lot in self.cargo["cargo"]:
-            raise ValueError("Attempt to load same lot twice.")
+            raise DuplicateItemError(in_lot.serial, "lot")
 
         return True  # explicitly returns True if all checks pass
 
@@ -200,7 +270,7 @@ class T5Starship:
         except ValueError:
             raise ValueError("Invalid lot serial number.")
         if not ((lot_type == "cargo") or (lot_type == "freight")):
-            raise ValueError("Invalid lot value.")
+            raise InvalidLotTypeError(lot_type, self.ALLOWED_LOT_TYPES)
         result = next((lot for lot in self.cargo[
             lot_type] if lot.serial == in_serial), None)
 
@@ -211,7 +281,14 @@ class T5Starship:
             self.cargo_size -= result.mass
             return result
 
-    def get_cargo(self):
+    @property
+    def cargo_manifest(self) -> Dict[str, List[T5Lot]]:
+        """Dictionary of cargo and freight lots currently on board.
+
+        Returns:
+            Dict with 'cargo' and 'freight'
+            keys mapping to lists of T5Lot objects
+        """
         return self.cargo
 
     @property
@@ -227,13 +304,24 @@ class T5Starship:
         self._balance += amount
 
     def debit(self, amount):
-        """Subtract money from the ship's balance."""
+        """Subtract money from the ship's balance.
+
+        Args:
+            amount: Amount of credits to debit
+
+        Raises:
+            TypeError: If amount is not a number
+            ValueError: If amount is negative
+            InsufficientFundsError: If insufficient funds available
+        """
         if not isinstance(amount, (int, float)):
             raise TypeError("Amount must be a number")
         if amount < 0:
             raise ValueError("Cannot debit a negative amount")
         if amount > self._balance:
-            raise ValueError("Insufficient funds")
+            raise InsufficientFundsError(
+                required=amount,
+                available=self._balance)
         self._balance -= amount
 
     def load_passengers(self, world) -> Dict[str, int]:
@@ -332,22 +420,24 @@ class T5Starship:
                 'purchase_cost': Original purchase cost
                 'modifier': Final price multiplier
                 'flux_info': Dict with flux details
-                  if trader skill used, else None
+                if trader skill used, else None
 
         Raises:
             ValueError: If lot is not in cargo hold
+            WorldNotFoundError: If current location
+            world not found in game data
         """
         from t5code import find_best_broker
         from t5code.T5Tables import ACTUAL_VALUE
 
         # Verify lot is in cargo
-        if lot not in self.get_cargo()["cargo"]:
+        if lot not in self.cargo_manifest["cargo"]:
             raise ValueError(f"Lot {lot.serial} is not in cargo hold")
 
         # Get world
         world = game_state.world_data.get(self.location)
         if not world:
-            raise ValueError(f"World {self.location} not found")
+            raise WorldNotFoundError(self.location)
 
         # Get broker info
         broker = find_best_broker(world.get_starport())
@@ -414,18 +504,21 @@ class T5Starship:
         """Purchase and load a speculative cargo lot.
 
         Debits the ship's balance and loads the lot into cargo hold.
+        If loading fails (e.g., capacity exceeded), the debit is rolled back.
 
         Args:
             lot: The cargo lot to purchase
 
         Raises:
-            ValueError: If insufficient funds or hold space
+            InsufficientFundsError: If insufficient funds for purchase
+            CapacityExceededError: If insufficient hold space
+            DuplicateItemError: If lot is already loaded
         """
         cost = lot.origin_value * lot.mass
         self.debit(cost)
         try:
             self.onload_lot(lot, "cargo")
-        except ValueError:
+        except (CapacityExceededError, DuplicateItemError):
             # Rollback debit if loading fails
             self.credit(cost)
             raise
@@ -472,13 +565,17 @@ class T5Starship:
         """Check if cargo hold is at or above a threshold percentage.
 
         Args:
-            threshold: Percentage of hold capacity (default 0.8 = 80%)
+            threshold: Percentage of hold capacity (0.0-1.0).
+            Default is 0.8 (80%).
 
         Returns:
             True if cargo_size >= threshold * hold_size, False otherwise
+
+        Raises:
+            InvalidThresholdError: If threshold is not between 0 and 1
         """
         if threshold < 0 or threshold > 1:
-            raise ValueError("Threshold must be between 0 and 1")
+            raise InvalidThresholdError(threshold, 0.0, 1.0)
         return self.cargo_size >= threshold * self.hold_size
 
     def execute_jump(self, destination: str) -> None:
@@ -499,7 +596,7 @@ class T5Starship:
         # Ship is now maneuvering to jump point
         self.status = "traveling"
         # Ship is now jumping
-        self.location = self.destination()
+        self.location = self.destination
         self.status = "maneuvering"
         # Ship is now maneuvering to starport
         self.status = "docked"
@@ -511,7 +608,7 @@ class T5Starship:
         Returns:
             List of offloaded freight lots
         """
-        freight_lots = list(self.get_cargo().get("freight", []))
+        freight_lots = list(self.cargo_manifest.get("freight", []))
         for lot in freight_lots:
             self.offload_lot(lot.serial, "freight")
         return freight_lots

@@ -10,6 +10,16 @@ from .T5Basics import (
     tech_level_to_letter,
     roll_flux,
 )
+from .T5Exceptions import (
+    T5Error,
+    InsufficientFundsError,
+    CapacityExceededError,
+    InvalidPassageClassError,
+    DuplicateItemError,
+    WorldNotFoundError,
+    InvalidLotTypeError,
+    InvalidThresholdError,
+)
 from .T5Lot import T5Lot
 from .T5Mail import T5Mail
 from .T5NPC import T5NPC
@@ -34,12 +44,23 @@ from .T5Tables import (
 from .T5World import T5World, find_best_broker
 
 __all__ = [
+    # Core classes
     "T5Lot",
     "T5Mail",
     "T5NPC",
     "T5ShipClass",
     "T5Starship",
     "T5World",
+    # Exceptions
+    "T5Error",
+    "InsufficientFundsError",
+    "CapacityExceededError",
+    "InvalidPassageClassError",
+    "DuplicateItemError",
+    "WorldNotFoundError",
+    "InvalidLotTypeError",
+    "InvalidThresholdError",
+    # Functions
     "letter_to_tech_level",
     "tech_level_to_letter",
     "check_success",
