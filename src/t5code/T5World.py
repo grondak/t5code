@@ -92,10 +92,10 @@ class T5World:
 
     def high_passenger_availability(self, steward_skill: int) -> int:
         """Determine number of available high passengers.
-        
+
         Args:
             steward_skill: Steward skill modifier
-            
+
         Returns:
             Number of high passengers available (Cr10,000 each)
         """
@@ -106,10 +106,10 @@ class T5World:
 
     def mid_passenger_availability(self, admin_skill: int) -> int:
         """Determine number of available mid passengers.
-        
+
         Args:
             admin_skill: Admin skill modifier
-            
+
         Returns:
             Number of mid passengers available (Cr8,000 each)
         """
@@ -120,10 +120,10 @@ class T5World:
 
     def low_passenger_availability(self, streetwise_skill: int) -> int:
         """Determine number of available low passengers.
-        
+
         Args:
             streetwise_skill: Streetwise skill modifier
-            
+
         Returns:
             Number of low passengers available (Cr1,000 each)
         """

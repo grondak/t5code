@@ -236,14 +236,14 @@ def test_generate_speculative_cargo_realistic_scenario():
 def test_high_passenger_availability():
     """Test high passenger availability with Steward skill."""
     world = T5World("Earth", test_world_data)
-    
+
     # Multiple rolls to test variation
-    results = [world.high_passenger_availability(steward_skill=0) 
+    results = [world.high_passenger_availability(steward_skill=0)
                for _ in range(10)]
-    
+
     # Should have variation (not all the same)
     assert len(set(results)) > 1
-    
+
     # All results should be non-negative
     assert all(r >= 0 for r in results)
 
@@ -251,14 +251,14 @@ def test_high_passenger_availability():
 def test_mid_passenger_availability():
     """Test mid passenger availability with Admin skill."""
     world = T5World("Earth", test_world_data)
-    
+
     # Multiple rolls to test variation
-    results = [world.mid_passenger_availability(admin_skill=0) 
+    results = [world.mid_passenger_availability(admin_skill=0)
                for _ in range(10)]
-    
+
     # Should have variation (not all the same)
     assert len(set(results)) > 1
-    
+
     # All results should be non-negative
     assert all(r >= 0 for r in results)
 
@@ -266,14 +266,14 @@ def test_mid_passenger_availability():
 def test_low_passenger_availability():
     """Test low passenger availability with Streetwise skill."""
     world = T5World("Earth", test_world_data)
-    
+
     # Multiple rolls to test variation
-    results = [world.low_passenger_availability(streetwise_skill=0) 
+    results = [world.low_passenger_availability(streetwise_skill=0)
                for _ in range(10)]
-    
+
     # Should have variation (not all the same)
     assert len(set(results)) > 1
-    
+
     # All results should be non-negative
     assert all(r >= 0 for r in results)
 
@@ -281,32 +281,31 @@ def test_low_passenger_availability():
 def test_passenger_availability_with_skills():
     """Test that higher skills increase passenger availability."""
     world = T5World("Earth", test_world_data)
-    
+
     # Test with and without skills (use multiple samples)
     no_skill_high = [world.high_passenger_availability(0) for _ in range(20)]
     with_skill_high = [world.high_passenger_availability(3) for _ in range(20)]
-    
+
     # Average with skill should be higher (skill adds 3 to each roll)
     assert sum(with_skill_high) / len(with_skill_high) > \
-           sum(no_skill_high) / len(no_skill_high)
+        sum(no_skill_high) / len(no_skill_high)
 
 
 def test_passenger_availability_formula():
     """Test passenger availability uses Flux + Population + Skill."""
     world = T5World("Mars", test_world_data)  # Pop 2
-    
+
     # With 0 skill, result should be Flux (range -5 to +5) + Pop (2)
     # So range is -3 to 7, but clamped to 0 minimum
     results = [world.high_passenger_availability(0) for _ in range(50)]
-    
+
     # Maximum possible: 5 (max flux) + 2 (pop) = 7
     assert max(results) <= 7
-    
+
     # Minimum: 0 (negative results clamped)
     assert min(results) >= 0
-    
+
     # With skill +5, max should be 5 + 2 + 5 = 12
     skilled_results = [world.high_passenger_availability(5) for _ in range(50)]
     assert max(skilled_results) <= 12
     assert max(skilled_results) > 7  # Should exceed no-skill maximum
-

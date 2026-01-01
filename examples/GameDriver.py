@@ -416,10 +416,11 @@ def search_and_load_passengers(ship: T5Starship, gd: GameDriver) -> None:
     mid_available = world.mid_passenger_availability(admin_skill)
     low_available = world.low_passenger_availability(streetwise_skill)
 
-    print(f"\n  Passenger availability (Flux + Pop + Skill):")
+    print("\n  Passenger availability (Flux + Pop + Skill):")
     print(f"    High: {high_available} available (Steward: {steward_skill})")
     print(f"    Mid: {mid_available} available (Admin: {admin_skill})")
-    print(f"    Low: {low_available} available (Streetwise: {streetwise_skill})")
+    print(
+        f"    Low: {low_available} available (Streetwise: {streetwise_skill})")
 
     # Load high passengers (limited by availability AND ship capacity)
     high_to_load = min(high_available, available_staterooms)
@@ -550,7 +551,7 @@ def main() -> None:
     # phase C: load passengers
     search_and_load_passengers(ship, gd)
 
-    # phase 
+    # phase
 
     print("End simulation version 0.5")
 
