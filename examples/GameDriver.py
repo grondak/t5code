@@ -60,15 +60,17 @@ def setup_departure(origin: str, gd: GameDriver) -> T5Starship:
 
 
 def perform_arrival(ship: T5Starship) -> None:
-    """Offload passengers, mail, and cargo at destination."""
+    """Offload passengers and mail at destination."""
     for p in ship.offload_passengers("high"):
         print(f"Offloaded high passenger: {p.character_name}")
-    for p in ship.offload_passengers("mid"):
-        print(f"Offloaded mid passenger: {p.character_name}")
-    for p in ship.offload_passengers("low"):
-        print(f"Offloaded low passenger: {p.character_name}")
+    print("Offloaded mail.")
     ship.offload_mail()
     print(f"Mail locker now has {len(ship.get_mail())} bundles")
+    for p in ship.offload_passengers("mid"):
+        print(f"Offloaded mid passenger: {p.character_name}")
+    offload_freight(ship)
+    for p in ship.offload_passengers("low"):
+        print(f"Offloaded low passenger: {p.character_name}")
 
 
 def sell_cargo(ship: T5Starship, gd: GameDriver) -> None:
@@ -120,8 +122,8 @@ def _try_onload_freight_lot(ship: T5Starship, lot: T5Lot) -> bool:
         raise
 
 
-def _report_cargo_status(ship: T5Starship) -> None:
-    """Print current freight cargo status."""
+def _report_hold_status(ship: T5Starship) -> None:
+    """Print current freight status."""
     ship_freight = list(ship.get_cargo().get("freight", []))
     for lot in ship_freight:
         print(
@@ -142,12 +144,12 @@ def _should_depart(ship: T5Starship) -> bool:
     return False
 
 
-def search_and_load_cargo(ship: T5Starship, gd: GameDriver) -> None:
-    """Search for cargo over multiple days until hold is 80% full."""
+def search_and_load_freight(ship: T5Starship, gd: GameDriver) -> None:
+    """Search for freight over multiple days until hold is 80% full."""
     searching = True
     sim_day = 0
     while searching:
-        print(f"Searching for Freight/Cargo/Mail on Day {sim_day}:")
+        print(f"Searching for freight on Day {sim_day}:")
         world = gd.world_data.get(ship.location)
         if not world:
             print(f"\tWorld {ship.location} not found in data.")
@@ -166,10 +168,24 @@ def search_and_load_cargo(ship: T5Starship, gd: GameDriver) -> None:
         else:
             print("\tNo lot available today.")
 
-        _report_cargo_status(ship)
+        _report_hold_status(ship)
         sim_day += 1
         if _should_depart(ship):
             searching = False
+
+
+def report_ship_status(ship):
+    print(
+        f"Starship {ship.ship_name} now has "
+        f"balance={ship.balance}, "
+        f"cargo_size={ship.cargo_size} with "
+        f"{len(list(ship.get_cargo()['cargo']))} cargo items, "
+        f"{len(list(ship.get_cargo()['freight']))} freight items, "
+        f"({len(list(ship.passengers['high']))} high, "
+        f"{len(list(ship.passengers['mid']))} mid, "
+        f"{len(list(ship.passengers['low']))} low passengers), and "
+        f"{len(ship.get_mail())} mail bundles."
+        )
 
 
 def main() -> None:
@@ -180,40 +196,43 @@ def main() -> None:
 
     # Phase 1: Load ship at origin
     ship = setup_departure(origin, gd)
-    print(
-        f"Before jump: location={ship.location}, "
-        f"destination={dest}, "
-        f"cargo_size={ship.cargo_size}")
+    report_ship_status(ship)
 
     # Phase 2: Jump to destination
     ship.set_course_for(dest)
+    ship.status = "maneuvering"
+    print(f"Starship {ship.ship_name} is maneuvering to {ship.location}"
+          f" jump point to {ship.destination()}...")
+    ship.status = "traveling"
+    print(f"Starship {ship.ship_name} is jumping to "
+          f"{ship.destination()} system "
+          f"from {ship.location}...")
     ship.location = ship.destination()
+    ship.status = "maneuvering"
+    print(f"Starship {ship.ship_name} is maneuvering to "
+          f"{ship.destination()} starport...")
     ship.status = "docked"
-    print(f"Arrived at {ship.location}; performing offload and local business")
+    print(f"Starship {ship.ship_name} arrived at {ship.location} starport; "
+          "performing offload and local business")
 
-    # Phase 3: Offload passengers and mail
+    # Phase A: Offload passengers and mail
     perform_arrival(ship)
 
-    # Phase 4: Sell cargo
+    # Phase B: Sell cargo
     sell_cargo(ship, gd)
 
-    # Phase 5: Offload freight
-    offload_freight(ship)
+    report_ship_status(ship)
 
-    print(
-        f"After port business: balance={ship.balance}, "
-        f"cargo_size={ship.cargo_size}")
-    print(
-        f"Starship {ship.ship_name} now has "
-        f"{len(list(ship.get_cargo()['cargo']))} cargo items on board.")
-    print(
-        f"Starship {ship.ship_name}'s bank account now has Cr{ship.balance}.")
+    dest = "Rhylanor"
+    ship.set_course_for(dest)
+    
+    # Phase D: Search for and load freight until 80% full
+    print(f"Starship {ship.ship_name} preparing for departure from "
+          f"{ship.location} starport bound for {ship.destination()} starport "
+          f"and performing local business")
+    search_and_load_freight(ship, gd)
 
-    # Phase 6: Search for and load cargo until 80% full
-    search_and_load_cargo(ship, gd)
-
-    print(
-        f"Starship {ship.ship_name}'s bank account now has Cr{ship.balance}.")
+    report_ship_status(ship)
     print("End simulation version 0.4")
 
 
