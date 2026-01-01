@@ -323,6 +323,25 @@ def search_and_load_cargo(ship: T5Starship, gd: GameDriver) -> None:
         f"with total mass {ship.cargo_size}.")
 
 
+def search_and_load_mail(ship: T5Starship, gd: GameDriver) -> None:
+    """Search for mail bundles to load onto the ship."""
+    world = gd.world_data.get(ship.location)
+    if not world:
+        print(f"World {ship.location} not found in data.")
+        return
+
+    print(f"Searching for mail at {ship.location} to load onto ship:")
+    try:
+        mail_lot = T5Mail(ship.location, ship.destination(), gd)
+        ship.onload_mail(mail_lot)
+        print(f"\tLoaded mail bundle {mail_lot.serial}.")
+    except ValueError as e:
+        print(f"\tCould not load mail bundle: {e}")
+
+    print(f"\tStarship {ship.ship_name} now has {len(ship.get_mail())} "
+          f"mail bundles on board.")
+
+
 def report_ship_status(ship):
     print(
         f"Starship {ship.ship_name} now has "
@@ -385,6 +404,9 @@ def main() -> None:
 
     # phase D: Load cargo to fill remaining hold space
     search_and_load_cargo(ship, gd)
+
+    # phase D: Load mail
+    search_and_load_mail(ship, gd)
 
     report_ship_status(ship)
 
