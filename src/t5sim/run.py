@@ -45,6 +45,12 @@ def main():
         help="Percentage of ships with 'no speculation'"
         "policy (0.0-1.0, default: 0.0)",
     )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Print detailed status updates during simulation",
+    )
 
     args = parser.parse_args()
 
@@ -65,6 +71,7 @@ def main():
         num_ships=args.ships,
         duration_days=args.days,
         speculate_cargo_pct=1.0 - args.no_speculation,
+        verbose=args.verbose,
     )
 
     print("\n" + "=" * 70)

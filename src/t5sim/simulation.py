@@ -30,6 +30,7 @@ class Simulation:
         duration_days: float = 365.0,
         starting_capital: float = 1_000_000.0,
         speculate_cargo_pct: float = 1.0,
+        verbose: bool = False,
     ):
         """Initialize the simulation.
 
@@ -40,6 +41,7 @@ class Simulation:
             starting_capital: Starting capital per ship in credits
             speculate_cargo_pct: Percentage of ships
                that speculate on cargo (0.0-1.0)
+            verbose: Whether to print detailed status updates during simulation
         """
         self.env = simpy.Environment()
         self.game_state = game_state
@@ -47,6 +49,7 @@ class Simulation:
         self.duration_days = duration_days
         self.starting_capital = starting_capital
         self.speculate_cargo_pct = speculate_cargo_pct
+        self.verbose = verbose
 
         self.agents: List[StarshipAgent] = []
         self.statistics: Dict[str, List[Any]] = {
@@ -198,6 +201,7 @@ def run_simulation(
     num_ships: int = 10,
     duration_days: float = 365.0,
     speculate_cargo_pct: float = 1.0,
+    verbose: bool = False,
 ) -> Dict[str, Any]:
     """Convenience function to run a complete simulation.
 
@@ -208,6 +212,7 @@ def run_simulation(
         duration_days: Simulation duration in days
         speculate_cargo_pct: Percentage of ships that
           speculate on cargo (0.0-1.0)
+        verbose: Whether to print detailed status updates during simulation
 
     Returns:
         Simulation results dictionary
@@ -228,5 +233,6 @@ def run_simulation(
     sim = Simulation(game_state,
                      num_ships=num_ships,
                      duration_days=duration_days,
-                     speculate_cargo_pct=speculate_cargo_pct)
+                     speculate_cargo_pct=speculate_cargo_pct,
+                     verbose=verbose)
     return sim.run()

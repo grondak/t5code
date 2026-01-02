@@ -128,9 +128,29 @@ python -m t5sim.run --ships 5 --days 30
 
 # Full year simulation (50 ships)
 python -m t5sim.run --ships 50 --days 365
+
+# Verbose mode - see detailed ship status at each state transition
+python -m t5sim.run --ships 3 --days 30 --verbose
+
+# No-speculation policy (80% of ships avoid cargo speculation)
+python -m t5sim.run --ships 20 --days 365 --no-speculation 0.8
 ```
 
-Output shows aggregate statistics:
+**Verbose output example:**
+```
+[Day 0.0] Trader_001 at Reacher (DOCKED): balance=Cr1,000,000, 
+  cargo=0 lots (0t), freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+
+Offloading complete
+[Day 0.2] Trader_001 at Reacher (SELLING_CARGO): balance=Cr1,000,000, 
+  cargo=0 lots (0t), freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+
+Trader_001 arrived at Faisal
+[Day 12.2] Trader_001 at Faisal (MANEUVERING_TO_PORT): balance=Cr996,000, 
+  cargo=1 lots (10.0t), freight=1 lots, passengers=(2H/0M/0L), mail=0 bundles
+```
+
+**Aggregate statistics output:**
 ```
 ======================================================================
 SIMULATION RESULTS

@@ -29,7 +29,35 @@ class StarshipAgent:
         simulation: Parent simulation instance
         state: Current starship state
         voyage_count: Number of completed voyages
+        verbose: Whether to print detailed status updates
     """
+
+    def _report_ship_status(self, context: str = ""):
+        """Report current ship status (similar to GameDriver).
+
+        Args:
+            context: Optional context string to print before status
+        """
+        if not self.simulation.verbose:
+            return
+
+        if context:
+            print(f"\n{context}")
+
+        print(
+            f"[Day {self.env.now:.1f}] {self.ship.ship_name} "
+            f"at {self.ship.location} ({self.state.name}): "
+            f"balance=Cr{self.ship.balance:,.0f}, "
+            f"cargo={len(list(self.ship.cargo_manifest.get('cargo', [])))}"
+            "lots "
+            f"({self.ship.cargo_size}t), "
+            f"freight={len(list(self.ship.cargo_manifest.get('freight', [])))}"
+            "lots, "
+            f"passengers=({len(list(self.ship.passengers['high']))}H/"
+            f"{len(list(self.ship.passengers['mid']))}M/"
+            f"{len(list(self.ship.passengers['low']))}L), "
+            f"mail={len(self.ship.mail_bundles)} bundles"
+        )
 
     def __init__(
         self,
@@ -56,8 +84,44 @@ class StarshipAgent:
         self.voyage_count = 0
         self.speculate_cargo = speculate_cargo
 
+        # Report initial status
+        self._report_ship_status(f"{self.ship.ship_name} starting simulation")
+
         # Start the agent's process
         self.process = env.process(self.run())
+
+    def _report_transition(self, old_state: StarshipState) -> None:
+        """Report status after specific state transitions.
+
+        Args:
+            old_state: The state we just completed
+        """
+        if not self.simulation.verbose:
+            return
+
+        if old_state == StarshipState.JUMPING:
+            self._report_ship_status(
+                f"{self.ship.ship_name} arrived at {self.ship.location}")
+        elif old_state == StarshipState.OFFLOADING:
+            self._report_ship_status("Offloading complete")
+        elif old_state == StarshipState.SELLING_CARGO and self.speculate_cargo:
+            self._report_ship_status("Cargo sales complete")
+
+    def _transition_to_next_state(self) -> bool:
+        """Transition to the next state in the state machine.
+
+        Returns:
+            True if transition succeeded, False if stuck (no valid next state)
+        """
+        next_state = get_next_state(self.state)
+        if not next_state:
+            print(f"Warning: {self.ship.ship_name} stuck in {self.state}")
+            return False
+
+        old_state = self.state
+        self.state = next_state
+        self._report_transition(old_state)
+        return True
 
     def run(self):
         """Main SimPy process loop for the starship agent.
@@ -66,16 +130,9 @@ class StarshipAgent:
             SimPy timeout events for state durations
         """
         while True:
-            # Execute state action
             yield from self._execute_state_action()
 
-            # Transition to next state
-            next_state = get_next_state(self.state)
-            if next_state:
-                self.state = next_state
-            else:
-                # No valid transition - shouldn't happen
-                print(f"Warning: {self.ship.ship_name} stuck in {self.state}")
+            if not self._transition_to_next_state():
                 break
 
     def _execute_state_action(self):
