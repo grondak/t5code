@@ -103,9 +103,11 @@ class StarshipAgent:
             self._report_ship_status(
                 f"{self.ship.ship_name} arrived at {self.ship.location}")
         elif old_state == StarshipState.OFFLOADING:
-            self._report_ship_status("Offloading complete")
+            self._report_ship_status(
+                f"{self.ship.ship_name} offloading complete")
         elif old_state == StarshipState.SELLING_CARGO and self.speculate_cargo:
-            self._report_ship_status("Cargo sales complete")
+            self._report_ship_status(
+                f"{self.ship.ship_name} cargo sales complete")
 
     def _transition_to_next_state(self) -> bool:
         """Transition to the next state in the state machine.
