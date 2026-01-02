@@ -39,8 +39,10 @@ def find_best_broker(starport_tier: str) -> Dict[str, Any]:
         >>> print(f"{broker['name']} charges {broker['rate']*100}% fees")
         Master Merchant charges 5.0% fees
     """
+    # Handle invalid/non-standard starport tiers
     if starport_tier not in {"A", "B", "C", "D"}:
-        raise ValueError("Tier must be one of: 'A', 'B', 'C', 'D'")
+        # Default to D tier for non-standard starports (E, X, etc.)
+        starport_tier = "D"
 
     best_name = None
     best_mod = -1
@@ -152,9 +154,16 @@ class T5World:
         """Extract population digit from UWP.
 
         Returns:
-            Population code (0-9+), where higher values indicate more people
+            Population code (0-15), where higher values indicate more people.
+            Handles hex digits (A=10, B=11, etc.)
         """
-        return int(self.uwp()[4:5])
+        pop_char = self.uwp()[4:5]
+        try:
+            # Try standard int conversion first (0-9)
+            return int(pop_char)
+        except ValueError:
+            # Handle hex digits (A-F)
+            return int(pop_char, 16)
 
     TRADE_CODE_MULTIPLIER_TAGS = {
         "Ag",  # Agricultural

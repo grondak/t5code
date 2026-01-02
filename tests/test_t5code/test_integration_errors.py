@@ -27,7 +27,7 @@ class MockGameState:
 def game_state():
     """Create a mock GameState with loaded world and ship data."""
     return MockGameState(
-        map_file="tests/t5_test_map.txt",
+        map_file="tests/test_t5code/t5_test_map.txt",
         ship_classes_file="resources/t5_ship_classes.csv"
     )
 

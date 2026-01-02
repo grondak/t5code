@@ -6,7 +6,7 @@ from t5code.T5RandomTradeGoods import RandomTradeGoodsTable
 
 def test_load_from_json():
     """Test that trade goods can be loaded from JSON file."""
-    json_path = Path(__file__).parent.parent / "resources" / \
+    json_path = Path(__file__).parent.parent.parent / "resources" / \
         "trade_goods_tables.json"
 
     # Load the table
@@ -51,7 +51,7 @@ def test_load_from_json():
 
 def test_json_structure_validation():
     """Test that JSON structure is correctly validated."""
-    json_path = Path(__file__).parent.parent / "resources" / \
+    json_path = Path(__file__).parent.parent.parent / "resources" / \
         "trade_goods_tables.json"
 
     table = RandomTradeGoodsTable.from_json(json_path)

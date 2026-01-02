@@ -14,7 +14,7 @@ def test_destination_is_less_important_than_origin():
     assert "GameState.world_data has not been initialized!" in str(
         excinfo.value)
 
-    MAP_FILE = "tests/t5_test_map.txt"
+    MAP_FILE = "tests/test_t5code/t5_test_map.txt"
     GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(
         MAP_FILE))
     with pytest.raises(Exception) as excinfo:

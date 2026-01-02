@@ -264,8 +264,9 @@ class T5Starship:
         Note:
             Calls npc.kill() if survival roll fails
         """
+        medic_skills = medic.skills if medic else None
         if check_success(roll_override=roll_override_in,
-                         skills_override=medic.skills):
+                         skills_override=medic_skills):
             return True
         else:
             npc.kill()

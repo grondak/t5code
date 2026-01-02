@@ -45,7 +45,7 @@ def test_ship_data():
 @pytest.fixture
 def setup_test_gamestate():
     """Setup GameState for tests that need T5Lot or T5Mail."""
-    MAP_FILE = "tests/t5_test_map.txt"
+    MAP_FILE = "tests/test_t5code/t5_test_map.txt"
     GameState.world_data = T5World.load_all_worlds(
         load_and_parse_t5_map(MAP_FILE))
     return GameState
@@ -53,7 +53,7 @@ def setup_test_gamestate():
 
 @pytest.fixture
 def setup_gamestate():
-    MAP_FILE = "tests/t5_test_map.txt"
+    MAP_FILE = "tests/test_t5code/t5_test_map.txt"
     GameState.world_data = T5World.load_all_worlds(load_and_parse_t5_map(
         MAP_FILE))
 

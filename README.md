@@ -1,19 +1,31 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-228%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-240%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**A Python framework for simulating Traveller 5 starship operations and interstellar trade.**
+**A Python framework for Traveller 5 starship operations and large-scale trade simulation.**
 
-Built for discrete-event simulation of merchant starship operations, trade economics, and passenger transport in the Traveller universe. Features comprehensive world generation, cargo speculation, mail contracts, and crew skill systems.
+This monorepo contains two packages:
+- **t5code**: Core library for T5 mechanics, world generation, trade, and ship operations
+- **t5sim**: Discrete-event simulation engine using SimPy for multi-ship trade networks
+
+Built for realistic simulation of merchant starship operations, trade economics, passenger transport, and interstellar commerce in the Traveller universe.
 
 ---
 
 ## Features
 
-### 🚀 Starship Operations
+### 🎯 Discrete-Event Simulation (t5sim)
+- **SimPy-based simulation** with concurrent multi-ship operations
+- **12-state starship FSM** (DOCKED → OFFLOADING → SELLING_CARGO → LOADING_FREIGHT → ...)
+- **Realistic time modeling** with configurable state durations
+- **Trade route tracking** and profit analysis
+- **Statistics collection** for voyages, sales, and balances
+- **CLI interface** for easy simulation runs
+
+### 🚀 Starship Operations (t5code)
 - **Complete starship management** with cargo holds, passenger berths, and mail lockers
 - **Crew skill system** with position-based skill checks (Pilot, Engineer, Steward, Admin, etc.)
 - **Property-based API** for clean, intuitive access to ship state
@@ -56,8 +68,14 @@ python -m venv .venv
 .venv\Scripts\activate  # Windows
 source .venv/bin/activate  # Linux/Mac
 
-# Install package in editable mode
+# Install core library only
 pip install -e .
+
+# Install with simulation support (includes SimPy)
+pip install -e ".[simulation]"
+
+# Install with all development tools
+pip install -e ".[all]"
 ```
 
 ### Basic Example
@@ -88,6 +106,7 @@ print(f"Balance: Cr{ship.balance:,.0f}")
 
 ### Running the Example Simulation
 
+**Single-ship example:**
 ```bash
 python examples/GameDriver.py
 ```
@@ -102,30 +121,67 @@ Loaded 2 high, 1 mid passengers (Cr19,000)
 Balance: Cr1,045,230
 ```
 
+**Multi-ship discrete-event simulation:**
+```bash
+# Quick test (5 ships, 30 days)
+python -m t5sim.run --ships 5 --days 30
+
+# Full year simulation (50 ships)
+python -m t5sim.run --ships 50 --days 365
+```
+
+Output shows aggregate statistics:
+```
+======================================================================
+SIMULATION RESULTS
+======================================================================
+Total voyages completed: 127
+Total cargo sales: 1,854
+Total profit: Cr45,231,920.00
+
+Average per ship:
+  Voyages: 12.7
+  Profit: Cr4,523,192.00
+
+Top 5 ships by balance:
+  1. Trader_003: Cr5,892,340.00 (15 voyages)
+  2. Trader_007: Cr5,441,220.00 (14 voyages)
+  ...
+```
+
 ---
 
 ## Project Structure
 
 ```
 t5code/
-├── src/t5code/          # Main package
-│   ├── T5Starship.py    # Starship operations (241 statements)
-│   ├── T5World.py       # World generation and trade
-│   ├── T5Lot.py         # Cargo lot mechanics
-│   ├── T5NPC.py         # Character/crew system
-│   ├── T5Mail.py        # Mail contract system
-│   ├── T5ShipClass.py   # Ship design specifications
-│   ├── T5RandomTradeGoods.py  # Trade goods tables
-│   ├── T5Basics.py      # Core game mechanics
-│   ├── T5Tables.py      # Reference tables
-│   ├── T5Exceptions.py  # Custom exception hierarchy
-│   └── GameState.py     # Global game state
-├── tests/               # 228 tests, 100% coverage
+├── src/
+│   ├── t5code/              # Core library (228 tests, 646 statements)
+│   │   ├── T5Starship.py    # Starship operations
+│   │   ├── T5World.py       # World generation and trade
+│   │   ├── T5Lot.py         # Cargo lot mechanics
+│   │   ├── T5NPC.py         # Character/crew system
+│   │   ├── T5Mail.py        # Mail contract system
+│   │   ├── T5ShipClass.py   # Ship design specifications
+│   │   ├── T5RandomTradeGoods.py  # Trade goods tables
+│   │   ├── T5Basics.py      # Core game mechanics
+│   │   ├── T5Tables.py      # Reference tables
+│   │   ├── T5Exceptions.py  # Custom exception hierarchy
+│   │   └── GameState.py     # Global game state
+│   └── t5sim/               # Simulation engine (12 tests, 620 statements)
+│       ├── starship_states.py   # 12-state FSM
+│       ├── starship_agent.py    # SimPy process agent
+│       ├── simulation.py        # Main orchestrator
+│       └── run.py               # CLI interface
+├── tests/
+│   ├── test_t5code/         # 228 tests for core library
+│   └── test_t5sim/          # 12 tests for simulation
 ├── examples/
-│   └── GameDriver.py    # Complete simulation example
-├── resources/           # Game data files
-│   ├── t5_map.txt       # World data
-│   └── t5_ship_classes.csv  # Ship specifications
+│   ├── GameDriver.py        # Single-ship example
+│   └── sim.py              # Simulation example
+├── resources/               # Game data files
+│   ├── t5_map.txt          # World data
+│   └── t5_ship_classes.csv # Ship specifications
 └── README.md
 ```
 
@@ -139,15 +195,27 @@ t5code/
 # Install test dependencies
 pip install pytest pytest-cov
 
-# Run tests with coverage
-pytest --cov=src/t5code --cov-report=term -q
+# Run all tests
+pytest tests/ -v
+
+# Run t5code tests only
+pytest tests/test_t5code/ -v
+
+# Run t5sim tests only
+pytest tests/test_t5sim/ -v
+
+# Run with coverage
+pytest --cov=src --cov-report=term-missing
 
 # Generate HTML coverage report
-pytest --cov=src/t5code --cov-report=html
+pytest --cov=src --cov-report=html
 # Open htmlcov/index.html in browser
 ```
 
-**Current Status:** 228 tests passing, 100% code coverage (646 statements)
+**Current Status:**
+- **t5code**: 228 tests passing, 100% coverage (646 statements)
+- **t5sim**: 12 tests passing, 100% coverage (620 statements)
+- **Total**: 240 tests, 100% coverage
 
 ### Code Quality
 
@@ -171,8 +239,8 @@ mypy src/
 - ✅ **Property-based API** for clean state access
 - ✅ **100% test coverage** with comprehensive test suite
 - ✅ **Professional documentation** with Google-style docstrings
-- 🔄 **Discrete-event simulation** integration (in progress)
-- 🔄 **Multi-ship simulation** with SimPy (planned)
+- ✅ **Discrete-event simulation** with SimPy integration
+- ✅ **Multi-ship simulation** with state machines and statistics
 
 ---
 
@@ -258,9 +326,11 @@ Contributions welcome! This project follows:
 ## Roadmap
 
 ### Near Term
-- [ ] SimPy integration for discrete-event simulation
-- [ ] Multi-starship trade network simulation
-- [ ] Jump route pathfinding
+- [x] SimPy integration for discrete-event simulation
+- [x] Multi-starship trade network simulation
+- [ ] Intelligent route planning (currently random)
+- [ ] Enhanced statistics and visualization
+- [ ] Jump route pathfinding optimization
 - [ ] Crew experience/advancement system
 - [ ] Ship maintenance and repair mechanics
 

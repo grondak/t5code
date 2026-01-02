@@ -7,7 +7,7 @@ from t5code.T5Lot import T5Lot
 from t5code.GameState import load_and_parse_t5_map, GameState
 from t5code.T5World import T5World
 
-MAP_FILE = "tests/t5_test_map.txt"
+MAP_FILE = "tests/test_t5code/t5_test_map.txt"
 
 
 def is_guid(string):

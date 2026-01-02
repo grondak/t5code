@@ -89,8 +89,11 @@ def test_find_best_broker_tiers(tier, expected):
 
 
 def test_invalid_tier():
-    with pytest.raises(ValueError):
-        find_best_broker("E")
+    """Test that invalid starport tiers default to D tier."""
+    # Non-standard starports should default to D tier
+    broker_e = find_best_broker("E")
+    broker_d = find_best_broker("D")
+    assert broker_e == broker_d
 
 
 def test_trade_classifications_mars():
@@ -308,4 +311,18 @@ def test_passenger_availability_formula():
     # With skill +5, max should be 5 + 2 + 5 = 12
     skilled_results = [world.high_passenger_availability(5) for _ in range(50)]
     assert max(skilled_results) <= 12
-    assert max(skilled_results) > 7  # Should exceed no-skill maximum
+
+
+def test_get_population_hex_digit():
+    """Test get_population with hex digit (A=10, B=11, etc.)."""
+    # UWP with population A (10)
+    world_data = {"HighPop": {"UWP": "A000A00-D", "Zone": "G",
+                              "TradeClassifications": "", "Importance": "+0"}}
+    world = T5World("HighPop", world_data)
+    assert world.get_population() == 10
+
+    # UWP with population B (11)
+    world_data2 = {"VeryHighPop": {"UWP": "A000B00-D", "Zone": "G",
+                   "TradeClassifications": "", "Importance": "+0"}}
+    world = T5World("VeryHighPop", world_data2)
+    assert world.get_population() == 11

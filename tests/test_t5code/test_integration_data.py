@@ -11,7 +11,7 @@ from t5code.T5RandomTradeGoods import T5RTGTable
 
 def test_all_worlds_load_successfully():
     """Test that world map loads without errors."""
-    worlds = load_and_parse_t5_map("tests/t5_test_map.txt")
+    worlds = load_and_parse_t5_map("tests/test_t5code/t5_test_map.txt")
     world_data = T5World.load_all_worlds(worlds)
 
     # Should have loaded at least 2 worlds
@@ -39,7 +39,7 @@ def test_all_ship_classes_load_successfully():
 
 def test_world_classifications_exist_in_trade_table():
     """Test that world trade classifications reference valid trade goods."""
-    worlds = load_and_parse_t5_map("tests/t5_test_map.txt")
+    worlds = load_and_parse_t5_map("tests/test_t5code/t5_test_map.txt")
     world_data = T5World.load_all_worlds(worlds)
 
     valid_codes = set(T5RTGTable.classifications.keys())
@@ -96,7 +96,7 @@ def test_ship_jump_ratings_valid():
 
 def test_world_uwp_format():
     """Test that world UWP (Universal World Profile) format is valid."""
-    worlds = load_and_parse_t5_map("tests/t5_test_map.txt")
+    worlds = load_and_parse_t5_map("tests/test_t5code/t5_test_map.txt")
     world_data = T5World.load_all_worlds(worlds)
 
     for world_name, world in world_data.items():
@@ -222,5 +222,5 @@ def test_world_and_ship_data_files_exist():
     assert trade_goods.exists(), "resources/trade_goods_tables.json is missing"
 
     # Test files
-    test_map = Path("tests/t5_test_map.txt")
-    assert test_map.exists(), "tests/t5_test_map.txt is missing"
+    test_map = Path("tests/test_t5code/t5_test_map.txt")
+    assert test_map.exists(), "tests/test_t5code/t5_test_map.txt is missing"
