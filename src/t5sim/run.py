@@ -5,6 +5,7 @@ Usage:
 """
 
 import argparse
+import time
 from t5sim.simulation import run_simulation
 
 
@@ -65,6 +66,7 @@ def main():
               f"({args.no_speculation*100:.0f}%)")
     print()
 
+    start_time = time.time()
     results = run_simulation(
         map_file=args.map,
         ship_classes_file=args.ships_file,
@@ -73,6 +75,7 @@ def main():
         speculate_cargo_pct=1.0 - args.no_speculation,
         verbose=args.verbose,
     )
+    elapsed_time = time.time() - start_time
 
     print("\n" + "=" * 70)
     print("SIMULATION RESULTS")
@@ -102,6 +105,8 @@ def main():
             f"  {i}. {ship['name']}: Cr{ship['balance']:,.2f} "
             f"({ship['voyages']} voyages)"
         )
+
+    print(f"\nSimulation completed in {elapsed_time:.2f} seconds")
 
 
 if __name__ == "__main__":

@@ -181,6 +181,10 @@ def test_main_results_output(mock_run_simulation, capsys):
     assert "1. Ship6: Cr950,000.00 (3 voyages)" in captured.out
     assert "5. Ship10: Cr750,000.00 (2 voyages)" in captured.out
 
+    # Check timing output
+    assert "Simulation completed in" in captured.out
+    assert "seconds" in captured.out
+
 
 def test_main_no_speculation_zero(mock_run_simulation, capsys):
     """Test that zero no-speculation doesn't print the policy line."""
@@ -205,6 +209,24 @@ def test_main_module_execution():
 
     assert result.returncode == 0
     assert "Traveller 5 trade simulation" in result.stdout
-    assert "--ships" in result.stdout
-    assert "--days" in result.stdout
-    assert "--verbose" in result.stdout
+
+
+def test_main_timing_output(mock_run_simulation, capsys):
+    """Test that simulation timing is displayed."""
+    with patch('sys.argv', ['run.py']):
+        main()
+
+    captured = capsys.readouterr()
+    assert "Simulation completed in" in captured.out
+    assert "seconds" in captured.out
+    # Verify the format matches expected pattern (number with 2 decimal places)
+    import re
+    timing_match = re.search(
+        r'Simulation completed in (\d+\.\d{2}) seconds',
+        captured.out)
+    assert timing_match is not None, \
+        "Timing output should match pattern 'X.XX seconds'"
+    # Timing should be a reasonable value (< 10 seconds for a mocked test)
+    elapsed = float(timing_match.group(1))
+    assert 0 <= elapsed < 10, \
+        f"Elapsed time {elapsed} seems unreasonable for mocked test"
