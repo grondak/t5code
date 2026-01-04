@@ -47,7 +47,7 @@ def test_get_state_duration():
     assert get_state_duration(StarshipState.JUMPING) == pytest.approx(7.0)
     assert get_state_duration(StarshipState.DOCKED) == pytest.approx(0.0)
     assert (get_state_duration(StarshipState.LOADING_FREIGHT)
-            == pytest.approx(3.0))
+            == pytest.approx(1.0))
 
 
 def test_describe_state():
@@ -68,7 +68,8 @@ def test_trading_voyage_cycle():
 def test_voyage_cycle_total_time():
     """Test that voyage cycle time adds up correctly."""
     total = sum(get_state_duration(state) for state in TRADING_VOYAGE_CYCLE)
-    assert 12.0 < total < 13.0  # Should be around 12.8 days
+    # Should be around 10.8 days (reduced from 12.8)
+    assert 10.0 < total < 11.0
 
 
 def test_print_voyage_summary(capsys):

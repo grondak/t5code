@@ -83,6 +83,10 @@ class StarshipAgent:
         self.state = starting_state
         self.voyage_count = 0
         self.speculate_cargo = speculate_cargo
+        # Captain won't depart until 80% full
+        self.minimum_cargo_threshold = 0.8
+        self.freight_loading_attempts = 0
+        self.max_freight_attempts = 4  # Give up after 4 cycles (12 days)
 
         # Report initial status
         self._report_ship_status(f"{self.ship.ship_name} starting simulation")
@@ -108,6 +112,48 @@ class StarshipAgent:
         elif old_state == StarshipState.SELLING_CARGO and self.speculate_cargo:
             self._report_ship_status(
                 f"{self.ship.ship_name} cargo sales complete")
+        elif old_state == StarshipState.LOADING_PASSENGERS:
+            print(f"  {self.ship.ship_name} loading complete, ready to depart")
+        elif old_state == StarshipState.DEPARTING:
+            print(f"  {self.ship.ship_name} departing starport")
+        elif old_state == StarshipState.MANEUVERING_TO_JUMP:
+            print(f"  {self.ship.ship_name} entering jump space")
+        elif old_state == StarshipState.MANEUVERING_TO_PORT:
+            print(f"  {self.ship.ship_name} docking at starport")
+        elif old_state == StarshipState.ARRIVING:
+            print(f"  {self.ship.ship_name} docked and ready for business")
+
+    def _should_continue_freight_loading(self) -> bool:
+        """Check if ship should continue loading freight.
+
+        Returns:
+            True if should stay in LOADING_FREIGHT state, False to proceed
+        """
+        cargo_fill_ratio = self.ship.cargo_size / self.ship.hold_size
+        self.freight_loading_attempts += 1
+
+        if cargo_fill_ratio < self.minimum_cargo_threshold:
+            # Check if we should keep trying
+            if self.freight_loading_attempts < self.max_freight_attempts:
+                # Not enough cargo yet, stay in LOADING_FREIGHT state
+                if self.simulation.verbose:
+                    complete = (self.freight_loading_attempts /
+                                self.max_freight_attempts)
+                    print(f"  Hold only {cargo_fill_ratio*100:.0f}% full, "
+                          f"need {self.minimum_cargo_threshold*100:.0f}% "
+                          "(continuing freight loading, "
+                          f"attempt {complete})")
+                # Don't transition, stay in same state
+                return True
+            else:
+                # Give up and proceed
+                if self.simulation.verbose:
+                    print(f"  Hold only {cargo_fill_ratio*100:.0f}% full, "
+                          f"but max attempts reached - departing anyway")
+
+        # Reset counter for next port
+        self.freight_loading_attempts = 0
+        return False
 
     def _transition_to_next_state(self) -> bool:
         """Transition to the next state in the state machine.
@@ -115,6 +161,11 @@ class StarshipAgent:
         Returns:
             True if transition succeeded, False if stuck (no valid next state)
         """
+        # Special check: after loading freight, verify minimum cargo threshold
+        if self.state == StarshipState.LOADING_FREIGHT:
+            if self._should_continue_freight_loading():
+                return True
+
         next_state = get_next_state(self.state)
         if not next_state:
             print(f"Warning: {self.ship.ship_name} stuck in {self.state}")
@@ -214,6 +265,8 @@ class StarshipAgent:
                     lot = T5Lot(self.ship.location, self.simulation.game_state)
                     lot.mass = freight_mass
                     self.ship.load_freight_lot(lot)
+                    if self.simulation.verbose:
+                        print(f"  Loaded {freight_mass}t freight lot")
         except (ValueError, CapacityExceededError):
             pass  # Hold full or other issue
 
@@ -230,11 +283,18 @@ class StarshipAgent:
                         max_total_tons=available_space,
                         max_lot_size=available_space,
                     )
+                    loaded_count = 0
+                    loaded_mass = 0
                     for lot in lots:
                         try:
                             self.ship.buy_cargo_lot(lot)
+                            loaded_count += 1
+                            loaded_mass += lot.mass
                         except (InsufficientFundsError, CapacityExceededError):
                             break
+                    if self.simulation.verbose and loaded_count > 0:
+                        print(f"  Loaded {loaded_count} "
+                              f"cargo lot(s), {loaded_mass}t total")
         except Exception as e:
             print(f"{self.ship.ship_name}: Cargo purchase error: {e}")
 
@@ -242,9 +302,14 @@ class StarshipAgent:
         """Load mail bundles."""
         try:
             if len(self.ship.mail_bundles) < self.ship.mail_locker_size:
+                before_count = len(self.ship.mail_bundles)
                 self.ship.load_mail(
                     self.simulation.game_state, self.ship.destination
                 )
+                after_count = len(self.ship.mail_bundles)
+                if self.simulation.verbose and after_count > before_count:
+                    loaded = after_count - before_count
+                    print(f"  Loaded {loaded} mail bundle(s)")
         except ValueError:
             pass  # No mail available or locker full
 
@@ -254,7 +319,20 @@ class StarshipAgent:
             world = self.simulation.game_state.world_data.get(
                 self.ship.location)
             if world:
+                before_high = len(self.ship.passengers['high'])
+                before_mid = len(self.ship.passengers['mid'])
+                before_low = len(self.ship.passengers['low'])
                 self.ship.load_passengers(world)
+                after_high = len(self.ship.passengers['high'])
+                after_mid = len(self.ship.passengers['mid'])
+                after_low = len(self.ship.passengers['low'])
+                if self.simulation.verbose:
+                    loaded_high = after_high - before_high
+                    loaded_mid = after_mid - before_mid
+                    loaded_low = after_low - before_low
+                    if loaded_high + loaded_mid + loaded_low > 0:
+                        print(f"  Loaded {loaded_high} high, "
+                              f"{loaded_mid} mid, {loaded_low} low passengers")
         except Exception as e:
             print(f"{self.ship.ship_name}: Passenger loading error: {e}")
 

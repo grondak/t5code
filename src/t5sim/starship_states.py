@@ -71,7 +71,7 @@ STATE_DURATIONS = {
     StarshipState.DOCKED: 0.0,  # Instant transition
     StarshipState.OFFLOADING: 0.25,  # 6 hours
     StarshipState.SELLING_CARGO: 0.5,  # 12 hours (broker negotiations)
-    StarshipState.LOADING_FREIGHT: 3.0,  # Variable: multi-day search (avg 3)
+    StarshipState.LOADING_FREIGHT: 1.0,  # 1 day per freight loading cycle
     StarshipState.LOADING_CARGO: 0.5,  # 12 hours (market shopping)
     StarshipState.LOADING_MAIL: 0.1,  # 2-3 hours (paperwork)
     StarshipState.LOADING_PASSENGERS: 0.25,  # 6 hours (boarding)
