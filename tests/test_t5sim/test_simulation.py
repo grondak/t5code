@@ -52,3 +52,19 @@ def test_simulation_run_short(game_state):
     assert "total_voyages" in results
     assert "ships" in results
     assert len(results["ships"]) == 2
+
+
+def test_simulation_record_cargo_sale(game_state):
+    """Test recording cargo sales."""
+    sim = Simulation(game_state, num_ships=1, duration_days=1.0)
+
+    # Record a cargo sale
+    sim.record_cargo_sale("TestShip", "Regina", 5000.0)
+
+    # Check it was recorded
+    assert len(sim.statistics["cargo_sales"]) == 1
+    sale = sim.statistics["cargo_sales"][0]
+    assert sale["ship"] == "TestShip"
+    assert sale["location"] == "Regina"
+    assert sale["profit"] == pytest.approx(5000.0)
+    assert "time" in sale

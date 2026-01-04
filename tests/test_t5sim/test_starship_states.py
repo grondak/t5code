@@ -81,3 +81,20 @@ def test_print_voyage_summary(capsys):
     assert "MERCHANT STARSHIP TRADING VOYAGE" in captured.out
     assert "Total voyage time" in captured.out
     assert "Round trip" in captured.out
+
+
+def test_main_block():
+    """Test running the module as __main__."""
+    import subprocess
+    import sys
+
+    # Run the module as a script
+    result = subprocess.run(
+        [sys.executable, "-m", "t5sim.starship_states"],
+        capture_output=True,
+        text=True
+    )
+
+    assert result.returncode == 0
+    assert "MERCHANT STARSHIP TRADING VOYAGE" in result.stdout
+    assert "Total voyage time" in result.stdout
