@@ -248,6 +248,9 @@ class StarshipAgent:
                     self.ship.location,
                     result["profit"],
                 )
+                if self.simulation.verbose:
+                    print("  Sold cargo lot for "
+                          f"Cr{result['profit']:,.0f} profit")
             except Exception as e:
                 print(f"{self.ship.ship_name}: Sale error: {e}")
 
@@ -264,9 +267,10 @@ class StarshipAgent:
 
                     lot = T5Lot(self.ship.location, self.simulation.game_state)
                     lot.mass = freight_mass
-                    self.ship.load_freight_lot(lot)
+                    payment = self.ship.load_freight_lot(lot)
                     if self.simulation.verbose:
-                        print(f"  Loaded {freight_mass}t freight lot")
+                        print(f"  Loaded {freight_mass}t freight lot, "
+                              f"income Cr{payment:,.0f}")
         except (ValueError, CapacityExceededError):
             pass  # Hold full or other issue
 
@@ -331,8 +335,14 @@ class StarshipAgent:
                     loaded_mid = after_mid - before_mid
                     loaded_low = after_low - before_low
                     if loaded_high + loaded_mid + loaded_low > 0:
+                        from t5code.T5Tables import PASSENGER_FARES
+                        income = (loaded_high * PASSENGER_FARES['high'] +
+                                  loaded_mid * PASSENGER_FARES['mid'] +
+                                  loaded_low * PASSENGER_FARES['low'])
                         print(f"  Loaded {loaded_high} high, "
-                              f"{loaded_mid} mid, {loaded_low} low passengers")
+                              f"{loaded_mid} mid, "
+                              f"{loaded_low} low passengers, "
+                              f"income Cr{income:,.0f}")
         except Exception as e:
             print(f"{self.ship.ship_name}: Passenger loading error: {e}")
 
