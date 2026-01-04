@@ -83,6 +83,15 @@ def main():
     print(f"Total voyages completed: {results['total_voyages']}")
     print(f"Total cargo sales: {results['cargo_sales']}")
     print(f"Total profit: Cr{results['total_profit']:,.2f}")
+
+    # Build timing message with parameters
+    timing_msg = (f"Simulation time: {elapsed_time:.2f} seconds "
+                  f"({args.ships} ships, {args.days} days")
+    if args.no_speculation > 0:
+        timing_msg += f", {args.no_speculation*100:.0f}% no-speculation"
+    timing_msg += ")"
+    print(timing_msg)
+
     print("\nAverage per ship:")
     print(f"  Voyages: {results['total_voyages'] / results['num_ships']:.1f}")
     print(
@@ -105,8 +114,6 @@ def main():
             f"  {i}. {ship['name']}: Cr{ship['balance']:,.2f} "
             f"({ship['voyages']} voyages)"
         )
-
-    print(f"\nSimulation completed in {elapsed_time:.2f} seconds")
 
 
 if __name__ == "__main__":

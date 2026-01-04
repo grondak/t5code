@@ -166,6 +166,10 @@ def test_main_results_output(mock_run_simulation, capsys):
     assert "Total cargo sales: 150" in captured.out
     assert "Total profit: Cr500,000.00" in captured.out
 
+    # Check timing output with parameters (after totals)
+    assert "Simulation time:" in captured.out
+    assert "seconds (10 ships, 365.0 days)" in captured.out
+
     # Check averages
     assert "Average per ship:" in captured.out
     assert "Voyages: 4.2" in captured.out
@@ -180,10 +184,6 @@ def test_main_results_output(mock_run_simulation, capsys):
     assert "Bottom 5 ships by balance:" in captured.out
     assert "1. Ship6: Cr950,000.00 (3 voyages)" in captured.out
     assert "5. Ship10: Cr750,000.00 (2 voyages)" in captured.out
-
-    # Check timing output
-    assert "Simulation completed in" in captured.out
-    assert "seconds" in captured.out
 
 
 def test_main_no_speculation_zero(mock_run_simulation, capsys):
@@ -211,22 +211,44 @@ def test_main_module_execution():
     assert "Traveller 5 trade simulation" in result.stdout
 
 
+def test_main_timing_with_no_speculation(mock_run_simulation, capsys):
+    """Test timing output includes no-speculation parameter when set."""
+    with patch('sys.argv',
+               ['run.py', '--ships', '20', '--no-speculation', '0.25']):
+        main()
+
+    captured = capsys.readouterr()
+    import re
+    timing_match = re.search(
+        r'Simulation time: [\d.]+ seconds '
+        r'\((\d+) ships, ([\d.]+) days, (\d+)% no-speculation\)',
+        captured.out)
+    assert timing_match is not None, \
+        "Timing should include no-speculation percentage"
+    assert timing_match.group(1) == '20'
+    assert timing_match.group(3) == '25'
+
+
 def test_main_timing_output(mock_run_simulation, capsys):
     """Test that simulation timing is displayed."""
     with patch('sys.argv', ['run.py']):
         main()
 
     captured = capsys.readouterr()
-    assert "Simulation completed in" in captured.out
+    assert "Simulation time:" in captured.out
     assert "seconds" in captured.out
-    # Verify the format matches expected pattern (number with 2 decimal places)
+    # Verify the format matches expected pattern with parameters
     import re
     timing_match = re.search(
-        r'Simulation completed in (\d+\.\d{2}) seconds',
+        r'Simulation time: (\d+\.\d{2}) seconds '
+        r'\((\d+) ships, ([\d.]+) days\)',
         captured.out)
     assert timing_match is not None, \
-        "Timing output should match pattern 'X.XX seconds'"
+        "Timing output should match pattern 'X.XX seconds (N ships, M days)'"
     # Timing should be a reasonable value (< 10 seconds for a mocked test)
     elapsed = float(timing_match.group(1))
     assert 0 <= elapsed < 10, \
         f"Elapsed time {elapsed} seems unreasonable for mocked test"
+    # Verify parameters are captured correctly
+    assert timing_match.group(2) == '10', "Ships count should be 10"
+    assert timing_match.group(3) == '365.0', "Days should be 365.0"
