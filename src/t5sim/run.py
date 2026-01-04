@@ -96,6 +96,13 @@ def main():
             f"({ship['voyages']} voyages)"
         )
 
+    print("\nBottom 5 ships by balance:")
+    for i, ship in enumerate(sorted_ships[-5:], 1):
+        print(
+            f"  {i}. {ship['name']}: Cr{ship['balance']:,.2f} "
+            f"({ship['voyages']} voyages)"
+        )
+
 
 if __name__ == "__main__":
     main()

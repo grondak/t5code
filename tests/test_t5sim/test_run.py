@@ -21,6 +21,10 @@ def mock_run_simulation():
                 {'name': 'Ship4', 'balance': 1050000.0, 'voyages': 4},
                 {'name': 'Ship5', 'balance': 1000000.0, 'voyages': 4},
                 {'name': 'Ship6', 'balance': 950000.0, 'voyages': 3},
+                {'name': 'Ship7', 'balance': 900000.0, 'voyages': 3},
+                {'name': 'Ship8', 'balance': 850000.0, 'voyages': 3},
+                {'name': 'Ship9', 'balance': 800000.0, 'voyages': 2},
+                {'name': 'Ship10', 'balance': 750000.0, 'voyages': 2},
             ]
         }
         yield mock
@@ -171,6 +175,11 @@ def test_main_results_output(mock_run_simulation, capsys):
     assert "Top 5 ships by balance:" in captured.out
     assert "1. Ship1: Cr1,200,000.00 (5 voyages)" in captured.out
     assert "2. Ship2: Cr1,150,000.00 (4 voyages)" in captured.out
+
+    # Check bottom ships
+    assert "Bottom 5 ships by balance:" in captured.out
+    assert "1. Ship6: Cr950,000.00 (3 voyages)" in captured.out
+    assert "5. Ship10: Cr750,000.00 (2 voyages)" in captured.out
 
 
 def test_main_no_speculation_zero(mock_run_simulation, capsys):
