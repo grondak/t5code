@@ -1,7 +1,7 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-240%20passing-brightgreen)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](htmlcov/)
+[![Tests](https://img.shields.io/badge/tests-285%2B%20passing-brightgreen)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -158,6 +158,7 @@ SIMULATION RESULTS
 Total voyages completed: 127
 Total cargo sales: 1,854
 Total profit: Cr45,231,920.00
+Simulation time: 2.34 seconds (10 ships, 365.0 days)
 
 Average per ship:
   Voyages: 12.7
@@ -166,6 +167,11 @@ Average per ship:
 Top 5 ships by balance:
   1. Trader_003: Cr5,892,340.00 (15 voyages)
   2. Trader_007: Cr5,441,220.00 (14 voyages)
+  ...
+
+Bottom 5 ships by balance:
+  1. Trader_008: Cr3,441,220.00 (10 voyages)
+  2. Trader_002: Cr3,192,100.00 (9 voyages)
   ...
 ```
 
@@ -176,7 +182,7 @@ Top 5 ships by balance:
 ```
 t5code/
 ├── src/
-│   ├── t5code/              # Core library (228 tests, 646 statements)
+│   ├── t5code/              # Core library (228 tests, 100% coverage)
 │   │   ├── T5Starship.py    # Starship operations
 │   │   ├── T5World.py       # World generation and trade
 │   │   ├── T5Lot.py         # Cargo lot mechanics
@@ -188,14 +194,14 @@ t5code/
 │   │   ├── T5Tables.py      # Reference tables
 │   │   ├── T5Exceptions.py  # Custom exception hierarchy
 │   │   └── GameState.py     # Global game state
-│   └── t5sim/               # Simulation engine (12 tests, 620 statements)
+│   └── t5sim/               # Simulation engine (57 tests, 99% coverage)
 │       ├── starship_states.py   # 12-state FSM
 │       ├── starship_agent.py    # SimPy process agent
 │       ├── simulation.py        # Main orchestrator
 │       └── run.py               # CLI interface
 ├── tests/
 │   ├── test_t5code/         # 228 tests for core library
-│   └── test_t5sim/          # 12 tests for simulation
+│   └── test_t5sim/          # 57 tests for simulation
 ├── examples/
 │   ├── GameDriver.py        # Single-ship example
 │   └── sim.py              # Simulation example
@@ -233,9 +239,9 @@ pytest --cov=src --cov-report=html
 ```
 
 **Current Status:**
-- **t5code**: 228 tests passing, 100% coverage (646 statements)
-- **t5sim**: 12 tests passing, 100% coverage (620 statements)
-- **Total**: 240 tests, 100% coverage
+- **t5code**: 228 tests passing, 100% coverage
+- **t5sim**: 57 tests passing, 99% coverage
+- **Total**: 285 tests, 99% overall coverage
 
 ### Code Quality
 
