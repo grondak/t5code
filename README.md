@@ -1,6 +1,6 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-285%2B%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-287%2B%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -138,16 +138,39 @@ python -m t5sim.run --ships 20 --days 365 --no-speculation 0.8
 
 **Verbose output example:**
 ```
-[Day 0.0] Trader_001 at Reacher (DOCKED): balance=Cr1,000,000, 
+[Day 0.0] Trader_001 at Sting (DOCKED): balance=Cr1,000,000, 
   cargo=0 lots (0t), freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
 
-Offloading complete
-[Day 0.2] Trader_001 at Reacher (SELLING_CARGO): balance=Cr1,000,000, 
+Trader_001 offloading complete
+[Day 0.2] Trader_001 at Sting (SELLING_CARGO): balance=Cr1,000,000, 
   cargo=0 lots (0t), freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
 
-Trader_001 arrived at Faisal
-[Day 12.2] Trader_001 at Faisal (MANEUVERING_TO_PORT): balance=Cr996,000, 
-  cargo=1 lots (10.0t), freight=1 lots, passengers=(2H/0M/0L), mail=0 bundles
+Trader_001 cargo sales complete
+[Day 0.8] Trader_001 at Sting (LOADING_FREIGHT): balance=Cr1,000,000,
+  cargo=0 lots (0t), freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+
+  Loaded 8t freight lot, income Cr8,000
+  Hold only 7% full, need 80% (continuing freight loading, attempt 0.25)
+  Loaded 5t freight lot, income Cr5,000
+  Hold only 11% full, need 80% (continuing freight loading, attempt 0.5)
+  Loaded 9t freight lot, income Cr9,000
+  Hold only 18% full, need 80% (continuing freight loading, attempt 0.75)
+  Loaded 7t freight lot, income Cr7,000
+  Hold only 24% full, but max attempts reached - departing anyway
+  Loaded 1 cargo lot(s), 91.0t total
+  Loaded 1 mail bundle(s)
+  Loaded 9 high, 11 mid, 7 low passengers, income Cr185,000
+  Trader_001 loading complete, ready to depart
+  Trader_001 departing starport
+  Trader_001 entering jump space
+
+Trader_001 arrived at Dentus
+[Day 12.8] Trader_001 at Dentus (MANEUVERING_TO_PORT): balance=Cr996,000, 
+  cargo=1 lots (91.0t), freight=4 lots, passengers=(9H/11M/7L), mail=1 bundles
+
+  Trader_001 docking at starport
+  Trader_001 docked and ready for business
+  Sold cargo lot for Cr-45,230 profit
 ```
 
 **Aggregate statistics output:**
@@ -182,7 +205,7 @@ Bottom 5 ships by balance:
 ```
 t5code/
 ├── src/
-│   ├── t5code/              # Core library (228 tests, 100% coverage)
+│   ├── t5code/              # Core library (229 tests, 100% coverage)
 │   │   ├── T5Starship.py    # Starship operations
 │   │   ├── T5World.py       # World generation and trade
 │   │   ├── T5Lot.py         # Cargo lot mechanics
@@ -194,14 +217,14 @@ t5code/
 │   │   ├── T5Tables.py      # Reference tables
 │   │   ├── T5Exceptions.py  # Custom exception hierarchy
 │   │   └── GameState.py     # Global game state
-│   └── t5sim/               # Simulation engine (57 tests, 99% coverage)
+│   └── t5sim/               # Simulation engine (58 tests, 99% coverage)
 │       ├── starship_states.py   # 12-state FSM
 │       ├── starship_agent.py    # SimPy process agent
 │       ├── simulation.py        # Main orchestrator
 │       └── run.py               # CLI interface
 ├── tests/
-│   ├── test_t5code/         # 228 tests for core library
-│   └── test_t5sim/          # 57 tests for simulation
+│   ├── test_t5code/         # 229 tests for core library
+│   └── test_t5sim/          # 58 tests for simulation
 ├── examples/
 │   ├── GameDriver.py        # Single-ship example
 │   └── sim.py              # Simulation example
@@ -239,9 +262,9 @@ pytest --cov=src --cov-report=html
 ```
 
 **Current Status:**
-- **t5code**: 228 tests passing, 100% coverage
-- **t5sim**: 57 tests passing, 99% coverage
-- **Total**: 285 tests, 99% overall coverage
+- **t5code**: 229 tests passing, 100% coverage
+- **t5sim**: 58 tests passing, 99% coverage
+- **Total**: 287 tests, 99% overall coverage
 
 ### Code Quality
 
