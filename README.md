@@ -138,40 +138,48 @@ python -m t5sim.run --ships 20 --days 365 --no-speculation 0.8
 
 **Verbose output example:**
 ```
-[Day 0.0] Trader_001 at Sting (DOCKED): balance=Cr1,000,000, 
-  cargo=0 lots (0t), freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+Trader_001 (Scout) starting simulation
+[Day 0.0] Trader_001 at Sting (DOCKED): balance=Cr1,000,000, hold (0t/10.0t, 0%), 
+  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
 
-Trader_001 offloading complete
-[Day 0.2] Trader_001 at Sting (SELLING_CARGO): balance=Cr1,000,000, 
-  cargo=0 lots (0t), freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+[Day 0.2] Trader_001 at Sting (OFFLOADING): balance=Cr1,000,000, hold (0t/10.0t, 0%), 
+  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
 
-Trader_001 cargo sales complete
-[Day 0.8] Trader_001 at Sting (LOADING_FREIGHT): balance=Cr1,000,000,
-  cargo=0 lots (0t), freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+[Day 0.8] Trader_001 at Sting (SELLING_CARGO): balance=Cr1,000,000, hold (0t/10.0t, 0%), 
+  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | cargo sales complete
 
-  Loaded 8t freight lot, income Cr8,000
-  Hold only 7% full, need 80% (continuing freight loading, attempt 0.25)
-  Loaded 5t freight lot, income Cr5,000
-  Hold only 11% full, need 80% (continuing freight loading, attempt 0.5)
-  Loaded 9t freight lot, income Cr9,000
-  Hold only 18% full, need 80% (continuing freight loading, attempt 0.75)
-  Loaded 7t freight lot, income Cr7,000
-  Hold only 24% full, but max attempts reached - departing anyway
-  Loaded 1 cargo lot(s), 91.0t total
-  Loaded 1 mail bundle(s)
-  Loaded 9 high, 11 mid, 7 low passengers, income Cr185,000
-  Trader_001 loading complete, ready to depart
-  Trader_001 departing starport
-  Trader_001 entering jump space
+[Day 0.8] Trader_001 at Sting (LOADING_FREIGHT): balance=Cr1,008,000, hold (8t/10.0t, 80%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 8t freight lot, income Cr8,000
 
-Trader_001 arrived at Dentus
-[Day 12.8] Trader_001 at Dentus (MANEUVERING_TO_PORT): balance=Cr996,000, 
-  cargo=1 lots (91.0t), freight=4 lots, passengers=(9H/11M/7L), mail=1 bundles
+[Day 1.8] Trader_001 at Sting (LOADING_FREIGHT): balance=Cr1,008,000, hold (8t/10.0t, 80%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 80% full, need 80% (continuing freight loading, attempt 0.25)
 
-  Trader_001 docking at starport
-  Trader_001 docked and ready for business
-  Sold cargo lot for Cr-45,230 profit
+[Day 2.6] Trader_001 at Sting (LOADING_PASSENGERS): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loading complete, ready to depart
+
+[Day 2.7] Trader_001 at Sting (DEPARTING): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | departing starport
+
+[Day 3.2] Trader_001 at Sting (MANEUVERING_TO_JUMP): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | entering jump space
+
+[Day 10.2] Trader_001 at Dentus (JUMPING): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | arrived at Dentus
+
+[Day 10.7] Trader_001 at Dentus (MANEUVERING_TO_PORT): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | docking at starport
+
+[Day 10.8] Trader_001 at Dentus (ARRIVING): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | docked and ready for business
 ```
+
+**Key verbose output features:**
+- Ship class shown at startup (e.g., Scout, Freighter, Liner)
+- Full status header: day, location, state, balance, hold capacity with percentage
+- Single-line format with pipe separator for actions
+- Financial tracking: income from freight/passengers, profit from cargo sales
+- Hold percentage helps assess cargo capacity at a glance
+- State names match the action just completed
 
 **Aggregate statistics output:**
 ```

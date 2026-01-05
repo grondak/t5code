@@ -117,6 +117,7 @@ class T5Starship:
         # Core identity
         self.ship_name: str = ship_name
         self.location: str = ship_location
+        self.ship_class: str = ship_class.class_name
         self.hold_size: int = ship_class.cargo_capacity
 
         # Passenger capacity (high and mid use staterooms, low uses low berths)

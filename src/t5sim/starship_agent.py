@@ -32,11 +32,16 @@ class StarshipAgent:
         verbose: Whether to print detailed status updates
     """
 
-    def _report_ship_status(self, context: str = ""):
-        """Report current ship status (similar to GameDriver).
+    def _report_status(self,
+                       message: str = "",
+                       context: str = "",
+                       state: StarshipState = None):
+        """Report ship status with optional action message.
 
         Args:
+            message: Optional action message to append after status
             context: Optional context string to print before status
+            state: Optional state to display (defaults to current state)
         """
         if not self.simulation.verbose:
             return
@@ -44,20 +49,35 @@ class StarshipAgent:
         if context:
             print(f"\n{context}")
 
-        print(
+        display_state = state if state is not None else self.state
+        cargo_pct = ((self.ship.cargo_size /
+                     self.ship.hold_size * 100)
+                     if self.ship.hold_size > 0 else 0)
+
+        # Extract values for cleaner formatting
+        cargo_lots = len(list(self.ship.cargo_manifest.get('cargo', [])))
+        freight_lots = len(list(self.ship.cargo_manifest.get('freight', [])))
+        high_pax = len(list(self.ship.passengers['high']))
+        mid_pax = len(list(self.ship.passengers['mid']))
+        low_pax = len(list(self.ship.passengers['low']))
+        mail_count = len(self.ship.mail_bundles)
+
+        status = (
             f"[Day {self.env.now:.1f}] {self.ship.ship_name} "
-            f"at {self.ship.location} ({self.state.name}): "
+            f"at {self.ship.location} ({display_state.name}): "
             f"balance=Cr{self.ship.balance:,.0f}, "
-            f"cargo={len(list(self.ship.cargo_manifest.get('cargo', [])))}"
-            "lots "
-            f"({self.ship.cargo_size}t), "
-            f"freight={len(list(self.ship.cargo_manifest.get('freight', [])))}"
-            "lots, "
-            f"passengers=({len(list(self.ship.passengers['high']))}H/"
-            f"{len(list(self.ship.passengers['mid']))}M/"
-            f"{len(list(self.ship.passengers['low']))}L), "
-            f"mail={len(self.ship.mail_bundles)} bundles"
+            f"hold ({self.ship.cargo_size}t/{self.ship.hold_size}t, "
+            f"{cargo_pct:.0f}%), "
+            f"cargo={cargo_lots} lots, "
+            f"freight={freight_lots} lots, "
+            f"passengers=({high_pax}H/{mid_pax}M/{low_pax}L), "
+            f"mail={mail_count} bundles"
         )
+
+        if message:
+            print(f"{status} | {message}")
+        else:
+            print(status)
 
     def __init__(
         self,
@@ -89,7 +109,8 @@ class StarshipAgent:
         self.max_freight_attempts = 4  # Give up after 4 cycles (12 days)
 
         # Report initial status
-        self._report_ship_status(f"{self.ship.ship_name} starting simulation")
+        self._report_status(context=f"{self.ship.ship_name} "
+                            f"({self.ship.ship_class}) starting simulation")
 
         # Start the agent's process
         self.process = env.process(self.run())
@@ -104,24 +125,24 @@ class StarshipAgent:
             return
 
         if old_state == StarshipState.JUMPING:
-            self._report_ship_status(
-                f"{self.ship.ship_name} arrived at {self.ship.location}")
+            self._report_status(f"arrived at {self.ship.location}",
+                                state=old_state)
         elif old_state == StarshipState.OFFLOADING:
-            self._report_ship_status(
-                f"{self.ship.ship_name} offloading complete")
+            self._report_status("offloading complete", state=old_state)
         elif old_state == StarshipState.SELLING_CARGO and self.speculate_cargo:
-            self._report_ship_status(
-                f"{self.ship.ship_name} cargo sales complete")
+            self._report_status("cargo sales complete", state=old_state)
         elif old_state == StarshipState.LOADING_PASSENGERS:
-            print(f"  {self.ship.ship_name} loading complete, ready to depart")
+            self._report_status("loading complete, ready to depart",
+                                state=old_state)
         elif old_state == StarshipState.DEPARTING:
-            print(f"  {self.ship.ship_name} departing starport")
+            self._report_status("departing starport", state=old_state)
         elif old_state == StarshipState.MANEUVERING_TO_JUMP:
-            print(f"  {self.ship.ship_name} entering jump space")
+            self._report_status("entering jump space", state=old_state)
         elif old_state == StarshipState.MANEUVERING_TO_PORT:
-            print(f"  {self.ship.ship_name} docking at starport")
+            self._report_status("docking at starport", state=old_state)
         elif old_state == StarshipState.ARRIVING:
-            print(f"  {self.ship.ship_name} docked and ready for business")
+            self._report_status("docked and ready for business",
+                                state=old_state)
 
     def _should_continue_freight_loading(self) -> bool:
         """Check if ship should continue loading freight.
@@ -139,17 +160,19 @@ class StarshipAgent:
                 if self.simulation.verbose:
                     complete = (self.freight_loading_attempts /
                                 self.max_freight_attempts)
-                    print(f"  Hold only {cargo_fill_ratio*100:.0f}% full, "
-                          f"need {self.minimum_cargo_threshold*100:.0f}% "
-                          "(continuing freight loading, "
-                          f"attempt {complete})")
+                    self._report_status(
+                        f"hold only {cargo_fill_ratio*100:.0f}% full, "
+                        f"need {self.minimum_cargo_threshold*100:.0f}% "
+                        "(continuing freight loading, "
+                        f"attempt {complete})")
                 # Don't transition, stay in same state
                 return True
             else:
                 # Give up and proceed
                 if self.simulation.verbose:
-                    print(f"  Hold only {cargo_fill_ratio*100:.0f}% full, "
-                          f"but max attempts reached - departing anyway")
+                    self._report_status(
+                        f"hold only {cargo_fill_ratio*100:.0f}% full, "
+                        f"but max attempts reached - departing anyway")
 
         # Reset counter for next port
         self.freight_loading_attempts = 0
@@ -249,8 +272,8 @@ class StarshipAgent:
                     result["profit"],
                 )
                 if self.simulation.verbose:
-                    print("  Sold cargo lot for "
-                          f"Cr{result['profit']:,.0f} profit")
+                    self._report_status(
+                        f"sold cargo lot for Cr{result['profit']:,.0f} profit")
             except Exception as e:
                 print(f"{self.ship.ship_name}: Sale error: {e}")
 
@@ -269,8 +292,9 @@ class StarshipAgent:
                     lot.mass = freight_mass
                     payment = self.ship.load_freight_lot(lot)
                     if self.simulation.verbose:
-                        print(f"  Loaded {freight_mass}t freight lot, "
-                              f"income Cr{payment:,.0f}")
+                        self._report_status(
+                            f"loaded {freight_mass}t freight lot, "
+                            f"income Cr{payment:,.0f}")
         except (ValueError, CapacityExceededError):
             pass  # Hold full or other issue
 
@@ -297,8 +321,9 @@ class StarshipAgent:
                         except (InsufficientFundsError, CapacityExceededError):
                             break
                     if self.simulation.verbose and loaded_count > 0:
-                        print(f"  Loaded {loaded_count} "
-                              f"cargo lot(s), {loaded_mass}t total")
+                        self._report_status(
+                            f"loaded {loaded_count} cargo lot(s), "
+                            f"{loaded_mass}t total")
         except Exception as e:
             print(f"{self.ship.ship_name}: Cargo purchase error: {e}")
 
@@ -313,7 +338,7 @@ class StarshipAgent:
                 after_count = len(self.ship.mail_bundles)
                 if self.simulation.verbose and after_count > before_count:
                     loaded = after_count - before_count
-                    print(f"  Loaded {loaded} mail bundle(s)")
+                    self._report_status(f"loaded {loaded} mail bundle(s)")
         except ValueError:
             pass  # No mail available or locker full
 
@@ -339,10 +364,10 @@ class StarshipAgent:
                         income = (loaded_high * PASSENGER_FARES['high'] +
                                   loaded_mid * PASSENGER_FARES['mid'] +
                                   loaded_low * PASSENGER_FARES['low'])
-                        print(f"  Loaded {loaded_high} high, "
-                              f"{loaded_mid} mid, "
-                              f"{loaded_low} low passengers, "
-                              f"income Cr{income:,.0f}")
+                        self._report_status(
+                            f"loaded {loaded_high} high, "
+                            f"{loaded_mid} mid, {loaded_low} low passengers, "
+                            f"income Cr{income:,.0f}")
         except Exception as e:
             print(f"{self.ship.ship_name}: Passenger loading error: {e}")
 

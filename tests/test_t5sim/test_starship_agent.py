@@ -113,8 +113,9 @@ def test_starship_agent_verbose_reporting(game_state, mock_simulation, capsys):
 
     # Check that initial status was reported
     captured = capsys.readouterr()
-    assert "Verbose Ship starting simulation" in captured.out
+    assert "starting simulation" in captured.out
     assert "Verbose Ship" in captured.out
+    assert class_name in captured.out  # Ship class should be shown
 
 
 def test_starship_agent_offloading(game_state, mock_simulation):

@@ -139,9 +139,9 @@ class Simulation:
             Dictionary of simulation results and statistics
         """
         print(f"Setting up simulation with {self.num_ships} ships...")
+        print(f"Running simulation for {self.duration_days} days...")
         self.setup()
 
-        print(f"Running simulation for {self.duration_days} days...")
         self.env.run(until=self.duration_days)
 
         print("Simulation complete. Generating results...")
