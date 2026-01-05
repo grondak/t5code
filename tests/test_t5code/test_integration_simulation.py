@@ -236,10 +236,12 @@ def test_ship_balance_persistence(game_state, ship_class):
     assert balance3 == balance1 + 500
 
 
-def test_passenger_manifest_across_multiple_ships(game_state, ship_class):
+def test_passenger_manifest_across_multiple_ships(game_state):
     """Test passenger tracking across multiple ships."""
-    ship1 = T5Starship("Liner One", "Rhylanor", ship_class)
-    ship2 = T5Starship("Liner Two", "Rhylanor", ship_class)
+    # Use Liner class which has passenger capacity
+    liner_class = game_state.ship_data["Liner"]
+    ship1 = T5Starship("Liner One", "Rhylanor", liner_class)
+    ship2 = T5Starship("Liner Two", "Rhylanor", liner_class)
 
     # Create passengers
     passenger1 = T5NPC("Alice")

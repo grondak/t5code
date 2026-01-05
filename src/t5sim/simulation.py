@@ -258,35 +258,33 @@ class Simulation:
             self.agents.append(agent)
 
     def _add_basic_crew(self, ship: T5Starship):
-        """Add basic crew with skills to a ship.
+        """Add crew NPCs to fill all positions defined by the ship class.
 
-        Creates and assigns two essential crew members with
-        appropriate skills for merchant operations:
-        - Captain: Random risk profile + trader, steward, admin, liaison skills
-        - Medic: For low passage revival
+        Creates NPCs for each position slot in ship.crew_position.
+        Captain gets special treatment with random risk profile.
+        Skills will be assigned later based on position requirements.
 
         Args:
             ship: T5Starship to crew
-
-        Note:
-            These skills are used by t5code's trading methods to
-            provide DMs on transaction rolls. Higher skill levels
-            would improve profitability. Captain is a jack-of-all-trades
-            handling all merchant operations.
         """
-        # Captain (multi-skilled with random risk profile)
-        captain = T5NPC("Captain")
-        captain.cargo_departure_threshold = generate_captain_risk_profile()
-        captain.set_skill("trader", 2)
-        captain.set_skill("steward", 1)
-        captain.set_skill("admin", 1)
-        captain.set_skill("liaison", 1)
-        ship.hire_crew("captain", captain)
+        # Fill each position slot with an NPC
+        for position_name, position_list in ship.crew_position.items():
+            for i, crew_position in enumerate(position_list):
+                # Generate unique name for multiple positions
+                if len(position_list) > 1:
+                    npc_name = f"{position_name} {i+1}"
+                else:
+                    npc_name = position_name
 
-        # Medic
-        medic = T5NPC("Medic")
-        medic.set_skill("medic", 1)
-        ship.hire_crew("medic", medic)
+                # Create NPC
+                npc = T5NPC(npc_name)
+
+                # Special handling for Captain: add risk profile
+                if position_name == "Captain":
+                    npc.cargo_departure_threshold = generate_captain_risk_profile()
+
+                # Assign NPC to position slot
+                crew_position.assign(npc)
 
     def run(self) -> Dict[str, Any]:
         """Run the simulation to completion.

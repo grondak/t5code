@@ -4,7 +4,8 @@ Defines the T5ShipClass class for representing starship design specifications
 including performance ratings and capacity limits.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
+from t5code.T5Tables import POSITIONS
 
 
 class T5ShipClass:
@@ -21,6 +22,7 @@ class T5ShipClass:
         cargo_capacity: Hold size in tons
         staterooms: Number of passenger/crew staterooms
         low_berths: Number of low berth pods
+        crew_positions: List of crew position codes (e.g., ['A', 'B', 'C'])
 
     Example:
         >>> ship_class = T5ShipClass("Free Trader", {
@@ -46,6 +48,7 @@ class T5ShipClass:
         self.cargo_capacity: int = ship_data["cargo_capacity"]
         self.staterooms: int = ship_data["staterooms"]
         self.low_berths: int = ship_data["low_berths"]
+        self.crew_positions: List[str] = ship_data.get("crew_positions", [])
 
     def usp(self) -> str:
         """Generate Universal Ship Profile string.

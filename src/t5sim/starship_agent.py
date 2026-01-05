@@ -170,32 +170,41 @@ class StarshipAgent:
         """Format crew roster with NPC names and skills for display.
 
         Returns:
-            Comma-separated list of NPCs with their skills.
-            Format: "Name: skill-level, skill-level" per NPC.
+            Comma-separated list of crew members from crew_position.
+            Shows position name (or name + number for multiples).
             Captain shows risk threshold percentage.
 
         Example:
-            "Captain: 80%, Trader: trader-2,
-            Steward: steward-1, Medic: medic-1"
+            "Captain: 80%, Pilot, Astrogator, Engineer 1, Engineer 2"
         """
         crew_list = []
-        for position, npc in self.ship.crew.items():
-            # Build skills list for this NPC
-            skills = []
-            if position == "captain":
-                # Show captain's risk threshold
-                threshold_pct = int(npc.cargo_departure_threshold * 100)
-                skills.append(f"{threshold_pct}%")
+        for position_name, position_list in self.ship.crew_position.items():
+            for i, crew_position in enumerate(position_list):
+                if not crew_position.is_filled():
+                    continue
 
-            # Add any skills this NPC has
-            for skill_name, skill_level in npc.skills.items():
-                skills.append(f"{skill_name}-{skill_level}")
+                npc = crew_position.npc
+                # Build skills list for this NPC
+                skills = []
+                if position_name == "Captain":
+                    # Show captain's risk threshold
+                    threshold_pct = int(npc.cargo_departure_threshold * 100)
+                    skills.append(f"{threshold_pct}%")
 
-            # Format as "NPC Name: skill1, skill2"
-            if skills:
-                crew_list.append(f"{npc.character_name}: {' '.join(skills)}")
-            else:
-                crew_list.append(npc.character_name)
+                # Add any skills this NPC has
+                for skill_name, skill_level in npc.skills.items():
+                    skills.append(f"{skill_name}-{skill_level}")
+
+                # Format crew member display
+                if len(position_list) > 1:
+                    display_name = f"{position_name} {i+1}"
+                else:
+                    display_name = position_name
+
+                if skills:
+                    crew_list.append(f"{display_name}: {' '.join(skills)}")
+                else:
+                    crew_list.append(display_name)
 
         return ", ".join(crew_list)
 

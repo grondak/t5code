@@ -39,7 +39,12 @@ def test_simulation_setup(game_state):
     # All ships should have crew and starting capital
     for agent in sim.agents:
         assert agent.ship.balance == sim.starting_capital
-        assert len(agent.ship.crew) > 0
+        # Check crew_position has filled positions
+        total_crew = sum(
+            sum(1 for pos in positions if pos.is_filled())
+            for positions in agent.ship.crew_position.values()
+        )
+        assert total_crew > 0
 
 
 def test_simulation_run_short(game_state):

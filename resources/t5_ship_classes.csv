@@ -1,5 +1,5 @@
-class_name,jump_rating,maneuver_rating,cargo_capacity,staterooms,low_berths
-Scout,2,1,10,2,0
-Freighter,1,1,82,9,20
-Corvette,3,2,20,0,0
-Liner,1,1,120,20,20
+class_name,jump_rating,maneuver_rating,cargo_capacity,staterooms,low_berths,crew_positions,crew_ranks
+Scout,2,1,10,0,0,ABCG,0123
+Freighter,1,1,82,9,20,ABCDF,012334
+Frigate,3,2,0,0,0,ABCCCDG
+Liner,1,1,120,20,20,0ABBBCCCCDEFNNN,012221222333444

@@ -117,6 +117,10 @@ def load_and_parse_t5_ship_classes_filelike(
     ships = {}
     reader = csv.DictReader(ship_file)
     for row in reader:
+        # Parse crew_positions string into list of position codes
+        crew_positions_str = row.get("crew_positions", "")
+        crew_positions = list(crew_positions_str) if crew_positions_str else []
+        
         ships[row["class_name"]] = {
             "class_name": row["class_name"],
             "jump_rating": int(row["jump_rating"]),
@@ -124,5 +128,6 @@ def load_and_parse_t5_ship_classes_filelike(
             "cargo_capacity": float(row["cargo_capacity"]),
             "staterooms": int(row["staterooms"]),
             "low_berths": int(row["low_berths"]),
+            "crew_positions": crew_positions,
         }
     return ships
