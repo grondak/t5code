@@ -69,8 +69,11 @@ class StarshipAgent:
         low_pax = len(list(self.ship.passengers['low']))
         mail_count = len(self.ship.mail_bundles)
 
+        # Format Traveller date (DDD-YYYY)
+        date_str = self.simulation.format_traveller_date(self.env.now)
+
         status = (
-            f"[Day {self.env.now:.1f}] {self.ship.ship_name} "
+            f"[{date_str}] {self.ship.ship_name} "
             f"at {location_display} ({display_state.name}): "
             f"balance=Cr{self.ship.balance:,.0f}, "
             f"hold ({self.ship.cargo_size}t/{self.ship.hold_size}t, "

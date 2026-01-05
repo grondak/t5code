@@ -31,6 +31,8 @@ class Simulation:
         starting_capital: float = 1_000_000.0,
         speculate_cargo_pct: float = 1.0,
         verbose: bool = False,
+        starting_year: int = 1104,
+        starting_day: int = 360,
     ):
         """Initialize the simulation.
 
@@ -42,6 +44,8 @@ class Simulation:
             speculate_cargo_pct: Percentage of ships
                that speculate on cargo (0.0-1.0)
             verbose: Whether to print detailed status updates during simulation
+            starting_year: Starting year in Traveller calendar (default: 1104)
+            starting_day: Starting day of year (1-365, default: 360)
         """
         self.env = simpy.Environment()
         self.game_state = game_state
@@ -50,6 +54,8 @@ class Simulation:
         self.starting_capital = starting_capital
         self.speculate_cargo_pct = speculate_cargo_pct
         self.verbose = verbose
+        self.starting_year = starting_year
+        self.starting_day = starting_day
 
         self.agents: List[StarshipAgent] = []
         self.statistics: Dict[str, List[Any]] = {
@@ -57,6 +63,34 @@ class Simulation:
             "ship_balances": [],  # Periodic balance snapshots
             "trade_routes": [],  # Route usage tracking
         }
+
+    def format_traveller_date(self, sim_time: float) -> str:
+        """Convert simulation time to Traveller date format (DDD-YYYY).
+
+        Args:
+            sim_time: Simulation time in days (can be fractional)
+
+        Returns:
+            Formatted date string like '001-1105' or '365-1104'
+
+        Example:
+            >>> sim.format_traveller_date(0.0)
+            # '360-1104' (if starting_day=360)
+            >>> sim.format_traveller_date(1.5)
+            # '361-1104'
+            >>> sim.format_traveller_date(6.0)
+            # '001-1105' (if starting_day=360)
+        """
+        # Calculate absolute day from start
+        total_days = int(self.starting_day + sim_time)
+
+        # Calculate year offset (every 365 days = 1 year)
+        years_elapsed = (total_days - 1) // 365
+        day_of_year = ((total_days - 1) % 365) + 1
+
+        current_year = self.starting_year + years_elapsed
+
+        return f"{day_of_year:03d}-{current_year}"
 
     def setup(self):
         """Create starships and agents."""
@@ -202,6 +236,8 @@ def run_simulation(
     duration_days: float = 365.0,
     speculate_cargo_pct: float = 1.0,
     verbose: bool = False,
+    starting_year: int = 1104,
+    starting_day: int = 360,
 ) -> Dict[str, Any]:
     """Convenience function to run a complete simulation.
 
@@ -213,6 +249,8 @@ def run_simulation(
         speculate_cargo_pct: Percentage of ships that
           speculate on cargo (0.0-1.0)
         verbose: Whether to print detailed status updates during simulation
+        starting_year: Starting year in Traveller calendar (default: 1104)
+        starting_day: Starting day of year (1-365, default: 360)
 
     Returns:
         Simulation results dictionary
@@ -234,5 +272,7 @@ def run_simulation(
                      num_ships=num_ships,
                      duration_days=duration_days,
                      speculate_cargo_pct=speculate_cargo_pct,
-                     verbose=verbose)
+                     verbose=verbose,
+                     starting_year=starting_year,
+                     starting_day=starting_day)
     return sim.run()

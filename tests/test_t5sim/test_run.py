@@ -43,6 +43,8 @@ def test_main_default_args(mock_run_simulation, capsys):
         duration_days=365.0,
         speculate_cargo_pct=1.0,
         verbose=False,
+        starting_year=1104,
+        starting_day=360,
     )
 
     # Check output

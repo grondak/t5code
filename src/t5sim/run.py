@@ -52,6 +52,18 @@ def main():
         action="store_true",
         help="Print detailed status updates during simulation",
     )
+    parser.add_argument(
+        "--year",
+        type=int,
+        default=1104,
+        help="Starting year in Traveller calendar (default: 1104)",
+    )
+    parser.add_argument(
+        "--day",
+        type=int,
+        default=360,
+        help="Starting day of year, 1-365 (default: 360)",
+    )
 
     args = parser.parse_args()
 
@@ -74,6 +86,8 @@ def main():
         duration_days=args.days,
         speculate_cargo_pct=1.0 - args.no_speculation,
         verbose=args.verbose,
+        starting_year=args.year,
+        starting_day=args.day,
     )
     elapsed_time = time.time() - start_time
 
