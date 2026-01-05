@@ -1,7 +1,26 @@
 """Command-line interface for running t5sim simulations.
 
+Provides argparse-based CLI for executing simulations with
+customizable parameters. Handles argument parsing, progress
+reporting, and formatted results output.
+
 Usage:
-    python -m t5sim.run --ships 50 --days 365
+    python -m t5sim.run --ships 50 --days 365 --verbose
+    python -m t5sim.run --ships 10 --days 100 --year 1105
+
+Arguments:
+    --ships: Number of merchant starships to simulate
+    --days: Simulation duration in days (can be fractional)
+    --map: Path to world data file
+    --ships-file: Path to ship classes CSV
+    --verbose: Print detailed status updates during simulation
+    --year: Starting year in Traveller calendar
+    --day: Starting day of year (1-365)
+
+Output:
+    Prints summary with total voyages, cargo sales, profit,
+    timing information, averages per ship, and top/bottom 5
+    ships by balance.
 """
 
 import argparse
@@ -10,7 +29,25 @@ from t5sim.simulation import run_simulation
 
 
 def main():
-    """Parse arguments and run simulation."""
+    """Parse arguments and run simulation.
+
+    Entry point for CLI execution. Parses command-line arguments,
+    prints configuration summary, executes simulation via
+    run_simulation(), measures execution time, and displays
+    formatted results.
+
+    Outputs:
+        - Configuration summary (ships, duration)
+        - Progress messages during execution
+        - Results summary (voyages, sales, profit)
+        - Performance timing
+        - Per-ship averages
+        - Top 5 and bottom 5 ships by balance
+
+    Exit Behavior:
+        Completes normally on success. Exceptions from simulation
+        propagate to caller (not caught here).
+    """
     parser = argparse.ArgumentParser(
         description="Run Traveller 5 trade simulation"
     )

@@ -1,7 +1,21 @@
 """SimPy agent for merchant starship behavior.
 
-Implements a SimPy process that uses t5code mechanics and the starship
-state machine to simulate trading operations.
+Implements a SimPy process that uses t5code mechanics and the
+starship state machine to simulate intelligent trading operations.
+The agent implements a 12-state finite state machine representing
+the complete cycle of merchant trading between worlds.
+
+State Machine:
+    - Arrival: MANEUVERING_TO_PORT -> ARRIVING -> DOCKED
+    - Business: OFFLOADING -> SELLING_CARGO -> LOADING_FREIGHT ->
+                LOADING_CARGO -> LOADING_MAIL -> LOADING_PASSENGERS
+    - Departure: DEPARTING -> MANEUVERING_TO_JUMP -> JUMPING
+
+Trading Strategy:
+    - Analyzes profitable trade routes before jumping
+    - Only purchases cargo profitable at destination
+    - Waits for minimum hold capacity before departing
+    - Uses crew skills for broker negotiations and liaison work
 """
 
 from typing import TYPE_CHECKING
@@ -38,10 +52,18 @@ class StarshipAgent:
                        state: StarshipState = None):
         """Report ship status with optional action message.
 
+        Prints detailed ship status including Traveller date, location,
+        state, balance, cargo hold capacity, cargo/freight/passengers,
+        and mail. Only outputs when verbose mode is enabled.
+
         Args:
             message: Optional action message to append after status
             context: Optional context string to print before status
-            state: Optional state to display (defaults to current state)
+            state: Optional state to display (defaults to current)
+
+        Note:
+            During JUMPING state, location displays as "jump space"
+            instead of showing ship.location.
         """
         if not self.simulation.verbose:
             return
@@ -102,13 +124,22 @@ class StarshipAgent:
         starting_state: StarshipState = StarshipState.DOCKED,
 
     ):
-        """Initialize starship agent.
+        """Initialize starship agent and start SimPy process.
+
+        Creates a new starship agent that will execute the trading
+        state machine. Automatically starts the SimPy process via
+        env.process(self.run()).
 
         Args:
-            env: SimPy environment
-            ship: T5Starship instance to control
-            simulation: Parent simulation for data access
+            env: SimPy environment for discrete-event simulation
+            ship: T5Starship instance to control (from t5code)
+            simulation: Parent Simulation for world/game data access
             starting_state: Initial state (default: DOCKED)
+
+        Attributes Set:
+            minimum_cargo_threshold: Won't depart until 80% full
+            max_freight_attempts: Give up loading after 4 cycles
+            freight_loading_attempts: Counter for current port
         """
         self.env = env
         self.ship = ship
@@ -152,8 +183,22 @@ class StarshipAgent:
     def _report_transition(self, old_state: StarshipState) -> None:
         """Report status after specific state transitions.
 
+        Provides informative messages for key state transitions when
+        verbose mode is enabled. Not all transitions generate output;
+        only significant operational milestones are reported.
+
         Args:
             old_state: The state we just completed
+
+        Reported Transitions:
+            - JUMPING: Arrival at destination world
+            - OFFLOADING: Completion of cargo/passenger offload
+            - SELLING_CARGO: Completion of cargo sales
+            - LOADING_PASSENGERS: Ready to depart
+            - DEPARTING: Leaving starport for jump point
+            - MANEUVERING_TO_JUMP: Entering jump space
+            - MANEUVERING_TO_PORT: Docking at starport
+            - ARRIVING: Docked and ready for business
         """
         if not self.simulation.verbose:
             return
@@ -186,8 +231,20 @@ class StarshipAgent:
     def _should_continue_freight_loading(self) -> bool:
         """Check if ship should continue loading freight.
 
+        Implements the captain's decision logic: wait for minimum
+        cargo threshold (80% full) before departing, but give up
+        after max_freight_attempts (4 cycles = 12 days) and proceed
+        anyway. Resets counter when threshold reached or max
+        attempts exceeded.
+
         Returns:
-            True if should stay in LOADING_FREIGHT state, False to proceed
+            True if should stay in LOADING_FREIGHT state,
+            False to proceed to next state
+
+        Side Effects:
+            - Increments freight_loading_attempts counter
+            - Resets counter when proceeding to next state
+            - Prints status messages in verbose mode
         """
         cargo_fill_ratio = self.ship.cargo_size / self.ship.hold_size
         self.freight_loading_attempts += 1
@@ -220,8 +277,21 @@ class StarshipAgent:
     def _transition_to_next_state(self) -> bool:
         """Transition to the next state in the state machine.
 
+        Handles special case logic (freight loading threshold) then
+        advances to the next state using get_next_state(). Calls
+        _report_transition() for status updates.
+
         Returns:
-            True if transition succeeded, False if stuck (no valid next state)
+            True if transition succeeded,
+            False if stuck (no valid next state)
+
+        Special Cases:
+            - LOADING_FREIGHT: May loop if cargo threshold not met
+            - All others: Advance to next state in sequence
+
+        Note:
+            If this returns False, the agent's run() loop will
+            terminate, effectively parking the ship.
         """
         # Special check: after loading freight, verify minimum cargo threshold
         if self.state == StarshipState.LOADING_FREIGHT:
@@ -241,8 +311,19 @@ class StarshipAgent:
     def run(self):
         """Main SimPy process loop for the starship agent.
 
+        Executes the infinite state machine loop: execute current
+        state's action (with duration), then transition to next
+        state. Continues until simulation ends or agent gets stuck
+        (no valid next state).
+
         Yields:
             SimPy timeout events for state durations
+
+        Flow:
+            1. Execute current state action (_execute_state_action)
+            2. Wait for state duration via SimPy timeout
+            3. Transition to next state (_transition_to_next_state)
+            4. Repeat until duration or failure
         """
         while True:
             yield from self._execute_state_action()
@@ -253,8 +334,22 @@ class StarshipAgent:
     def _execute_state_action(self):
         """Execute the action for the current state.
 
+        Dispatches to state-specific handler methods based on current
+        state, then yields a SimPy timeout for the state's duration.
+        Most states have no action (pure delays), but key states
+        execute trading operations.
+
         Yields:
-            SimPy timeout for state duration
+            SimPy timeout for state duration from STATE_DURATIONS
+
+        States With Actions:
+            - OFFLOADING: Offload passengers, mail, freight
+            - SELLING_CARGO: Sell cargo lots with broker skill
+            - LOADING_FREIGHT: Load freight if space available
+            - LOADING_CARGO: Purchase profitable speculative cargo
+            - LOADING_MAIL: Load mail bundles
+            - LOADING_PASSENGERS: Board high/mid/low passengers
+            - JUMPING: Execute jump and choose next destination
         """
         duration = get_state_duration(self.state)
 
@@ -278,7 +373,21 @@ class StarshipAgent:
         yield self.env.timeout(duration)
 
     def _offload_cargo(self):
-        """Offload passengers, mail, and freight."""
+        """Offload passengers, mail, and freight.
+
+        Processes all three types of cargo in order: passengers
+        (all classes), mail bundles, then freight lots. Credits
+        are automatically added to ship balance by t5code methods.
+
+        Side Effects:
+            - Clears passengers from all three classes
+            - Delivers mail bundles and collects payment
+            - Offloads all freight lots and collects payment
+
+        Exceptions:
+            Catches and logs any exceptions during offload process
+            to prevent agent failure.
+        """
         try:
             # Offload passengers
             for passage_class in ["high", "mid", "low"]:
@@ -295,7 +404,22 @@ class StarshipAgent:
             print(f"{self.ship.ship_name}: Offload error: {e}")
 
     def _sell_cargo(self):
-        """Sell all cargo lots."""
+        """Sell all cargo lots using broker skill.
+
+        Iterates through all cargo manifest lots and sells each one
+        using the crew's trader skill for bonus DMs. Records each
+        transaction in simulation statistics for analysis.
+
+        Side Effects:
+            - Sells all cargo lots from manifest
+            - Credits added to ship balance automatically
+            - Records transactions via simulation.record_cargo_sale
+            - Prints status for each sale in verbose mode
+
+        Exceptions:
+            Catches and logs any exceptions during sale process
+            to prevent agent failure.
+        """
         cargo_lots = list(self.ship.cargo_manifest.get("cargo", []))
         for lot in cargo_lots:
             try:
@@ -315,7 +439,25 @@ class StarshipAgent:
                 print(f"{self.ship.ship_name}: Sale error: {e}")
 
     def _load_freight(self):
-        """Load freight lots (simplified - single attempt)."""
+        """Load freight lots (single attempt per cycle).
+
+        Attempts to load one freight lot if hold space available
+        and ship not mostly full. Uses liaison skill to determine
+        available freight mass via world.freight_lot_mass().
+        Payment credited immediately upon loading.
+
+        This is called multiple times if ship remains in
+        LOADING_FREIGHT state waiting for minimum cargo threshold.
+
+        Side Effects:
+            - Loads one freight lot if space permits
+            - Credits payment to ship balance immediately
+            - Prints status in verbose mode
+
+        Exceptions:
+            Silently catches ValueError and CapacityExceededError
+            when hold is full or freight unavailable.
+        """
         try:
             world = self.simulation.game_state.world_data.get(
                 self.ship.location)
@@ -338,8 +480,21 @@ class StarshipAgent:
     def _is_lot_profitable(self, lot) -> tuple[bool, float]:
         """Check if a cargo lot would be profitable at destination.
 
+        Calculates purchase price and compares to projected sale
+        value at current destination. Returns profitability flag
+        and actual profit/loss amount.
+
+        Args:
+            lot: T5Lot instance to evaluate
+
         Returns:
-            Tuple of (is_profitable, profit_amount)
+            Tuple of (is_profitable, profit_amount) where
+            is_profitable is True if profit > 0, and
+            profit_amount is the Cr profit or loss
+
+        Note:
+            Uses lot.determine_sale_value_on() which factors in
+            trade codes and market conditions at destination.
         """
         purchase_price = lot.origin_value * lot.mass
         sale_value = lot.determine_sale_value_on(
@@ -352,12 +507,25 @@ class StarshipAgent:
     def _try_purchase_lot(self, lot) -> tuple[bool, int]:
         """Try to purchase a cargo lot if profitable.
 
+        Checks profitability using _is_lot_profitable(), then
+        attempts purchase if profitable. Returns purchase status
+        and mass for statistics tracking.
+
+        Args:
+            lot: T5Lot instance to potentially purchase
+
         Returns:
-            Tuple of (purchased, mass) where purchased is True if bought
+            Tuple of (purchased, mass) where:
+            - purchased: True if lot was bought, False if skipped
+            - mass: Tonnage of lot (0 if not purchased)
 
         Raises:
             InsufficientFundsError: If ship can't afford the lot
             CapacityExceededError: If ship doesn't have space
+
+        Note:
+            Caller should catch exceptions to handle funding/space
+            issues gracefully.
         """
         is_profitable, _ = self._is_lot_profitable(lot)
 
@@ -373,7 +541,24 @@ class StarshipAgent:
         loaded_mass: int,
         skipped_count: int
     ) -> str:
-        """Format verbose message for cargo loading results."""
+        """Format verbose message for cargo loading results.
+
+        Creates human-readable summary of cargo loading activity,
+        listing both successful purchases and skipped unprofitable
+        lots. Returns empty string if no activity occurred.
+
+        Args:
+            loaded_count: Number of lots successfully purchased
+            loaded_mass: Total tonnage of loaded cargo
+            skipped_count: Number of unprofitable lots skipped
+
+        Returns:
+            Formatted message string, or empty string if no lots
+            were loaded or skipped
+
+        Example:
+            "loaded 3 cargo lot(s), 45t total, skipped 2 unprofitable"
+        """
         if loaded_count == 0 and skipped_count == 0:
             return ""
 
@@ -387,7 +572,25 @@ class StarshipAgent:
         return ", ".join(parts) if parts else ""
 
     def _load_cargo(self):
-        """Purchase speculative cargo, only if profitable at destination."""
+        """Purchase speculative cargo, only if profitable.
+
+        Generates available speculative cargo lots at current world
+        and evaluates each for profitability at current destination.
+        Only purchases lots that show positive profit potential.
+        Stops purchasing when funds exhausted or hold full.
+
+        Uses world.generate_speculative_cargo() to get available
+        lots, limited by hold space. Iterates through lots and
+        calls _try_purchase_lot() for profitability checks.
+
+        Side Effects:
+            - Purchases profitable cargo lots (debits ship balance)
+            - Prints summary in verbose mode
+            - Stops on InsufficientFundsError or CapacityExceeded
+
+        Exceptions:
+            Catches and logs exceptions to prevent agent failure.
+        """
         try:
             world = self.simulation.game_state.world_data.get(
                 self.ship.location)
@@ -430,7 +633,20 @@ class StarshipAgent:
             print(f"{self.ship.ship_name}: Cargo purchase error: {e}")
 
     def _load_mail(self):
-        """Load mail bundles."""
+        """Load mail bundles bound for current destination.
+
+        Loads mail bundles from current world to ship's destination,
+        up to mail locker capacity. Mail provides guaranteed income
+        (Cr25,000 per bundle for jump-1 worlds) upon delivery.
+
+        Side Effects:
+            - Loads mail bundles up to mail_locker_size
+            - Prints status in verbose mode if any loaded
+
+        Exceptions:
+            Silently catches ValueError when no mail available
+            or locker already full.
+        """
         try:
             if len(self.ship.mail_bundles) < self.ship.mail_locker_size:
                 before_count = len(self.ship.mail_bundles)
@@ -445,7 +661,26 @@ class StarshipAgent:
             pass  # No mail available or locker full
 
     def _load_passengers(self):
-        """Load passengers."""
+        """Load passengers in all classes (high/mid/low).
+
+        Loads high, middle, and low passage passengers bound for
+        current destination, up to stateroom/low berth capacity.
+        Uses world.load_passengers() which handles availability
+        rolls and capacity checks.
+
+        Passenger Fares (per parsec):
+            - High passage: Cr10,000
+            - Middle passage: Cr8,000
+            - Low passage: Cr1,000
+
+        Side Effects:
+            - Loads passengers in all three classes
+            - Credits fares to ship balance immediately
+            - Prints summary with total income in verbose mode
+
+        Exceptions:
+            Catches and logs exceptions to prevent agent failure.
+        """
         try:
             world = self.simulation.game_state.world_data.get(
                 self.ship.location)
@@ -474,7 +709,25 @@ class StarshipAgent:
             print(f"{self.ship.ship_name}: Passenger loading error: {e}")
 
     def _execute_jump(self):
-        """Execute the jump to destination."""
+        """Execute the jump to destination and pick next target.
+
+        Performs the actual jump to ship's current destination using
+        ship.execute_jump(), which handles fuel consumption and
+        updates ship location. Increments voyage counter. Then
+        chooses next destination using _choose_next_destination().
+
+        Side Effects:
+            - Executes jump (consumes fuel, updates location)
+            - Increments voyage_count
+            - Chooses and sets next destination
+
+        Exceptions:
+            Catches and logs exceptions to prevent agent failure.
+
+        Note:
+            The actual 7-day transit time is handled by state
+            duration, not this method.
+        """
         try:
             self.ship.execute_jump(self.ship.destination)
             self.voyage_count += 1
@@ -487,18 +740,26 @@ class StarshipAgent:
             print(f"{self.ship.ship_name}: Jump error: {e}")
 
     def _choose_next_destination(self):
-        """Choose next destination world, preferring profitable trade routes.
+        """Choose next destination, preferring profitable routes.
 
-        Strategy:
-        1. Find worlds within jump range that offer profitable cargo sales
-        2. If profitable destinations exist, randomly choose from them
-        3. If no profitable destinations,
-        randomly choose from all reachable worlds
+        Implements intelligent merchant captain decision-making:
+        1. Find worlds in jump range with profitable cargo sales
+        2. If profitable destinations exist, randomly choose one
+        3. If none profitable, randomly choose any reachable world
         4. If no worlds in range, stay at current location
 
-        This creates realistic merchant behavior where ships seek profit
-        opportunities but will still travel
-        if no immediate profit is available.
+        Uses ship.find_profitable_destinations() to identify worlds
+        where cargo from current location can be sold for profit.
+        This creates realistic merchant behavior seeking profit but
+        willing to travel speculatively if needed.
+
+        Side Effects:
+            - Sets ship.destination via ship.set_course_for()
+            - Prints destination choice rationale in verbose mode
+
+        Note:
+            Enhanced destination selection could weight choices by
+            expected profit amount rather than uniform random.
         """
         import random
 

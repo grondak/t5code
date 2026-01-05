@@ -1,7 +1,17 @@
 """Main SimPy simulation orchestrator.
 
 Manages the discrete-event simulation of multiple merchant starships
-using t5code for game mechanics.
+using t5code for game mechanics. Provides the Simulation class which
+handles SimPy environment setup, agent creation, statistics tracking,
+and results reporting.
+
+The orchestrator separates concerns:
+    - t5code handles all game mechanics (trading, cargo, passengers)
+    - t5sim handles discrete-event timing and multi-agent coordination
+    - StarshipAgent implements individual ship AI behavior
+
+This architecture enables large-scale simulations (100+ ships, 1000+
+days) to complete in seconds while maintaining game-accurate mechanics.
 """
 
 from typing import List, Dict, Any
@@ -16,11 +26,22 @@ from t5sim.starship_states import StarshipState
 class Simulation:
     """Main simulation controller for merchant starship operations.
 
+    Orchestrates SimPy discrete-event simulation of multiple merchant
+    starships executing independent trading operations. Manages the
+    SimPy environment, creates agents, tracks statistics, and
+    generates results.
+
     Attributes:
-        env: SimPy environment
-        game_state: GameState with world and ship data
+        env: SimPy environment for discrete-event simulation
+        game_state: GameState with world and ship class data
         agents: List of active StarshipAgent instances
-        statistics: Collected simulation data
+        statistics: Collected simulation data (cargo_sales, etc)
+        num_ships: Number of ships in simulation
+        duration_days: Total simulation duration
+        starting_capital: Initial credits per ship
+        verbose: Whether to print detailed status updates
+        starting_year: Traveller calendar year (default: 1104)
+        starting_day: Day of year 1-365 (default: 360)
     """
 
     def __init__(
@@ -33,16 +54,31 @@ class Simulation:
         starting_year: int = 1104,
         starting_day: int = 360,
     ):
-        """Initialize the simulation.
+        """Initialize the simulation with environment and settings.
+
+        Creates SimPy environment and initializes simulation
+        parameters. Does not create ships or agents yet; call
+        setup() followed by run() to execute the simulation.
 
         Args:
-            game_state: Initialized GameState with world and ship data
-            num_ships: Number of starships to simulate
-            duration_days: Simulation duration in days
+            game_state: Initialized GameState with world and ship
+                        data loaded
+            num_ships: Number of starships to simulate (default: 10)
+            duration_days: Simulation duration in days, can be
+                           fractional (default: 365.0)
             starting_capital: Starting capital per ship in credits
-            verbose: Whether to print detailed status updates during simulation
-            starting_year: Starting year in Traveller calendar (default: 1104)
-            starting_day: Starting day of year (1-365, default: 360)
+                              (default: 1,000,000)
+            verbose: Print detailed status updates during simulation
+                     (default: False)
+            starting_year: Starting year in Traveller calendar
+                           (default: 1104)
+            starting_day: Starting day of year, 1-365
+                          (default: 360)
+
+        Note:
+            Verbose mode generates substantial output for large
+            simulations; recommended only for debugging or small
+            runs (< 10 ships, < 100 days).
         """
         self.env = simpy.Environment()
         self.game_state = game_state
@@ -93,7 +129,24 @@ class Simulation:
         return f"{day_int:03d}.{day_frac * 100:02.0f}-{current_year}"
 
     def setup(self):
-        """Create starships and agents."""
+        """Create starships and agents for simulation.
+
+        Generates num_ships merchant starships with random starting
+        worlds and ship classes. Each ship receives starting capital
+        and basic crew (trader, steward, admin, liaison, medic).
+        Creates StarshipAgent wrapper for each ship and adds to
+        agents list.
+
+        Side Effects:
+            - Populates self.agents with StarshipAgent instances
+            - Each agent automatically starts its SimPy process
+            - Ships randomly distributed across map worlds
+            - Each ship picks initial destination in jump range
+
+        Note:
+            Called automatically by run() if needed, but can be
+            called separately for inspection before execution.
+        """
         import random
         from t5code import T5ShipClass
 
@@ -119,11 +172,17 @@ class Simulation:
             self._add_basic_crew(ship)
 
             # Pick initial destination within jump range
-            reachable_worlds = ship.get_worlds_in_jump_range(self.game_state)
+            reachable_worlds = ship.get_worlds_in_jump_range(
+                self.game_state
+            )
             if reachable_worlds:
                 destination = random.choice(reachable_worlds)
                 ship.set_course_for(destination)
-            # If no worlds in range, ship will pick destination on first jump
+            else:
+                # If no worlds in range, set destination to current
+                # location to prevent crashes. Ship will pick real
+                # destination after first jump.
+                ship.set_course_for(starting_world)
 
             # Create agent
             agent = StarshipAgent(
@@ -135,8 +194,21 @@ class Simulation:
     def _add_basic_crew(self, ship: T5Starship):
         """Add basic crew with skills to a ship.
 
+        Creates and assigns five essential crew members with
+        appropriate skills for merchant operations:
+        - Trader (skill 2): For cargo negotiations
+        - Steward (skill 1): For passenger services
+        - Admin (skill 1): For paperwork and regulations
+        - Liaison (skill 1): For freight lot availability
+        - Medic (skill 1): For low passage revival
+
         Args:
             ship: T5Starship to crew
+
+        Note:
+            These skills are used by t5code's trading methods to
+            provide DMs on transaction rolls. Higher skill levels
+            would improve profitability.
         """
         # Trader
         trader = T5NPC("Trader")
@@ -164,10 +236,30 @@ class Simulation:
         ship.hire_crew("medic", medic)
 
     def run(self) -> Dict[str, Any]:
-        """Run the simulation.
+        """Run the simulation to completion.
+
+        Executes the full simulation: calls setup() to create ships
+        and agents, runs SimPy environment until duration_days,
+        then generates and returns results dictionary.
 
         Returns:
-            Dictionary of simulation results and statistics
+            Dictionary of simulation results and statistics:
+            - duration_days: Simulation length
+            - num_ships: Number of ships simulated
+            - total_voyages: Sum of all completed voyages
+            - cargo_sales: Count of cargo transactions
+            - total_profit: Sum of profit/loss vs starting capital
+            - ships: List of per-ship details (name, balance,
+                     voyages, location)
+
+        Side Effects:
+            - Prints progress messages during execution
+            - Populates self.statistics with transaction data
+
+        Example:
+            >>> sim = Simulation(game_state, num_ships=10)
+            >>> results = sim.run()
+            >>> print(f"Profit: Cr{results['total_profit']:,.0f}")
         """
         print(f"Setting up simulation with {self.num_ships} ships...")
         print(f"Running simulation for {self.duration_days} days...")
@@ -179,10 +271,24 @@ class Simulation:
         return self._generate_results()
 
     def _generate_results(self) -> Dict[str, Any]:
-        """Generate summary results from simulation.
+        """Generate summary results from completed simulation.
+
+        Aggregates data from all agents and statistics to produce
+        comprehensive results dictionary. Calculates total profit
+        as change from starting_capital across all ships.
 
         Returns:
-            Dictionary with simulation statistics
+            Dictionary with simulation statistics:
+            - duration_days: Simulation length
+            - num_ships: Number of ships
+            - total_voyages: Sum of completed voyages
+            - cargo_sales: Count of cargo transactions
+            - total_profit: Total Cr profit/loss vs starting
+            - ships: List of per-ship data dictionaries
+
+        Note:
+            Called internally by run(); not typically called
+            directly by users.
         """
         # Calculate total profit as change from starting capital
         total_profit = sum(
@@ -208,13 +314,30 @@ class Simulation:
         }
         return results
 
-    def record_cargo_sale(self, ship_name: str, location: str, profit: float):
-        """Record a cargo sale transaction.
+    def record_cargo_sale(self,
+                          ship_name: str,
+                          location: str,
+                          profit: float):
+        """Record a cargo sale transaction for statistics.
+
+        Logs cargo sale details to statistics['cargo_sales'] list
+        for post-simulation analysis. Called by agents during
+        SELLING_CARGO state.
 
         Args:
             ship_name: Name of ship making sale
             location: World where sale occurred
-            profit: Profit/loss from sale
+            profit: Profit or loss from sale in credits (can be
+                    negative)
+
+        Side Effects:
+            Appends transaction dict to self.statistics['cargo_sales']
+            with fields: time, ship, location, profit
+
+        Note:
+            Could be extended to track freight income, passenger
+            fares, mail payments, etc. for comprehensive financial
+            analysis.
         """
         self.statistics["cargo_sales"].append(
             {
@@ -237,17 +360,33 @@ def run_simulation(
 ) -> Dict[str, Any]:
     """Convenience function to run a complete simulation.
 
+    One-line setup and execution: loads game data, creates
+    Simulation instance, and runs to completion. Handles all
+    file loading and GameState initialization internally.
+
     Args:
         map_file: Path to world data file
+                  (default: "resources/t5_map.txt")
         ship_classes_file: Path to ship classes CSV
-        num_ships: Number of ships to simulate
-        duration_days: Simulation duration in days
-        verbose: Whether to print detailed status updates during simulation
-        starting_year: Starting year in Traveller calendar (default: 1104)
-        starting_day: Starting day of year (1-365, default: 360)
+                           (default: "resources/t5_ship_classes.csv")
+        num_ships: Number of ships to simulate (default: 10)
+        duration_days: Simulation duration in days, can be
+                       fractional (default: 365.0)
+        verbose: Print detailed status updates during simulation
+                 (default: False)
+        starting_year: Starting year in Traveller calendar
+                       (default: 1104)
+        starting_day: Starting day of year, 1-365 (default: 360)
 
     Returns:
-        Simulation results dictionary
+        Simulation results dictionary with keys: duration_days,
+        num_ships, total_voyages, cargo_sales, total_profit, ships
+
+    Example:
+        >>> results = run_simulation(num_ships=50,
+        ...                          duration_days=1000,
+        ...                          verbose=True)
+        >>> print(f"Total profit: Cr{results['total_profit']:,.0f}")
     """
     from t5code import GameState as gs_module, T5World
     from t5code.GameState import GameState

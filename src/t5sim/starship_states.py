@@ -1,9 +1,23 @@
 """Starship state machine for discrete-event simulation.
 
-Defines the states and transitions that a merchant starship goes through
-during normal trading operations between worlds.
+Defines the 12-state finite state machine that merchant starships
+follow during trading operations between worlds. Each state has a
+duration and specific game actions, creating a realistic trading
+cycle.
 
-States extracted from GameDriver.py main() function.
+The state machine was extracted from the sequential GameDriver.py
+main() function and formalized for discrete-event simulation,
+enabling parallel execution of multiple independent ships.
+
+State Categories:
+    - Arrival (3 states): MANEUVERING_TO_PORT -> ARRIVING -> DOCKED
+    - Business (5 states): OFFLOADING -> SELLING_CARGO ->
+                          LOADING_FREIGHT -> LOADING_CARGO ->
+                          LOADING_MAIL -> LOADING_PASSENGERS
+    - Departure (2 states): DEPARTING -> MANEUVERING_TO_JUMP
+    - Transit (1 state): JUMPING (7 days)
+
+Total cycle duration: ~10.35 days minimum (varies with loading)
 """
 
 from enum import Enum, auto
@@ -12,7 +26,16 @@ from dataclasses import dataclass, field
 
 
 class StarshipState(Enum):
-    """States a merchant starship goes through during trading operations."""
+    """States a merchant starship goes through during trading.
+
+    12-state finite state machine representing the complete cycle
+    of merchant trading operations. Each state represents a
+    distinct phase with specific duration and actions.
+
+    State values use auto() for automatic enumeration. The order
+    is logical (grouped by category) but not sequential; actual
+    transitions are defined in STATE_TRANSITIONS dict.
+    """
 
     # At origin/current location
     DOCKED = auto()  # Ship at starport, can do business
@@ -37,7 +60,19 @@ class StarshipState(Enum):
 
 @dataclass
 class StarshipStateData:
-    """Data associated with each state for simulation."""
+    """Data associated with each state for simulation.
+
+    Captures state information and context for logging, analysis,
+    or extended state machine implementations. Currently not used
+    by the basic simulation but provided for future extensions.
+
+    Attributes:
+        state: The StarshipState enum value
+        duration_days: Time spent in this state (fractional)
+        location: Current world name (optional)
+        destination: Target world name (optional)
+        metadata: Additional state-specific data (flexible dict)
+    """
 
     state: StarshipState
     duration_days: float = 0.0  # Time spent in this state
@@ -83,14 +118,27 @@ STATE_DURATIONS = {
 }
 
 
-def get_next_state(current_state: StarshipState) -> Optional[StarshipState]:
+def get_next_state(current_state: StarshipState) -> (
+        Optional[StarshipState]):
     """Get the default next state for a given current state.
+
+    Looks up the current state in STATE_TRANSITIONS and returns
+    the first (and typically only) valid next state. Returns None
+    if no transition is defined, indicating end of state machine.
 
     Args:
         current_state: The starship's current state
 
     Returns:
-        The next state in the sequence, or None if no valid transition
+        The next state in the sequence, or None if no valid
+        transition exists
+
+    Note:
+        Most states have exactly one next state (linear sequence).
+        DOCKED can transition to either OFFLOADING or
+        LOADING_FREIGHT depending on whether cargo exists, but
+        this function always returns OFFLOADING. Agents handle
+        special logic separately.
     """
     transitions = STATE_TRANSITIONS.get(current_state, [])
     return transitions[0] if transitions else None
@@ -99,23 +147,41 @@ def get_next_state(current_state: StarshipState) -> Optional[StarshipState]:
 def get_state_duration(state: StarshipState) -> float:
     """Get the typical duration for a state in days.
 
+    Returns the standard duration from STATE_DURATIONS dict.
+    Fractional days represent hours (e.g., 0.25 = 6 hours).
+
     Args:
         state: The starship state
 
     Returns:
-        Duration in days (fractional for hours)
+        Duration in days (fractional for hours). Returns 0.0 if
+        state not found in dict (instant transition).
+
+    Example Durations:
+        - JUMPING: 7.0 days (168 hours in jump space)
+        - LOADING_FREIGHT: 1.0 day (per attempt)
+        - OFFLOADING: 0.25 days (6 hours)
+        - DOCKED: 0.0 days (instant)
     """
     return STATE_DURATIONS.get(state, 0.0)
 
 
 def describe_state(state: StarshipState) -> str:
-    """Get a human-readable description of what happens in this state.
+    """Get a human-readable description of state actions.
+
+    Returns a plain-English description of what occurs during
+    this state, suitable for logging, debugging, or user display.
 
     Args:
         state: The starship state
 
     Returns:
-        Description string
+        Description string, or "Unknown state" if state not
+        found in descriptions dict
+
+    Example:
+        >>> describe_state(StarshipState.LOADING_CARGO)
+        'Purchasing speculative cargo'
     """
     descriptions = {
         StarshipState.DOCKED: "Ship docked at starport, ready for business",
@@ -161,7 +227,23 @@ TRADING_VOYAGE_CYCLE = [
 
 
 def print_voyage_summary():
-    """Print a summary of all states in a trading voyage."""
+    """Print a summary of all states in a trading voyage.
+
+    Outputs formatted table showing each state in the
+    TRADING_VOYAGE_CYCLE with its duration and description.
+    Calculates and displays total one-way and round-trip times.
+
+    Useful for understanding the state machine structure and
+    validating durations. Can be run directly via:
+        python -m t5sim.starship_states
+
+    Output Format:
+        STATE_NAME........................ X.XX days
+          Human-readable description
+
+    Side Effects:
+        Prints formatted output to stdout
+    """
     print("=" * 70)
     print("MERCHANT STARSHIP TRADING VOYAGE - STATE SEQUENCE")
     print("=" * 70)
