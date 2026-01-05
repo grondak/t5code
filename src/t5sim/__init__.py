@@ -1,7 +1,22 @@
-"""T5 Simulation - Discrete-event simulation of merchant starship operations.
+"""T5 Simulation - Discrete-event merchant starship simulation.
 
-This module provides large-scale SimPy-based simulation of Traveller 5 trading
-operations using the t5code library for game mechanics.
+Provides large-scale SimPy-based simulation of Traveller 5 merchant
+trading operations. Uses the t5code library for all game mechanics
+while implementing discrete-event simulation for scalable multi-ship
+operations.
+
+Key Components:
+    - Simulation: Main orchestrator managing SimPy environment
+    - StarshipAgent: SimPy process implementing trading behavior
+    - StarshipState: 12-state finite state machine for trade cycles
+    - Comprehensive statistics tracking and reporting
+
+Example:
+    >>> from t5sim import Simulation
+    >>> from t5code.GameState import GameState
+    >>> game_state = GameState()
+    >>> sim = Simulation(game_state, num_ships=10, duration_days=365)
+    >>> results = sim.run()
 """
 
 from t5sim.starship_states import (
