@@ -155,14 +155,49 @@ class StarshipAgent:
         self.max_freight_attempts = 4  # Give up after 4 cycles (12 days)
         self.freight_loaded_this_cycle = False  # Track if freight obtained
 
-        # Report initial status with destination
+        # Report initial status with destination and crew
         dest_display = self._get_destination_display()
+        crew_info = self._format_crew_info()
         self._report_status(context=f"{self.ship.ship_name} "
                             f"({self.ship.ship_class}) starting simulation, "
-                            f"destination: {dest_display}")
+                            f"destination: {dest_display}\n  "
+                            f"Crew: {crew_info}")
 
         # Start the agent's process
         self.process = env.process(self.run())
+
+    def _format_crew_info(self) -> str:
+        """Format crew roster with NPC names and skills for display.
+
+        Returns:
+            Comma-separated list of NPCs with their skills.
+            Format: "Name: skill-level, skill-level" per NPC.
+            Captain shows risk threshold percentage.
+
+        Example:
+            "Captain: 80%, Trader: trader-2,
+            Steward: steward-1, Medic: medic-1"
+        """
+        crew_list = []
+        for position, npc in self.ship.crew.items():
+            # Build skills list for this NPC
+            skills = []
+            if position == "captain":
+                # Show captain's risk threshold
+                threshold_pct = int(npc.cargo_departure_threshold * 100)
+                skills.append(f"{threshold_pct}%")
+
+            # Add any skills this NPC has
+            for skill_name, skill_level in npc.skills.items():
+                skills.append(f"{skill_name}-{skill_level}")
+
+            # Format as "NPC Name: skill1, skill2"
+            if skills:
+                crew_list.append(f"{npc.character_name}: {' '.join(skills)}")
+            else:
+                crew_list.append(npc.character_name)
+
+        return ", ".join(crew_list)
 
     def _get_world_display_name(self, world_name: str) -> str:
         """Get formatted display name for a world.

@@ -2,7 +2,7 @@
 
 [![Tests](https://img.shields.io/badge/tests-309%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1171%20%7C%207%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1185%20%7C%2011%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -65,9 +65,10 @@ Built for realistic simulation of merchant starship operations, trade economics,
   - Stored in `cargo_departure_threshold` attribute (0.60 to 0.98)
   - Influences when captains decide to depart port
   - Creates varied ship behaviors in simulations
+  - Captain is multi-skilled: trader-2, steward-1, admin-1, liaison-1
+- **Streamlined crew** - Captain handles all merchant operations, Medic for low passage
 - **Passenger classes** (High, Middle, Low passage)
 - **Low passage survival mechanics** with medic skill effects
-- **Crew position management** with role-based assignments
 
 ### 🎲 Game Mechanics
 - **T5 dice mechanics** (2d6, flux, sequential flux)
@@ -157,8 +158,9 @@ python -m t5sim.run --ships 5 --days 30 --year 1105 --day 1 --verbose
 
 **Verbose output example (Traveller date format DDD.FF-YYYY with fractional days):**
 ```
-Trader_001 (Liner) starting simulation
-[360.00-1104] Trader_001 at Enos/J (1130) (DOCKED): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
+Trader_001 (Liner) starting simulation, destination: Nosea/Darrian (0724)
+  Crew: Captain: 80% trader-2 steward-1 admin-1 liaison-1, Medic: medic-1
+[360.00-1104] Trader_001 at Enos/Sword Worlds (1130) (DOCKED): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
 
 [360.25-1104] Trader_001 at Enos/J (1130) (OFFLOADING): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
@@ -202,6 +204,11 @@ Trader_001 (Liner) starting simulation
 ```
 
 **Key verbose output features:**
+- **Crew roster displayed at startup**: Shows all NPCs with their skills
+  - Format: "NPC Name: threshold% skill-level skill-level"
+  - Example: "Captain: 80% trader-2 steward-1 admin-1 liaison-1, Medic: medic-1"
+  - Captain shows cargo departure threshold percentage followed by all skills
+  - Streamlined 2-person crew (Captain + Medic) handles all operations
 - Ship class shown at startup (e.g., Scout, Freighter, Liner, Corvette)
 - **Traveller date format**: `[DDD.FF-YYYY]` format with fractional days for hour-by-hour tracking
   - Examples: `[360.00-1104]` (day start), `[360.25-1104]` (6 hours), `[360.75-1104]` (18 hours)
@@ -214,10 +221,10 @@ Trader_001 (Liner) starting simulation
   - `picked destination 'WorldName' because it showed cargo profit of +CrX/ton`
   - `picked destination 'WorldName' randomly because no in-range system could buy cargo`
 - **Freight loading progress**: Shows captain's departure threshold and attempt counter
-  - Displays captain's cargo_departure_threshold (e.g., "need 80%" or "need 76%")
+  - Displays captain's cargo_departure_threshold (e.g., "need 80%" or "need 85%")
   - `attempt 0.0` when freight obtained (hope mechanism active)
   - Counter increments only on failed attempts, captain gives up at 1.0 (4 cycles)
-  - Different captains have different thresholds (60%-98% range)
+  - Different captains have different thresholds (65%-95% range)
 - Full status header: day, location, state, balance, hold capacity with percentage
 - Single-line format with pipe separator for actions
 - Financial tracking: income from freight/passengers, profit from cargo sales
@@ -314,11 +321,11 @@ pytest --cov=src --cov-report=html
 
 **Current Status:**
 - **t5code**: 235 tests passing, 100% coverage (includes sector lookup tests)
-- **t5sim**: 74 tests passing, 97-100% coverage by module
+- **t5sim**: 74 tests passing, 97-98% coverage by module
   - simulation.py: 97% coverage (114 statements, 3 missed)
-  - starship_agent.py: 99% coverage (260 statements, 1 missed)
+  - starship_agent.py: 98% coverage (274 statements, 5 missed)
   - starship_states.py: 98% coverage (50 statements, 1 missed)
-- **Total**: 309 tests, 99% overall coverage (1171 statements, 7 missed)
+- **Total**: 309 tests, 99% overall coverage (1185 statements, 11 missed)
 
 ### Code Quality
 

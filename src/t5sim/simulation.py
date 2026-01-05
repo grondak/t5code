@@ -260,15 +260,10 @@ class Simulation:
     def _add_basic_crew(self, ship: T5Starship):
         """Add basic crew with skills to a ship.
 
-        Creates and assigns five essential crew members with
+        Creates and assigns two essential crew members with
         appropriate skills for merchant operations:
-        - Captain: Random risk profile (60% standard, 30% moderate,
-                   8% cautious, 2% aggressive)
-        - Trader (skill 2): For buying/selling cargo with broker bonuses
-        - Steward (skill 1): For passenger services
-        - Admin (skill 1): For paperwork and regulations
-        - Liaison (skill 1): For freight lot availability
-        - Medic (skill 1): For low passage revival
+        - Captain: Random risk profile + trader, steward, admin, liaison skills
+        - Medic: For low passage revival
 
         Args:
             ship: T5Starship to crew
@@ -276,32 +271,17 @@ class Simulation:
         Note:
             These skills are used by t5code's trading methods to
             provide DMs on transaction rolls. Higher skill levels
-            would improve profitability.
+            would improve profitability. Captain is a jack-of-all-trades
+            handling all merchant operations.
         """
-        # Captain (sets operational preferences with random risk profile)
+        # Captain (multi-skilled with random risk profile)
         captain = T5NPC("Captain")
         captain.cargo_departure_threshold = generate_captain_risk_profile()
+        captain.set_skill("trader", 2)
+        captain.set_skill("steward", 1)
+        captain.set_skill("admin", 1)
+        captain.set_skill("liaison", 1)
         ship.hire_crew("captain", captain)
-
-        # Trader
-        trader = T5NPC("Trader")
-        trader.set_skill("trader", 2)
-        ship.hire_crew("trader", trader)
-
-        # Steward
-        steward = T5NPC("Steward")
-        steward.set_skill("steward", 1)
-        ship.hire_crew("steward", steward)
-
-        # Admin
-        admin = T5NPC("Admin")
-        admin.set_skill("admin", 1)
-        ship.hire_crew("admin", admin)
-
-        # Liaison
-        liaison = T5NPC("Liaison")
-        liaison.set_skill("liaison", 1)
-        ship.hire_crew("liaison", liaison)
 
         # Medic
         medic = T5NPC("Medic")
