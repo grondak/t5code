@@ -226,7 +226,8 @@ class Simulation:
 
         Creates and assigns five essential crew members with
         appropriate skills for merchant operations:
-        - Trader (skill 2): For cargo negotiations
+        - Captain: Sets operational preferences (cargo threshold 80%)
+        - Trader (skill 2): For buying/selling cargo with broker bonuses
         - Steward (skill 1): For passenger services
         - Admin (skill 1): For paperwork and regulations
         - Liaison (skill 1): For freight lot availability
@@ -240,6 +241,11 @@ class Simulation:
             provide DMs on transaction rolls. Higher skill levels
             would improve profitability.
         """
+        # Captain (sets operational preferences)
+        captain = T5NPC("Captain")
+        captain.cargo_departure_threshold = 0.8  # Standard 80% threshold
+        ship.hire_crew("captain", captain)
+
         # Trader
         trader = T5NPC("Trader")
         trader.set_skill("trader", 2)

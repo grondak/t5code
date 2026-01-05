@@ -52,6 +52,10 @@ class T5NPC:
         self.skills: Dict[str, int] = {}  # e.g. {"broker": 2, "gun combat": 1}
         self.state: str = "Alive"  # Could be "Alive", "Missing", "Dead", etc.
 
+        # Captain/operational preferences
+        # Won't depart until hold is this full
+        self.cargo_departure_threshold: float = 0.8
+
     def update_location(self, location: str) -> None:
         """Update character's current location.
 

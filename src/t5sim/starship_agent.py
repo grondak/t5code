@@ -137,17 +137,20 @@ class StarshipAgent:
             starting_state: Initial state (default: DOCKED)
 
         Attributes Set:
-            minimum_cargo_threshold: Won't depart until 80% full
+            minimum_cargo_threshold: From captain's preferences (default 80%)
             max_freight_attempts: Give up loading after 4 cycles
             freight_loading_attempts: Counter for current port
+            freight_loaded_this_cycle: Tracks successful freight loads
         """
         self.env = env
         self.ship = ship
         self.simulation = simulation
         self.state = starting_state
         self.voyage_count = 0
-        # Captain won't depart until 80% full
-        self.minimum_cargo_threshold = 0.8
+        # Get departure threshold from captain's preferences
+        captain = self.ship.crew.get("captain")
+        self.minimum_cargo_threshold = (captain.cargo_departure_threshold
+                                        if captain else 0.8)
         self.freight_loading_attempts = 0
         self.max_freight_attempts = 4  # Give up after 4 cycles (12 days)
         self.freight_loaded_this_cycle = False  # Track if freight obtained
