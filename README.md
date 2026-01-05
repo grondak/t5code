@@ -22,6 +22,9 @@ Built for realistic simulation of merchant starship operations, trade economics,
 - **12-state starship FSM** (DOCKED → OFFLOADING → SELLING_CARGO → LOADING_FREIGHT → ...)
 - **Profit-aware routing** - ships evaluate destinations for cargo profitability
 - **Smart cargo purchasing** - skips lots that would result in losses
+- **Intelligent freight loading** - captain waits for 80% capacity but gives up after 4 failed attempts
+  - **"Hope" mechanism**: Counter resets each time freight is successfully loaded
+  - Ships stay longer at profitable ports, depart faster from poor ones
 - **Realistic time modeling** with configurable state durations
 - **Trade route tracking** and profit analysis
 - **Statistics collection** for voyages, sales, and balances
@@ -37,6 +40,7 @@ Built for realistic simulation of merchant starship operations, trade economics,
 
 ### 🌍 World System
 - **T5 world generation** with UWP (Universal World Profile) support
+- **Sector name lookup** - subsector codes mapped to full sector names (SECTORS table)
 - **Trade classifications** (Agricultural, Industrial, Rich, Poor, etc.)
 - **Starport quality** affecting broker availability and fees
 - **Population-based** passenger and freight availability
@@ -156,7 +160,7 @@ Trader_001 (Liner) starting simulation
   cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 4t freight lot, income Cr4,000
 
 [362.75-1104] Trader_001 at Enos/J (1130) (LOADING_FREIGHT): balance=Cr1,004,000, hold (4t/120.0t, 3%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 3% full, need 80% (continuing freight loading, attempt 0.25)
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 3% full, need 80% (continuing freight loading, attempt 0.0)
 
 [001.35-1105] Trader_001 at Enos/J (1130) (LOADING_PASSENGERS): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
   cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | loaded 7 high, 7 mid, 0 low passengers, income Cr126,000
@@ -198,6 +202,9 @@ Trader_001 (Liner) starting simulation
 - **Destination selection reasoning**: Shows why each destination was picked:
   - `picked destination 'WorldName' because it showed cargo profit of +CrX/ton`
   - `picked destination 'WorldName' randomly because no in-range system could buy cargo`
+- **Freight loading progress**: Shows attempt counter that resets on successful loads
+  - `attempt 0.0` when freight obtained (hope mechanism active)
+  - Counter increments only on failed attempts, gives up at 1.0 (4 cycles)
 - Full status header: day, location, state, balance, hold capacity with percentage
 - Single-line format with pipe separator for actions
 - Financial tracking: income from freight/passengers, profit from cargo sales
