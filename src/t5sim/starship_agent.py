@@ -150,6 +150,7 @@ class StarshipAgent:
         self.minimum_cargo_threshold = 0.8
         self.freight_loading_attempts = 0
         self.max_freight_attempts = 4  # Give up after 4 cycles (12 days)
+        self.freight_loaded_this_cycle = False  # Track if freight obtained
 
         # Report initial status with destination
         dest_display = self._get_destination_display()
@@ -234,8 +235,8 @@ class StarshipAgent:
         Implements the captain's decision logic: wait for minimum
         cargo threshold (80% full) before departing, but give up
         after max_freight_attempts (4 cycles = 12 days) and proceed
-        anyway. Resets counter when threshold reached or max
-        attempts exceeded.
+        anyway. Resets counter when threshold reached, max attempts
+        exceeded, or freight is successfully loaded (giving hope).
 
         Returns:
             True if should stay in LOADING_FREIGHT state,
@@ -243,11 +244,17 @@ class StarshipAgent:
 
         Side Effects:
             - Increments freight_loading_attempts counter
-            - Resets counter when proceeding to next state
+            - Resets counter when freight loaded or proceeding
             - Prints status messages in verbose mode
         """
         cargo_fill_ratio = self.ship.cargo_size / self.ship.hold_size
-        self.freight_loading_attempts += 1
+
+        # Reset counter if we got freight this cycle (hope!)
+        if self.freight_loaded_this_cycle:
+            self.freight_loading_attempts = 0
+            self.freight_loaded_this_cycle = False
+        else:
+            self.freight_loading_attempts += 1
 
         if cargo_fill_ratio < self.minimum_cargo_threshold:
             # Check if we should keep trying
@@ -272,6 +279,7 @@ class StarshipAgent:
 
         # Reset counter for next port
         self.freight_loading_attempts = 0
+        self.freight_loaded_this_cycle = False
         return False
 
     def _transition_to_next_state(self) -> bool:
@@ -452,12 +460,14 @@ class StarshipAgent:
         Side Effects:
             - Loads one freight lot if space permits
             - Credits payment to ship balance immediately
+            - Sets freight_loaded_this_cycle flag if successful
             - Prints status in verbose mode
 
         Exceptions:
             Silently catches ValueError and CapacityExceededError
             when hold is full or freight unavailable.
         """
+        self.freight_loaded_this_cycle = False
         try:
             world = self.simulation.game_state.world_data.get(
                 self.ship.location)
@@ -470,6 +480,7 @@ class StarshipAgent:
                     lot = T5Lot(self.ship.location, self.simulation.game_state)
                     lot.mass = freight_mass
                     payment = self.ship.load_freight_lot(lot)
+                    self.freight_loaded_this_cycle = True  # Got freight!
                     if self.simulation.verbose:
                         self._report_status(
                             f"loaded {freight_mass}t freight lot, "
