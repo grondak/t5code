@@ -17,7 +17,7 @@ days) to complete in seconds while maintaining game-accurate mechanics.
 from typing import List, Dict, Any
 import random
 import simpy
-from t5code import T5NPC
+from t5code import T5NPC, T5ShipClass
 from t5code.GameState import GameState
 from t5code.T5Starship import T5Starship
 from t5sim.starship_agent import StarshipAgent
@@ -227,8 +227,8 @@ class Simulation:
             )
             ship.credit(self.starting_capital)
 
-            # Add basic crew
-            self._add_basic_crew(ship)
+            # Add basic crew (pass ship_class since ship stores class_name string)
+            self._add_basic_crew(ship, ship_class)
 
             # Pick initial destination using same logic as agent's
             # _choose_next_destination(): prefer profitable routes
@@ -257,15 +257,26 @@ class Simulation:
             )
             self.agents.append(agent)
 
-    def _add_basic_crew(self, ship: T5Starship):
+    def _add_basic_crew(self, ship: T5Starship, ship_class: T5ShipClass):
         """Add crew NPCs to fill all positions defined by the ship class.
 
         Creates NPCs for each position slot in ship.crew_position.
+        Assigns skills based on position type and ship attributes:
+        - Pilot: pilot-n (n = maneuver_rating)
+        - Astrogator: navigation-n (n = jump_rating)
+        - Engineer: engineer-n (n = powerplant_rating)
+          * Chief Engineer (first): engineer-(powerplant_rating + 1)
+        - Steward: steward-3
+        - Gunner: gunner-1
+        - Counsellor: counsellor-2
+        - Medic: medic-2
+        - All other positions: no skills
+
         Captain gets special treatment with random risk profile.
-        Skills will be assigned later based on position requirements.
 
         Args:
             ship: T5Starship to crew
+            ship_class: T5ShipClass object with ship specifications
         """
         # Fill each position slot with an NPC
         for position_name, position_list in ship.crew_position.items():
@@ -278,6 +289,27 @@ class Simulation:
 
                 # Create NPC
                 npc = T5NPC(npc_name)
+
+                # Assign position-specific skills
+                if position_name == "Pilot":
+                    npc.set_skill("Pilot", ship_class.maneuver_rating)
+                elif position_name == "Astrogator":
+                    npc.set_skill("Astrogator", ship_class.jump_rating)
+                elif position_name == "Engineer":
+                    # Chief Engineer (first one) gets +1 skill level
+                    if i == 0:
+                        npc.set_skill("Engineer", ship_class.powerplant_rating + 1)
+                    else:
+                        npc.set_skill("Engineer", ship_class.powerplant_rating)
+                elif position_name == "Steward":
+                    npc.set_skill("Steward", 3)
+                elif position_name == "Gunner":
+                    npc.set_skill("Gunner", 1)
+                elif position_name == "Counsellor":
+                    npc.set_skill("Counsellor", 2)
+                elif position_name == "Medic":
+                    npc.set_skill("Medic", 2)
+                # All other positions get no skills
 
                 # Special handling for Captain: add risk profile
                 if position_name == "Captain":

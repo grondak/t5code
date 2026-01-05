@@ -28,7 +28,7 @@ print(f"\nChecking if Pilot position [0] is filled: {scout_ship.crew_position['P
 
 # Assign an NPC to the Pilot position
 pilot_npc = T5NPC("Jane 'Ace' Starr")
-pilot_npc.set_skill("pilot", 3)
+pilot_npc.set_skill("Pilot", 3)
 scout_ship.crew_position['Pilot'][0].assign(pilot_npc)
 
 print(f"\nAfter assigning pilot:")

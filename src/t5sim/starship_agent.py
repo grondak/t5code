@@ -193,7 +193,9 @@ class StarshipAgent:
 
                 # Add any skills this NPC has
                 for skill_name, skill_level in npc.skills.items():
-                    skills.append(f"{skill_name}-{skill_level}")
+                    # Capitalize skill name for display
+                    display_name = skill_name.title()
+                    skills.append(f"{display_name}-{skill_level}")
 
                 # Format crew member display
                 if len(position_list) > 1:

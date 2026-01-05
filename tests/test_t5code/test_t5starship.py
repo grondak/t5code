@@ -152,7 +152,7 @@ def test_offload_passengers(test_ship_data):
     assert starship.passengers["mid"] == set()
     assert npc3.location == starship.location
     npc5 = T5NPC("Bones")
-    npc5.set_skill("medic", 45)
+    npc5.set_skill("Medic", 45)
     starship.hire_crew("medic", npc5)
     offloaded_passengers = starship.offload_passengers("low")
     assert offloaded_passengers == {npc4}
@@ -198,7 +198,7 @@ def test_awaken_passenger(test_ship_data):
     ship_class = T5ShipClass("large", test_ship_data["large"])
     starship = T5Starship("Steamboat", "Rhylanor", ship_class)
     npc1 = T5NPC("Bones")
-    npc1.set_skill("medic", 3)
+    npc1.set_skill("Medic", 3)
     starship.hire_crew("medic", npc1)
     npc2 = T5NPC("Ted")
     starship.onload_passenger(npc2, "low")
@@ -764,7 +764,7 @@ def test_sell_cargo_lot_with_trader(test_ship_data, setup_test_gamestate):
 
     # Add trader to crew
     trader = T5NPC("Merchant Marcus")
-    trader.set_skill("trader", 3)
+    trader.set_skill("Trader", 3)
     ship.hire_crew("crew1", trader)
 
     # Create and load a cargo lot

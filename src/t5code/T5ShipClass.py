@@ -41,10 +41,12 @@ class T5ShipClass:
             class_name: Name/designation of ship class
             ship_data: Dictionary with required keys: jump_rating,
                 maneuver_rating, cargo_capacity, staterooms, low_berths
+                Optional: powerplant_rating (defaults to maneuver_rating)
         """
         self.class_name: str = class_name
         self.jump_rating: int = ship_data["jump_rating"]
         self.maneuver_rating: float = ship_data["maneuver_rating"]
+        self.powerplant_rating: int = ship_data.get("powerplant_rating", self.maneuver_rating)
         self.cargo_capacity: int = ship_data["cargo_capacity"]
         self.staterooms: int = ship_data["staterooms"]
         self.low_berths: int = ship_data["low_berths"]

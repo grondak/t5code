@@ -144,7 +144,7 @@ def test_concurrent_crew_hiring(game_state, ship_class):
 
     # Create crew members
     medic = T5NPC("Dr. Bones")
-    medic.set_skill("medic", 5)
+    medic.set_skill("Medic", 5)
 
     engineer = T5NPC("Chief Engineer")
     engineer.set_skill("engineer", 4)

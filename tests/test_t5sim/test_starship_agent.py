@@ -108,7 +108,7 @@ def test_starship_agent_offloading(game_state, mock_simulation):
 
     # Add crew for passenger handling
     steward = T5NPC("Steward")
-    steward.set_skill("steward", 1)
+    steward.set_skill("Steward", 1)
     ship.hire_crew("steward", steward)
 
     # Load some passengers
@@ -157,7 +157,7 @@ def test_starship_agent_selling_cargo(game_state, mock_simulation):
 
     # Add trader crew
     trader = T5NPC("Trader")
-    trader.set_skill("trader", 2)
+    trader.set_skill("Trader", 2)
     ship.hire_crew("trader", trader)
 
     # Buy some cargo at origin
@@ -197,7 +197,7 @@ def test_starship_agent_loading_freight(game_state, mock_simulation):
 
     # Add liaison crew
     liaison = T5NPC("Liaison")
-    liaison.set_skill("liaison", 1)
+    liaison.set_skill("Liaison", 1)
     ship.hire_crew("liaison", liaison)
 
     agent = StarshipAgent(
@@ -254,7 +254,7 @@ def test_starship_agent_loading_mail(game_state, mock_simulation):
 
     # Add admin crew for mail
     admin = T5NPC("Admin")
-    admin.set_skill("admin", 1)
+    admin.set_skill("Admin", 1)
     ship.hire_crew("admin", admin)
 
     agent = StarshipAgent(
@@ -282,7 +282,7 @@ def test_starship_agent_loading_passengers(game_state, mock_simulation):
 
     # Add steward crew for passengers
     steward = T5NPC("Steward")
-    steward.set_skill("steward", 1)
+    steward.set_skill("Steward", 1)
     ship.hire_crew("steward", steward)
 
     agent = StarshipAgent(
@@ -396,7 +396,7 @@ def test_starship_agent_selling_cargo_verbose(game_state,
 
     # Add trader for sales
     trader = T5NPC("Trader")
-    trader.set_skill("trader", 2)
+    trader.set_skill("Trader", 2)
     ship.hire_crew("trader", trader)
 
     _agent = StarshipAgent(  # noqa: F841
@@ -455,7 +455,7 @@ def test_starship_agent_error_handling_cargo_sale(game_state,
 
     # Add trader
     trader = T5NPC("Trader")
-    trader.set_skill("trader", 2)
+    trader.set_skill("Trader", 2)
     ship.hire_crew("trader", trader)
 
     # Add cargo lot that will cause issues
@@ -542,7 +542,7 @@ def test_starship_agent_error_handling_passengers(game_state,
 
     # Add steward
     steward = T5NPC("Steward")
-    steward.set_skill("steward", 1)
+    steward.set_skill("Steward", 1)
     ship.hire_crew("steward", steward)
 
     # Mock load_passengers to raise exception
@@ -603,19 +603,19 @@ def test_starship_agent_full_cycle(game_state, mock_simulation):
 
     # Add full crew
     trader = T5NPC("Trader")
-    trader.set_skill("trader", 2)
+    trader.set_skill("Trader", 2)
     ship.hire_crew("trader", trader)
 
     steward = T5NPC("Steward")
-    steward.set_skill("steward", 1)
+    steward.set_skill("Steward", 1)
     ship.hire_crew("steward", steward)
 
     admin = T5NPC("Admin")
-    admin.set_skill("admin", 1)
+    admin.set_skill("Admin", 1)
     ship.hire_crew("admin", admin)
 
     liaison = T5NPC("Liaison")
-    liaison.set_skill("liaison", 1)
+    liaison.set_skill("Liaison", 1)
     ship.hire_crew("liaison", liaison)
 
     agent = StarshipAgent(env, ship, mock_simulation)
@@ -666,7 +666,7 @@ def test_starship_agent_full_hold_freight(game_state, mock_simulation):
 
     # Add liaison
     liaison = T5NPC("Liaison")
-    liaison.set_skill("liaison", 1)
+    liaison.set_skill("Liaison", 1)
     ship.hire_crew("liaison", liaison)
 
     # Fill the hold with cargo
@@ -793,7 +793,7 @@ def test_starship_agent_mail_locker_full(game_state, mock_simulation):
 
     # Add admin crew
     admin = T5NPC("Admin")
-    admin.set_skill("admin", 1)
+    admin.set_skill("Admin", 1)
     ship.hire_crew("admin", admin)
 
     # Fill mail locker
@@ -862,7 +862,7 @@ def test_starship_agent_capacity_exceeded_freight(game_state, mock_simulation):
 
     # Add liaison crew
     liaison = T5NPC("Liaison")
-    liaison.set_skill("liaison", 5)  # High skill = large freight lots
+    liaison.set_skill("Liaison", 5)  # High skill = large freight lots
     ship.hire_crew("liaison", liaison)
 
     # Fill most of the hold
@@ -906,7 +906,7 @@ def test_starship_agent_mail_value_error(game_state, mock_simulation):
 
     # Add admin crew
     admin = T5NPC("Admin")
-    admin.set_skill("admin", 1)
+    admin.set_skill("Admin", 1)
     ship.hire_crew("admin", admin)
 
     # Mock load_mail to raise ValueError

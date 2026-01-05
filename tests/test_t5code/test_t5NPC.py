@@ -33,10 +33,10 @@ def test_set_and_get_skill():
     """Verify skill can be set and retrieved from NPC."""
     npc = T5NPC("Doug")
     assert npc.skills == {}
-    npc.set_skill("medic", 5)
+    npc.set_skill("Medic", 5)
     assert npc.get_skill("medic") == 5
     assert npc.get_skill("pilot") == 0  # assuming 0 default for unset skills
-    npc.set_skill("medic", 7)
+    npc.set_skill("Medic", 7)
     assert npc.get_skill("medic") == 7
 
 
