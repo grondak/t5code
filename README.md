@@ -1,6 +1,6 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-306%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-309%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -191,7 +191,9 @@ Trader_001 (Liner) starting simulation
 - **Traveller date format**: `[DDD.FF-YYYY]` format with fractional days for hour-by-hour tracking
   - Examples: `[360.00-1104]` (day start), `[360.25-1104]` (6 hours), `[360.75-1104]` (18 hours)
 - **Year rollover**: Automatically transitions from day 365 to day 001 of next year
-- Location format includes subsector and hex: `WorldName/Subsector (Hex)` e.g., `Enos/J (1130)`
+- **Location format** includes sector name and hex: `WorldName/Sector (Hex)` 
+  - Examples: `Fornice/Mora (3025)`, `Faisal/Querion (0518)`, `Rhylanor/Rhylanor (2716)`
+  - Sector names are looked up from the SECTORS table using subsector codes
 - **Jump space display**: Shows `at jump space (JUMPING)` during transit instead of destination
 - **Destination selection reasoning**: Shows why each destination was picked:
   - `picked destination 'WorldName' because it showed cargo profit of +CrX/ton`
@@ -234,7 +236,7 @@ Bottom 5 ships by balance:
 ```
 t5code/
 ├── src/
-│   ├── t5code/              # Core library (232 tests, 100% coverage)
+│   ├── t5code/              # Core library (235 tests, 100% coverage)
 │   │   ├── T5Starship.py    # Starship operations
 │   │   ├── T5World.py       # World generation with subsector/hex location formatting
 │   │   ├── T5Lot.py         # Cargo lot mechanics
@@ -243,16 +245,16 @@ t5code/
 │   │   ├── T5ShipClass.py   # Ship design specifications
 │   │   ├── T5RandomTradeGoods.py  # Trade goods tables
 │   │   ├── T5Basics.py      # Core game mechanics
-│   │   ├── T5Tables.py      # Reference tables
+│   │   ├── T5Tables.py      # Reference tables with sector name lookups
 │   │   ├── T5Exceptions.py  # Custom exception hierarchy
-│   │   └── GameState.py     # Global game state
+│   │   └── GameState.py     # Global game state with sector mapping
 │   └── t5sim/               # Simulation engine (74 tests, 99% coverage)
 │       ├── starship_states.py   # 12-state FSM
 │       ├── starship_agent.py    # SimPy process agent (99% coverage)
 │       ├── simulation.py        # Main orchestrator (100% coverage)
 │       └── run.py               # CLI interface
 ├── tests/
-│   ├── test_t5code/         # 232 tests for core library
+│   ├── test_t5code/         # 235 tests for core library
 │   └── test_t5sim/          # 74 tests for simulation
 ├── examples/
 │   ├── GameDriver.py        # Single-ship example
@@ -291,9 +293,9 @@ pytest --cov=src --cov-report=html
 ```
 
 **Current Status:**
-- **t5code**: 232 tests passing, 100% coverage
+- **t5code**: 235 tests passing, 100% coverage (includes sector lookup tests)
 - **t5sim**: 74 tests passing, 99% coverage (simulation.py: 100%, starship_agent.py: 99%)
-- **Total**: 306 tests, 99% overall coverage
+- **Total**: 309 tests, 99% overall coverage
 
 ### Code Quality
 
@@ -430,6 +432,7 @@ Contributions welcome! This project follows:
 - [x] Profit-aware route planning with destination evaluation
 - [x] Smart cargo purchasing (skip unprofitable lots)
 - [x] Jump range validation and reachability checking
+- [x] Sector name lookup table (SECTORS) for subsector code mapping
 - [ ] Enhanced statistics and visualization
 - [ ] Advanced pathfinding with multi-jump routes
 - [ ] Ship maintenance and repair mechanics

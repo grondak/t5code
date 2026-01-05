@@ -134,6 +134,14 @@ class T5World:
         """
         return self.world_data.get("Subsector", "")
 
+    def sector(self) -> str:
+        """Get world sector name.
+
+        Returns:
+            Sector name (e.g., 'Cronor', 'Rhylanor', 'Querion')
+        """
+        return self.world_data.get("Sector", "")
+
     def hex_location(self) -> str:
         """Get world hex location.
 
@@ -143,16 +151,16 @@ class T5World:
         return self.world_data.get("Hex", "")
 
     def full_name(self) -> str:
-        """Get full world name with subsector and hex location.
+        """Get full world name with sector and hex location.
 
         Returns:
-            Formatted string: "WorldName/Subsector (Hex)"
-            Example: "Zeycude/A (0101)"
+            Formatted string: "WorldName/Sector (Hex)"
+            Example: "Zeycude/Cronor (0101)"
         """
-        subsector = self.subsector()
+        sector = self.sector()
         hex_loc = self.hex_location()
-        if subsector and hex_loc:
-            return f"{self.name}/{subsector} ({hex_loc})"
+        if sector and hex_loc:
+            return f"{self.name}/{sector} ({hex_loc})"
         return self.name
 
     @staticmethod

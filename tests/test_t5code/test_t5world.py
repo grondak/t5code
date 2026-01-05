@@ -329,11 +329,12 @@ def test_get_population_hex_digit():
 
 
 def test_full_name_with_subsector_and_hex():
-    """Test full_name() returns formatted name with subsector and hex."""
+    """Test full_name() returns formatted name with sector and hex."""
     world_data = {
         "Regina": {
             "UWP": "A788899-C",
             "Zone": "G",
+            "Sector": "Regina",
             "Subsector": "C",
             "Hex": "1910",
             "TradeClassifications": "Ri Hi In",
@@ -341,7 +342,7 @@ def test_full_name_with_subsector_and_hex():
         }
     }
     world = T5World("Regina", world_data)
-    assert world.full_name() == "Regina/C (1910)"
+    assert world.full_name() == "Regina/Regina (1910)"
 
 
 def test_full_name_without_subsector_or_hex():

@@ -210,3 +210,22 @@ SKILLS_BY_GROUP = {
     "PERSONALS": ["Carouse", "Query", "Persuade", "Command"],
     "INTUITIONS": ["Curiosity", "Insight", "Luck"],
 }
+
+SECTORS = {
+    "A": "Cronor",
+    "B": "Jewell",
+    "C": "Regina",
+    "D": "Aramis",
+    "E": "Querion",
+    "F": "Vilis",
+    "G": "Lanth",
+    "H": "Rhylanor",
+    "I": "Darrian",
+    "J": "Sword Worlds",
+    "K": "Lunion",
+    "L": "Mora",
+    "M": "Five Sisters",
+    "N": "District 268",
+    "O": "Glisten",
+    "P": "Trin's Veil",
+}

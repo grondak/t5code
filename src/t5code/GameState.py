@@ -6,6 +6,7 @@ which form the foundation for world and ship data in the simulator.
 
 import csv
 from typing import Dict, Any, Optional
+from .T5Tables import SECTORS
 
 
 class GameState:
@@ -61,11 +62,13 @@ def load_and_parse_t5_map_filelike(mapfile) -> Dict[str, Dict[str, Any]]:
     worlds = {}
     reader = csv.DictReader(mapfile, delimiter="\t")
     for row in reader:
+        sector_code = row["SS"]
+        sector_name = SECTORS.get(sector_code, sector_code)
         worlds[row["Name"]] = {
             "Name": row["Name"],
             "UWP": row["UWP"],
             "Zone": row["Zone"],
-            "Sector": row["Sector"],
+            "Sector": sector_name,
             "Subsector": row["SS"],
             "Hex": row["Hex"],
             "Coordinates": (int(row["Hex"][:2]), int(row["Hex"][2:])),
