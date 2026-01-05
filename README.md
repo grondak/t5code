@@ -1,6 +1,6 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-296%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-306%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -246,14 +246,14 @@ t5code/
 │   │   ├── T5Tables.py      # Reference tables
 │   │   ├── T5Exceptions.py  # Custom exception hierarchy
 │   │   └── GameState.py     # Global game state
-│   └── t5sim/               # Simulation engine (58 tests, 99% coverage)
+│   └── t5sim/               # Simulation engine (74 tests, 99% coverage)
 │       ├── starship_states.py   # 12-state FSM
-│       ├── starship_agent.py    # SimPy process agent
-│       ├── simulation.py        # Main orchestrator
+│       ├── starship_agent.py    # SimPy process agent (99% coverage)
+│       ├── simulation.py        # Main orchestrator (100% coverage)
 │       └── run.py               # CLI interface
 ├── tests/
-│   ├── test_t5code/         # 229 tests for core library
-│   └── test_t5sim/          # 58 tests for simulation
+│   ├── test_t5code/         # 232 tests for core library
+│   └── test_t5sim/          # 74 tests for simulation
 ├── examples/
 │   ├── GameDriver.py        # Single-ship example
 │   └── sim.py              # Simulation example
@@ -292,8 +292,8 @@ pytest --cov=src --cov-report=html
 
 **Current Status:**
 - **t5code**: 232 tests passing, 100% coverage
-- **t5sim**: 64 tests passing, 98% coverage
-- **Total**: 296 tests, 99% overall coverage
+- **t5sim**: 74 tests passing, 99% coverage (simulation.py: 100%, starship_agent.py: 99%)
+- **Total**: 306 tests, 99% overall coverage
 
 ### Code Quality
 
