@@ -126,6 +126,35 @@ class T5World:
         """
         return self.world_data["Importance"]
 
+    def subsector(self) -> str:
+        """Get world subsector designation.
+
+        Returns:
+            Subsector letter (e.g., 'A', 'B', 'C')
+        """
+        return self.world_data.get("Subsector", "")
+
+    def hex_location(self) -> str:
+        """Get world hex location.
+
+        Returns:
+            Hex coordinate string (e.g., '0101', '1234')
+        """
+        return self.world_data.get("Hex", "")
+
+    def full_name(self) -> str:
+        """Get full world name with subsector and hex location.
+
+        Returns:
+            Formatted string: "WorldName/Subsector (Hex)"
+            Example: "Zeycude/A (0101)"
+        """
+        subsector = self.subsector()
+        hex_loc = self.hex_location()
+        if subsector and hex_loc:
+            return f"{self.name}/{subsector} ({hex_loc})"
+        return self.name
+
     @staticmethod
     def load_all_worlds(
         world_data: Dict[str,

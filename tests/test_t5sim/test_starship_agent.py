@@ -945,3 +945,36 @@ def test_starship_agent_mail_value_error(game_state, mock_simulation):
 
     # State should still progress
     assert agent.state != StarshipState.LOADING_MAIL
+
+
+def test_starship_agent_jumping_unknown_world(game_state, capsys):
+    """Test verbose reporting when jumping to a world not in world_data."""
+    env = simpy.Environment()
+    from t5code import T5ShipClass
+    from unittest.mock import Mock
+
+    # Create a mock simulation with verbose output
+    sim = Mock()
+    sim.game_state = game_state
+    sim.record_cargo_sale = Mock()
+    sim.verbose = True  # Enable verbose output
+
+    ship_class_dict = next(iter(game_state.ship_classes.values()))
+    class_name = ship_class_dict["class_name"]
+    ship_class = T5ShipClass(class_name, ship_class_dict)
+    ship = T5Starship("Unknown Destination Ship", "Rhylanor", ship_class)
+    ship.credit(1_000_000)
+
+    # Set course to a world that doesn't exist in world_data
+    ship.set_course_for("UnknownWorld")
+
+    _agent = StarshipAgent(  # noqa: F841
+        env, ship, sim, starting_state=StarshipState.JUMPING
+    )
+
+    # Run through jump to trigger verbose arrival report
+    env.run(until=7.5)
+
+    captured = capsys.readouterr()
+    # Should fall back to using the location name directly
+    assert "arrived at UnknownWorld" in captured.out

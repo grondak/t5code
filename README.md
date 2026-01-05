@@ -1,6 +1,6 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-287%2B%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-290%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -138,43 +138,50 @@ python -m t5sim.run --ships 20 --days 365 --no-speculation 0.8
 
 **Verbose output example:**
 ```
-Trader_001 (Scout) starting simulation
-[Day 0.0] Trader_001 at Sting (DOCKED): balance=Cr1,000,000, hold (0t/10.0t, 0%), 
+Trader_001 (Liner) starting simulation
+[Day 0.0] Trader_001 at Enos/J (1130) (DOCKED): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
 
-[Day 0.2] Trader_001 at Sting (OFFLOADING): balance=Cr1,000,000, hold (0t/10.0t, 0%), 
+[Day 0.2] Trader_001 at Enos/J (1130) (OFFLOADING): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
 
-[Day 0.8] Trader_001 at Sting (SELLING_CARGO): balance=Cr1,000,000, hold (0t/10.0t, 0%), 
+[Day 0.8] Trader_001 at Enos/J (1130) (SELLING_CARGO): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | cargo sales complete
 
-[Day 0.8] Trader_001 at Sting (LOADING_FREIGHT): balance=Cr1,008,000, hold (8t/10.0t, 80%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 8t freight lot, income Cr8,000
+[Day 0.8] Trader_001 at Enos/J (1130) (LOADING_FREIGHT): balance=Cr1,004,000, hold (4t/120.0t, 3%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 4t freight lot, income Cr4,000
 
-[Day 1.8] Trader_001 at Sting (LOADING_FREIGHT): balance=Cr1,008,000, hold (8t/10.0t, 80%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 80% full, need 80% (continuing freight loading, attempt 0.25)
+[Day 1.8] Trader_001 at Enos/J (1130) (LOADING_FREIGHT): balance=Cr1,004,000, hold (4t/120.0t, 3%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 3% full, need 80% (continuing freight loading, attempt 0.25)
 
-[Day 2.6] Trader_001 at Sting (LOADING_PASSENGERS): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loading complete, ready to depart
+[Day 5.3] Trader_001 at Enos/J (1130) (LOADING_PASSENGERS): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | loaded 7 high, 7 mid, 0 low passengers, income Cr126,000
 
-[Day 2.7] Trader_001 at Sting (DEPARTING): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | departing starport
+[Day 5.6] Trader_001 at Enos/J (1130) (LOADING_PASSENGERS): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | loading complete, ready to depart
 
-[Day 3.2] Trader_001 at Sting (MANEUVERING_TO_JUMP): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | entering jump space
+[Day 5.7] Trader_001 at Enos/J (1130) (DEPARTING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | departing starport
 
-[Day 10.2] Trader_001 at Dentus (JUMPING): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | arrived at Dentus
+[Day 6.2] Trader_001 at Enos/J (1130) (MANEUVERING_TO_JUMP): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | entering jump space
 
-[Day 10.7] Trader_001 at Dentus (MANEUVERING_TO_PORT): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | docking at starport
+[Day 13.2] Trader_001 at 899-076/F (0912) (JUMPING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | arrived at 899-076/F (0912)
 
-[Day 10.8] Trader_001 at Dentus (ARRIVING): balance=Cr1,008,000, hold (10.0t/10.0t, 100%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | docked and ready for business
+[Day 13.7] Trader_001 at 899-076/F (0912) (MANEUVERING_TO_PORT): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | docking at starport
+
+[Day 14.0] Trader_001 at 899-076/F (0912) (OFFLOADING): balance=Cr679,000, hold (105.0t/120.0t, 88%), 
+  cargo=1 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
+
+[Day 14.0] Trader_001 at 899-076/F (0912) (SELLING_CARGO): balance=Cr682,135, hold (0.0t/120.0t, 0%), 
+  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | sold cargo lot for Cr-458,865 profit
 ```
 
 **Key verbose output features:**
-- Ship class shown at startup (e.g., Scout, Freighter, Liner)
+- Ship class shown at startup (e.g., Scout, Freighter, Liner, Corvette)
+- Location format includes subsector and hex: `WorldName/Subsector (Hex)` e.g., `Enos/J (1130)`
 - Full status header: day, location, state, balance, hold capacity with percentage
 - Single-line format with pipe separator for actions
 - Financial tracking: income from freight/passengers, profit from cargo sales
@@ -213,9 +220,9 @@ Bottom 5 ships by balance:
 ```
 t5code/
 ├── src/
-│   ├── t5code/              # Core library (229 tests, 100% coverage)
+│   ├── t5code/              # Core library (232 tests, 100% coverage)
 │   │   ├── T5Starship.py    # Starship operations
-│   │   ├── T5World.py       # World generation and trade
+│   │   ├── T5World.py       # World generation with subsector/hex location formatting
 │   │   ├── T5Lot.py         # Cargo lot mechanics
 │   │   ├── T5NPC.py         # Character/crew system
 │   │   ├── T5Mail.py        # Mail contract system
@@ -270,9 +277,9 @@ pytest --cov=src --cov-report=html
 ```
 
 **Current Status:**
-- **t5code**: 229 tests passing, 100% coverage
+- **t5code**: 232 tests passing, 100% coverage
 - **t5sim**: 58 tests passing, 99% coverage
-- **Total**: 287 tests, 99% overall coverage
+- **Total**: 290 tests, 99% overall coverage
 
 ### Code Quality
 

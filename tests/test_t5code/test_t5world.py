@@ -326,3 +326,34 @@ def test_get_population_hex_digit():
                    "TradeClassifications": "", "Importance": "+0"}}
     world = T5World("VeryHighPop", world_data2)
     assert world.get_population() == 11
+
+
+def test_full_name_with_subsector_and_hex():
+    """Test full_name() returns formatted name with subsector and hex."""
+    world_data = {
+        "Regina": {
+            "UWP": "A788899-C",
+            "Zone": "G",
+            "Subsector": "C",
+            "Hex": "1910",
+            "TradeClassifications": "Ri Hi In",
+            "Importance": "+4"
+        }
+    }
+    world = T5World("Regina", world_data)
+    assert world.full_name() == "Regina/C (1910)"
+
+
+def test_full_name_without_subsector_or_hex():
+    """Test full_name() falls back to name when subsector/hex missing."""
+    world_data = {
+        "Unknown": {
+            "UWP": "X000000-0",
+            "Zone": "R",
+            "TradeClassifications": "",
+            "Importance": "-1"
+        }
+    }
+    world = T5World("Unknown", world_data)
+    # Should fall back to just the name
+    assert world.full_name() == "Unknown"

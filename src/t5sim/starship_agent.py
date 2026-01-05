@@ -54,6 +54,13 @@ class StarshipAgent:
                      self.ship.hold_size * 100)
                      if self.ship.hold_size > 0 else 0)
 
+        # Format location with subsector and hex
+        world = self.simulation.game_state.world_data.get(self.ship.location)
+        if world:
+            location_display = world.full_name()
+        else:
+            location_display = self.ship.location
+
         # Extract values for cleaner formatting
         cargo_lots = len(list(self.ship.cargo_manifest.get('cargo', [])))
         freight_lots = len(list(self.ship.cargo_manifest.get('freight', [])))
@@ -64,7 +71,7 @@ class StarshipAgent:
 
         status = (
             f"[Day {self.env.now:.1f}] {self.ship.ship_name} "
-            f"at {self.ship.location} ({display_state.name}): "
+            f"at {location_display} ({display_state.name}): "
             f"balance=Cr{self.ship.balance:,.0f}, "
             f"hold ({self.ship.cargo_size}t/{self.ship.hold_size}t, "
             f"{cargo_pct:.0f}%), "
@@ -125,7 +132,14 @@ class StarshipAgent:
             return
 
         if old_state == StarshipState.JUMPING:
-            self._report_status(f"arrived at {self.ship.location}",
+            # Format location name with subsector/hex
+            world = self.simulation.game_state.world_data.get(
+                self.ship.location)
+            if world:
+                location_name = world.full_name()
+            else:
+                location_name = self.ship.location
+            self._report_status(f"arrived at {location_name}",
                                 state=old_state)
         elif old_state == StarshipState.OFFLOADING:
             self._report_status("offloading complete", state=old_state)

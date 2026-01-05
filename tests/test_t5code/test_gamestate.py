@@ -10,9 +10,9 @@ from t5code import (
 def test_load_and_parse_t5_map_filelike():
     """Verify T5 map file parsing from file-like object."""
     mock_data = (
-        "Name\tUWP\tZone\tHex\tRemarks\t{Ix}\n"
-        "Regina\tA788899-C\tR\t1234\tHi In\t{2}\n"
-        "Efate\tA000989-C\tA\t2345\tNa Pi\t{1}\n"
+        "Name\tUWP\tZone\tSector\tSS\tHex\tRemarks\t{Ix}\n"
+        "Regina\tA788899-C\tR\tSpinward Marches\tC\t1234\tHi In\t{2}\n"
+        "Efate\tA000989-C\tA\tSpinward Marches\tA\t2345\tNa Pi\t{1}\n"
     )
     fake_file = io.StringIO(mock_data)
     result = load_and_parse_t5_map_filelike(fake_file)
