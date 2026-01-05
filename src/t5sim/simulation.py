@@ -15,12 +15,48 @@ days) to complete in seconds while maintaining game-accurate mechanics.
 """
 
 from typing import List, Dict, Any
+import random
 import simpy
 from t5code import T5NPC
 from t5code.GameState import GameState
 from t5code.T5Starship import T5Starship
 from t5sim.starship_agent import StarshipAgent
 from t5sim.starship_states import StarshipState
+
+
+def generate_captain_risk_profile() -> float:
+    """Generate cargo departure threshold based on captain risk profile.
+
+    Creates realistic distribution of captain behavior:
+    - 60% chance: Standard (0.80) - cautious but practical
+    - 30% chance: Moderate (0.70-0.90) - normal variance
+    - 8% chance: Very cautious (0.91-0.95) - waits for full holds
+    - 2% chance: Aggressive (0.65-0.69) - leaves early for speed
+
+    Range is constrained to 0.60-0.98 to ensure reasonable behavior.
+
+    Returns:
+        Float between 0.60 and 0.98 representing cargo fill threshold
+
+    Example:
+        >>> threshold = generate_captain_risk_profile()
+        >>> 0.60 <= threshold <= 0.98
+        True
+    """
+    roll = random.random()
+
+    if roll < 0.60:
+        # 60% chance: Standard threshold
+        return 0.80
+    elif roll < 0.90:
+        # 30% chance: Moderate range (70-90%)
+        return random.uniform(0.70, 0.90)
+    elif roll < 0.98:
+        # 8% chance: Very cautious (91-95%)
+        return random.uniform(0.91, 0.95)
+    else:
+        # 2% chance: Aggressive (65-69%)
+        return random.uniform(0.65, 0.69)
 
 
 class Simulation:
@@ -226,7 +262,8 @@ class Simulation:
 
         Creates and assigns five essential crew members with
         appropriate skills for merchant operations:
-        - Captain: Sets operational preferences (cargo threshold 80%)
+        - Captain: Random risk profile (60% standard, 30% moderate,
+                   8% cautious, 2% aggressive)
         - Trader (skill 2): For buying/selling cargo with broker bonuses
         - Steward (skill 1): For passenger services
         - Admin (skill 1): For paperwork and regulations
@@ -241,9 +278,9 @@ class Simulation:
             provide DMs on transaction rolls. Higher skill levels
             would improve profitability.
         """
-        # Captain (sets operational preferences)
+        # Captain (sets operational preferences with random risk profile)
         captain = T5NPC("Captain")
-        captain.cargo_departure_threshold = 0.8  # Standard 80% threshold
+        captain.cargo_departure_threshold = generate_captain_risk_profile()
         ship.hire_crew("captain", captain)
 
         # Trader

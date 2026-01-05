@@ -2,6 +2,7 @@
 
 [![Tests](https://img.shields.io/badge/tests-309%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1171%20%7C%207%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -22,9 +23,15 @@ Built for realistic simulation of merchant starship operations, trade economics,
 - **12-state starship FSM** (DOCKED → OFFLOADING → SELLING_CARGO → LOADING_FREIGHT → ...)
 - **Profit-aware routing** - ships evaluate destinations for cargo profitability
 - **Smart cargo purchasing** - skips lots that would result in losses
-- **Intelligent freight loading** - captain waits for 80% capacity but gives up after 4 failed attempts
+- **Captain risk profiles** - each ship's captain has unique operational preferences
+  - 60% standard captains depart at 80% hold capacity
+  - 30% moderate captains vary between 70-90% capacity
+  - 8% cautious captains wait for 91-95% capacity
+  - 2% aggressive captains depart early at 65-69% capacity
+- **Intelligent freight loading** with captain-specific departure thresholds
   - **"Hope" mechanism**: Counter resets each time freight is successfully loaded
   - Ships stay longer at profitable ports, depart faster from poor ones
+  - Different captains exhibit different patience levels
 - **Realistic time modeling** with configurable state durations
 - **Trade route tracking** and profit analysis
 - **Statistics collection** for voyages, sales, and balances
@@ -54,6 +61,10 @@ Built for realistic simulation of merchant starship operations, trade economics,
 
 ### 👥 NPCs & Passengers
 - **Character skill system** with skill groups and skill levels
+- **Captain risk profiles** - randomly generated operational personalities
+  - Stored in `cargo_departure_threshold` attribute (0.60 to 0.98)
+  - Influences when captains decide to depart port
+  - Creates varied ship behaviors in simulations
 - **Passenger classes** (High, Middle, Low passage)
 - **Low passage survival mechanics** with medic skill effects
 - **Crew position management** with role-based assignments
@@ -202,9 +213,11 @@ Trader_001 (Liner) starting simulation
 - **Destination selection reasoning**: Shows why each destination was picked:
   - `picked destination 'WorldName' because it showed cargo profit of +CrX/ton`
   - `picked destination 'WorldName' randomly because no in-range system could buy cargo`
-- **Freight loading progress**: Shows attempt counter that resets on successful loads
+- **Freight loading progress**: Shows captain's departure threshold and attempt counter
+  - Displays captain's cargo_departure_threshold (e.g., "need 80%" or "need 76%")
   - `attempt 0.0` when freight obtained (hope mechanism active)
-  - Counter increments only on failed attempts, gives up at 1.0 (4 cycles)
+  - Counter increments only on failed attempts, captain gives up at 1.0 (4 cycles)
+  - Different captains have different thresholds (60%-98% range)
 - Full status header: day, location, state, balance, hold capacity with percentage
 - Single-line format with pipe separator for actions
 - Financial tracking: income from freight/passengers, profit from cargo sales
@@ -301,8 +314,11 @@ pytest --cov=src --cov-report=html
 
 **Current Status:**
 - **t5code**: 235 tests passing, 100% coverage (includes sector lookup tests)
-- **t5sim**: 74 tests passing, 99% coverage (simulation.py: 100%, starship_agent.py: 99%)
-- **Total**: 309 tests, 99% overall coverage
+- **t5sim**: 74 tests passing, 97-100% coverage by module
+  - simulation.py: 97% coverage (114 statements, 3 missed)
+  - starship_agent.py: 99% coverage (260 statements, 1 missed)
+  - starship_states.py: 98% coverage (50 statements, 1 missed)
+- **Total**: 309 tests, 99% overall coverage (1171 statements, 7 missed)
 
 ### Code Quality
 
@@ -328,6 +344,9 @@ mypy src/
 - ✅ **Professional documentation** with Google-style docstrings
 - ✅ **Discrete-event simulation** with SimPy integration
 - ✅ **Multi-ship simulation** with state machines and statistics
+- ✅ **Captain risk profiles** with varied operational personalities
+- ✅ **Intelligent freight loading** with hope mechanism
+- ✅ **Sector name mapping** for readable world locations
 
 ---
 
@@ -440,6 +459,8 @@ Contributions welcome! This project follows:
 - [x] Smart cargo purchasing (skip unprofitable lots)
 - [x] Jump range validation and reachability checking
 - [x] Sector name lookup table (SECTORS) for subsector code mapping
+- [x] Captain risk profiles with varied operational personalities
+- [x] Intelligent freight loading with hope mechanism
 - [ ] Enhanced statistics and visualization
 - [ ] Advanced pathfinding with multi-jump routes
 - [ ] Ship maintenance and repair mechanics
