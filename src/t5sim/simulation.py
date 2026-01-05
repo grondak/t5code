@@ -227,7 +227,8 @@ class Simulation:
             )
             ship.credit(self.starting_capital)
 
-            # Add basic crew (pass ship_class since ship stores class_name string)
+            # Add basic crew (pass ship_class since
+            # ship stores class_name string)
             self._add_basic_crew(ship, ship_class)
 
             # Pick initial destination using same logic as agent's
@@ -257,6 +258,47 @@ class Simulation:
             )
             self.agents.append(agent)
 
+    def _get_skill_for_position(
+        self,
+        position_name: str,
+        position_index: int,
+        ship_class: T5ShipClass
+    ) -> tuple[str, int] | None:
+        """Determine skill name and level for a crew position.
+
+        Args:
+            position_name: Name of position (e.g., "Pilot", "Engineer")
+            position_index: Index in position list (0 = first/chief)
+            ship_class: T5ShipClass for ship-attribute-based skills
+
+        Returns:
+            Tuple of (skill_name, skill_level) or None if no skill
+        """
+        # Check if this is a Captain serving as Pilot
+        # (no separate Pilot position)
+        has_pilot = "A" in ship_class.crew_positions
+        if position_name == "Captain" and not has_pilot:
+            return ("Pilot", ship_class.maneuver_rating)
+        elif position_name == "Pilot":
+            return ("Pilot", ship_class.maneuver_rating)
+        elif position_name == "Astrogator":
+            return ("Astrogator", ship_class.jump_rating)
+        elif position_name == "Engineer":
+            # Chief Engineer (first one) gets +1 skill level
+            level = (ship_class.powerplant_rating + 1
+                     if position_index == 0
+                     else ship_class.powerplant_rating)
+            return ("Engineer", level)
+        elif position_name == "Steward":
+            return ("Steward", 3)
+        elif position_name == "Gunner":
+            return ("Gunner", 1)
+        elif position_name == "Counsellor":
+            return ("Counsellor", 2)
+        elif position_name == "Medic":
+            return ("Medic", 2)
+        return None
+
     def _add_basic_crew(self, ship: T5Starship, ship_class: T5ShipClass):
         """Add crew NPCs to fill all positions defined by the ship class.
 
@@ -273,47 +315,38 @@ class Simulation:
         - All other positions: no skills
 
         Captain gets special treatment with random risk profile.
+        On ships without explicit Captain position, Pilot serves as Captain.
 
         Args:
             ship: T5Starship to crew
             ship_class: T5ShipClass object with ship specifications
         """
+        # Check if ship has explicit captain position
+        has_captain = "Captain" in ship.crew_position
+
         # Fill each position slot with an NPC
         for position_name, position_list in ship.crew_position.items():
             for i, crew_position in enumerate(position_list):
                 # Generate unique name for multiple positions
-                if len(position_list) > 1:
-                    npc_name = f"{position_name} {i+1}"
-                else:
-                    npc_name = position_name
+                npc_name = (f"{position_name} {i+1}"
+                            if len(position_list) > 1
+                            else position_name)
 
-                # Create NPC
+                # Create NPC and assign skill if applicable
                 npc = T5NPC(npc_name)
+                skill_info = self._get_skill_for_position(
+                    position_name, i, ship_class
+                )
+                if skill_info:
+                    npc.set_skill(skill_info[0], skill_info[1])
 
-                # Assign position-specific skills
-                if position_name == "Pilot":
-                    npc.set_skill("Pilot", ship_class.maneuver_rating)
-                elif position_name == "Astrogator":
-                    npc.set_skill("Astrogator", ship_class.jump_rating)
-                elif position_name == "Engineer":
-                    # Chief Engineer (first one) gets +1 skill level
-                    if i == 0:
-                        npc.set_skill("Engineer", ship_class.powerplant_rating + 1)
-                    else:
-                        npc.set_skill("Engineer", ship_class.powerplant_rating)
-                elif position_name == "Steward":
-                    npc.set_skill("Steward", 3)
-                elif position_name == "Gunner":
-                    npc.set_skill("Gunner", 1)
-                elif position_name == "Counsellor":
-                    npc.set_skill("Counsellor", 2)
-                elif position_name == "Medic":
-                    npc.set_skill("Medic", 2)
-                # All other positions get no skills
-
-                # Special handling for Captain: add risk profile
-                if position_name == "Captain":
-                    npc.cargo_departure_threshold = generate_captain_risk_profile()
+                # Add risk profile to Captain or Pilot (if no Captain)
+                if (position_name == "Captain" or (position_name == "Pilot"
+                                                   and not has_captain
+                                                   and i == 0)):
+                    npc.cargo_departure_threshold = (
+                        generate_captain_risk_profile()
+                    )
 
                 # Assign NPC to position slot
                 crew_position.assign(npc)

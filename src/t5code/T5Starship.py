@@ -27,50 +27,53 @@ if TYPE_CHECKING:
 
 class CrewPosition:
     """Represents a crew position on a starship with optional NPC assignment.
-    
+
     Provides methods to check if a position is filled and to get/set the
     assigned NPC.
-    
+
     Attributes:
         position_code: Single-letter code from POSITIONS table
         position_name: Full position name from POSITIONS table
         npc: The T5NPC assigned to this position, or None if unfilled
     """
-    
+
     def __init__(self, position_code: str) -> None:
         """Initialize crew position with code from POSITIONS table.
-        
+
         Args:
             position_code: Single-letter or digit code (e.g., 'A', '0')
         """
         self.position_code = position_code
-        self.position_name = POSITIONS.get(position_code, f"Unknown-{position_code}")
+        self.position_name = POSITIONS.get(position_code,
+                                           f"Unknown-{position_code}")
         self.npc: Optional[T5NPC] = None
-    
+
     def is_filled(self) -> bool:
         """Check if position has an assigned crew member.
-        
+
         Returns:
             True if position has an NPC assigned, False otherwise
         """
         return self.npc is not None
-    
+
     def assign(self, npc: T5NPC) -> None:
         """Assign an NPC to this position.
-        
+
         Args:
             npc: The T5NPC to assign to this position
         """
         self.npc = npc
-    
+
     def clear(self) -> None:
         """Remove the assigned NPC from this position."""
         self.npc = None
-    
+
     def __repr__(self) -> str:
         """String representation of crew position."""
-        status = f"filled by {self.npc.character_name}" if self.is_filled() else "vacant"
-        return f"CrewPosition({self.position_code}: {self.position_name}, {status})"
+        status = (f"filled by {self.npc.character_name}"
+                  if self.is_filled() else "vacant")
+        return (f"CrewPosition({self.position_code}: "
+                f"{self.position_name}, {status})")
 
 
 class _BestCrewSkillDict:
@@ -186,16 +189,19 @@ class T5Starship:
         # Mail, crew, and cargo tracking
         self.mail: Dict[str, "T5Mail"] = {}  # mail_id → T5Mail object
         self.crew: Dict[str, T5NPC] = {}  # role → T5NPC or crew record
-        
-        # Crew positions from ship class design (supports multiple of same type)
+
+        # Crew positions from ship class design
+        # (supports multiple of same type)
         # Dict[position_name, List[CrewPosition]]
         self.crew_position: Dict[str, List[CrewPosition]] = {}
         for position_code in ship_class.crew_positions:
-            position_name = POSITIONS.get(position_code, f"Unknown-{position_code}")
+            position_name = POSITIONS.get(position_code,
+                                          f"Unknown-{position_code}")
             if position_name not in self.crew_position:
                 self.crew_position[position_name] = []
-            self.crew_position[position_name].append(CrewPosition(position_code))
-        
+            (self.crew_position[position_name].
+             append(CrewPosition(position_code)))
+
         self.cargo: Dict[str, List[T5Lot]] = {
             "freight": [],  # freight lots
             "cargo": [],  # miscellaneous or special cargo

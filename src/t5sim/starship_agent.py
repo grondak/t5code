@@ -20,7 +20,12 @@ Trading Strategy:
 
 from typing import TYPE_CHECKING
 import simpy
-from t5code import T5Starship, InsufficientFundsError, CapacityExceededError
+from t5code import (
+    T5Starship,
+    T5NPC,
+    InsufficientFundsError,
+    CapacityExceededError
+)
 from t5sim.starship_states import (
     StarshipState,
     get_next_state,
@@ -148,9 +153,20 @@ class StarshipAgent:
         self.state = starting_state
         self.voyage_count = 0
         # Get departure threshold from captain's preferences
-        captain = self.ship.crew.get("captain")
-        self.minimum_cargo_threshold = (captain.cargo_departure_threshold
-                                        if captain else 0.8)
+        # Check Captain position first, then Pilot (pilot
+        # serves as captain on ships without captain)
+        captain_position = self.ship.crew_position.get("Captain")
+        pilot_position = self.ship.crew_position.get("Pilot")
+
+        if captain_position and captain_position[0].is_filled():
+            captain_npc = captain_position[0].npc
+        elif pilot_position and pilot_position[0].is_filled():
+            captain_npc = pilot_position[0].npc
+        else:
+            captain_npc = None
+
+        self.minimum_cargo_threshold = (captain_npc.cargo_departure_threshold
+                                        if captain_npc else 0.8)
         self.freight_loading_attempts = 0
         self.max_freight_attempts = 4  # Give up after 4 cycles (12 days)
         self.freight_loaded_this_cycle = False  # Track if freight obtained
@@ -166,6 +182,71 @@ class StarshipAgent:
         # Start the agent's process
         self.process = env.process(self.run())
 
+    def _build_crew_skills_list(
+        self, npc: T5NPC, position_name: str, is_captain: bool = False
+    ) -> list[str]:
+        """Build list of skill strings for a crew member.
+
+        Args:
+            npc: The NPC crew member
+            position_name: Position name (e.g., "Captain", "Pilot")
+            is_captain: Whether this crew member serves as captain
+
+        Returns:
+            List of skill strings (e.g., ["80%", "Pilot-2"])
+        """
+        skills = []
+        if position_name == "Captain" or is_captain:
+            # Show captain's risk threshold if they have one
+            if hasattr(npc, 'cargo_departure_threshold'):
+                threshold_pct = int(npc.cargo_departure_threshold * 100)
+                skills.append(f"{threshold_pct}%")
+
+        # Add any skills this NPC has
+        for skill_name, skill_level in npc.skills.items():
+            # Capitalize skill name for display
+            display_name = skill_name.title()
+            skills.append(f"{display_name}-{skill_level}")
+
+        return skills
+
+    def _format_crew_member(
+        self,
+        position_name: str,
+        position_index: int,
+        position_count: int,
+        npc: T5NPC,
+        is_captain: bool = False
+    ) -> str:
+        """Format a single crew member for display.
+
+        Args:
+            position_name: Position name (e.g., "Engineer")
+            position_index: Index in position list (0-based)
+            position_count: Total positions of this type
+            npc: The NPC crew member
+            is_captain: Whether this crew member serves as captain
+
+        Returns:
+            Formatted crew member string (e.g., "Engineer 1: Engineer-3")
+        """
+        # Determine display name - show "Captain"
+        # for pilot who serves as captain
+        if is_captain and position_name == "Pilot":
+            display_name = "Captain"
+        else:
+            display_name = (f"{position_name} {position_index + 1}"
+                            if position_count > 1
+                            else position_name)
+
+        # Build skills list
+        skills = self._build_crew_skills_list(npc, position_name, is_captain)
+
+        # Format with or without skills
+        if skills:
+            return f"{display_name}: {' '.join(skills)}"
+        return display_name
+
     def _format_crew_info(self) -> str:
         """Format crew roster with NPC names and skills for display.
 
@@ -173,40 +254,26 @@ class StarshipAgent:
             Comma-separated list of crew members from crew_position.
             Shows position name (or name + number for multiples).
             Captain shows risk threshold percentage.
+            On ships without Captain, Pilot is shown as Captain.
 
         Example:
-            "Captain: 80%, Pilot, Astrogator, Engineer 1, Engineer 2"
+            "Captain: 80% Pilot-2, Astrogator, Engineer 1, Engineer 2"
         """
+        # Check if ship has explicit captain
+        has_captain = "Captain" in self.ship.crew_position
+
         crew_list = []
         for position_name, position_list in self.ship.crew_position.items():
             for i, crew_position in enumerate(position_list):
-                if not crew_position.is_filled():
-                    continue
-
-                npc = crew_position.npc
-                # Build skills list for this NPC
-                skills = []
-                if position_name == "Captain":
-                    # Show captain's risk threshold
-                    threshold_pct = int(npc.cargo_departure_threshold * 100)
-                    skills.append(f"{threshold_pct}%")
-
-                # Add any skills this NPC has
-                for skill_name, skill_level in npc.skills.items():
-                    # Capitalize skill name for display
-                    display_name = skill_name.title()
-                    skills.append(f"{display_name}-{skill_level}")
-
-                # Format crew member display
-                if len(position_list) > 1:
-                    display_name = f"{position_name} {i+1}"
-                else:
-                    display_name = position_name
-
-                if skills:
-                    crew_list.append(f"{display_name}: {' '.join(skills)}")
-                else:
-                    crew_list.append(display_name)
+                if crew_position.is_filled():
+                    # First pilot serves as captain on ships without captain
+                    is_captain = (not has_captain and
+                                  position_name == "Pilot" and i == 0)
+                    crew_member = self._format_crew_member(
+                        position_name, i, len(position_list),
+                        crew_position.npc, is_captain
+                    )
+                    crew_list.append(crew_member)
 
         return ", ".join(crew_list)
 
@@ -296,6 +363,10 @@ class StarshipAgent:
             - Resets counter when freight loaded or proceeding
             - Prints status messages in verbose mode
         """
+        # Handle ships with no cargo capacity (like Frigates)
+        if self.ship.hold_size == 0:
+            return False
+
         cargo_fill_ratio = self.ship.cargo_size / self.ship.hold_size
 
         # Reset counter if we got freight this cycle (hope!)

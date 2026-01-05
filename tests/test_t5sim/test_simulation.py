@@ -1,9 +1,11 @@
 """Test the main simulation orchestrator."""
 
 import pytest
-from t5code import GameState as gs_module, T5World
+from unittest.mock import patch
+from t5code import GameState as gs_module, T5World, T5ShipClass
 from t5code.GameState import GameState
 from t5sim import Simulation
+from t5sim.simulation import generate_captain_risk_profile
 
 
 @pytest.fixture
@@ -132,3 +134,63 @@ def test_run_simulation_function():
     assert "ships" in results
     assert len(results["ships"]) == 2
     assert "total_voyages" in results
+
+
+def test_generate_captain_risk_profile_very_cautious():
+    """Test very cautious captain risk profile (91-95%)."""
+    # Force roll between 0.90 and 0.98 for very cautious
+    with patch('t5sim.simulation.random.random', return_value=0.95):
+        with patch('t5sim.simulation.random.uniform', return_value=0.93):
+            threshold = generate_captain_risk_profile()
+            assert threshold == pytest.approx(0.93)
+
+
+def test_generate_captain_risk_profile_aggressive():
+    """Test aggressive captain risk profile (65-69%)."""
+    # Force roll above 0.98 for aggressive
+    with patch('t5sim.simulation.random.random', return_value=0.99):
+        with patch('t5sim.simulation.random.uniform', return_value=0.67):
+            threshold = generate_captain_risk_profile()
+            assert threshold == pytest.approx(0.67)
+
+
+def test_get_skill_for_position_gunner(game_state):
+    """Test _get_skill_for_position returns correct skill for Gunner."""
+    sim = Simulation(game_state, num_ships=1, duration_days=1.0)
+
+    # Create a ship class with gunner position
+    ship_data = {
+        "class_name": "test_gunship",
+        "jump_rating": 2,
+        "maneuver_rating": 3,
+        "powerplant_rating": 3,
+        "cargo_capacity": 50,
+        "staterooms": 5,
+        "low_berths": 0,
+        "crew_positions": ["G"]  # Gunner
+    }
+    ship_class = T5ShipClass("test_gunship", ship_data)
+
+    skill = sim._get_skill_for_position("Gunner", 0, ship_class)
+    assert skill == ("Gunner", 1)
+
+
+def test_get_skill_for_position_counsellor(game_state):
+    """Test _get_skill_for_position returns correct skill for Counsellor."""
+    sim = Simulation(game_state, num_ships=1, duration_days=1.0)
+
+    # Create a ship class with counsellor position
+    ship_data = {
+        "class_name": "test_counsellor_ship",
+        "jump_rating": 2,
+        "maneuver_rating": 3,
+        "powerplant_rating": 3,
+        "cargo_capacity": 50,
+        "staterooms": 5,
+        "low_berths": 0,
+        "crew_positions": ["O"]  # Counsellor
+    }
+    ship_class = T5ShipClass("test_counsellor_ship", ship_data)
+
+    skill = sim._get_skill_for_position("Counsellor", 0, ship_class)
+    assert skill == ("Counsellor", 2)

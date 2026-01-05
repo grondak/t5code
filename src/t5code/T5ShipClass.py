@@ -4,8 +4,7 @@ Defines the T5ShipClass class for representing starship design specifications
 including performance ratings and capacity limits.
 """
 
-from typing import Dict, Any, List, Optional
-from t5code.T5Tables import POSITIONS
+from typing import Dict, Any, List
 
 
 class T5ShipClass:
@@ -46,7 +45,8 @@ class T5ShipClass:
         self.class_name: str = class_name
         self.jump_rating: int = ship_data["jump_rating"]
         self.maneuver_rating: float = ship_data["maneuver_rating"]
-        self.powerplant_rating: int = ship_data.get("powerplant_rating", self.maneuver_rating)
+        self.powerplant_rating: int = ship_data.get("powerplant_rating",
+                                                    self.maneuver_rating)
         self.cargo_capacity: int = ship_data["cargo_capacity"]
         self.staterooms: int = ship_data["staterooms"]
         self.low_berths: int = ship_data["low_berths"]

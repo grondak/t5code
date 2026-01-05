@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-309%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-322%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1185%20%7C%2011%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1247%20%7C%205%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -66,7 +66,12 @@ Built for realistic simulation of merchant starship operations, trade economics,
   - Influences when captains decide to depart port
   - Creates varied ship behaviors in simulations
   - Captain is multi-skilled: trader-2, steward-1, admin-1, liaison-1
-- **Streamlined crew** - Captain handles all merchant operations, Medic for low passage
+- **Streamlined crew** - Captain and specialized crew for ship operations
+  - Captain is multi-skilled: Pilot, Trader, Steward, Admin, Liaison
+  - Ships with Captain position ("0"): Captain handles piloting duties
+  - Ships without Captain position: Pilot serves as captain with full authority
+  - Additional crew: Engineer, Astrogator, Medic, Sensop, Freightmaster, etc.
+  - All ships display captain's name and risk profile regardless of crew structure
 - **Passenger classes** (High, Middle, Low passage)
 - **Low passage survival mechanics** with medic skill effects
 
@@ -158,58 +163,63 @@ python -m t5sim.run --ships 5 --days 30 --year 1105 --day 1 --verbose
 
 **Verbose output example (Traveller date format DDD.FF-YYYY with fractional days):**
 ```
-Trader_001 (Liner) starting simulation, destination: Nosea/Darrian (0724)
-  Crew: Captain: 80% trader-2 steward-1 admin-1 liaison-1, Medic: medic-1
-[360.00-1104] Trader_001 at Enos/Sword Worlds (1130) (DOCKED): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
+Trader_001 (Liner) starting simulation, destination: Derchon/Lunion (2024)
+  Crew: Captain: 80%, Pilot: Pilot-2, Astrogator 1: Astrogator-1, Astrogator 2: Astrogator-1, Astrogator 3: Astrogator-1, 
+  Engineer 1: Engineer-3, Engineer 2: Engineer-2, Engineer 3: Engineer-2, Engineer 4: Engineer-2, Medic: Medic-2, 
+  Steward: Steward-3, Freightmaster, Cook 1, Cook 2, Cook 3
+
+Trader_002 (Scout) starting simulation, destination: Powaza/Rhylanor (3220)
+  Crew: Captain: 76% Pilot-2, Astrogator: Astrogator-2, Engineer: Engineer-3, Sensop
+[360.00-1104] Trader_001 at Shirene/Lunion (2125) (DOCKED): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
 
-[360.25-1104] Trader_001 at Enos/J (1130) (OFFLOADING): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
+[360.00-1104] Trader_002 at Cipatwe/Rhylanor (3118) (DOCKED): balance=Cr1,000,000, hold (0t/10.0t, 0%), 
+  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+
+[360.25-1104] Trader_001 at Shirene/Lunion (2125) (OFFLOADING): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
 
-[360.75-1104] Trader_001 at Enos/J (1130) (SELLING_CARGO): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
+[360.75-1104] Trader_001 at Shirene/Lunion (2125) (SELLING_CARGO): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | cargo sales complete
 
-[361.75-1104] Trader_001 at Enos/J (1130) (LOADING_FREIGHT): balance=Cr1,004,000, hold (4t/120.0t, 3%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 4t freight lot, income Cr4,000
+[360.75-1104] Trader_002 at Cipatwe/Rhylanor (3118) (LOADING_FREIGHT): balance=Cr1,009,000, hold (9t/10.0t, 90%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 9t freight lot, income Cr9,000
 
-[362.75-1104] Trader_001 at Enos/J (1130) (LOADING_FREIGHT): balance=Cr1,004,000, hold (4t/120.0t, 3%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 3% full, need 80% (continuing freight loading, attempt 0.0)
+[361.75-1104] Trader_001 at Shirene/Lunion (2125) (LOADING_FREIGHT): balance=Cr1,005,000, hold (5t/120.0t, 4%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 5t freight lot, income Cr5,000
 
-[001.35-1105] Trader_001 at Enos/J (1130) (LOADING_PASSENGERS): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
-  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | loaded 7 high, 7 mid, 0 low passengers, income Cr126,000
+[361.75-1104] Trader_002 at Cipatwe/Rhylanor (3118) (LOADING_CARGO): balance=Cr1,006,400, hold (10.0t/10.0t, 100%), 
+  cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 1 cargo lot(s), 1.0t total
 
-[001.60-1105] Trader_001 at Enos/J (1130) (LOADING_PASSENGERS): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
-  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | loading complete, ready to depart
+[362.75-1104] Trader_001 at Shirene/Lunion (2125) (LOADING_FREIGHT): balance=Cr1,005,000, hold (5t/120.0t, 4%), 
+  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 4% full, need 80% (continuing freight loading, attempt 0.0)
 
-[002.10-1105] Trader_001 at Enos/J (1130) (DEPARTING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
-  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | departing starport for Worldname/A (1234)
+[363.20-1104] Trader_002 at Cipatwe/Rhylanor (3118) (MANEUVERING_TO_JUMP): balance=Cr1,006,400, hold (10.0t/10.0t, 100%), 
+  cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | entering jump space to Powaza/Rhylanor (3220)
 
-[002.60-1105] Trader_001 at Enos/J (1130) (MANEUVERING_TO_JUMP): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
-  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | entering jump space to Worldname/A (1234)
+[363.20-1104] Trader_002 at jump space (JUMPING): balance=Cr1,006,400, hold (10.0t/10.0t, 100%), 
+  cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | picked destination 'Cipatwe' because it showed cargo profit of +Cr1900/ton
 
-[002.60-1105] Trader_001 at jump space (JUMPING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
-  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | picked destination 'Worldname' because it showed cargo profit of +Cr2000/ton
+[005.20-1105] Trader_002 at jump space (JUMPING): balance=Cr1,006,400, hold (10.0t/10.0t, 100%), 
+  cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | arrived at Powaza/Rhylanor (3220)
 
-[009.60-1105] Trader_001 at jump space (JUMPING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
-  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | arrived at Worldname/A (1234)
-
-[010.10-1105] Trader_001 at Worldname/A (1234) (MANEUVERING_TO_PORT): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
-  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | docking at starport
-
-[010.20-1105] Trader_001 at Worldname/A (1234) (OFFLOADING): balance=Cr679,000, hold (105.0t/120.0t, 88%), 
+[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (OFFLOADING): balance=Cr1,006,400, hold (1.0t/10.0t, 10%), 
   cargo=1 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
 
-[010.70-1105] Trader_001 at Worldname/A (1234) (SELLING_CARGO): balance=Cr682,135, hold (0.0t/120.0t, 0%), 
-  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | sold cargo lot for Cr3,135 profit
+[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (SELLING_CARGO): balance=Cr1,016,498, hold (0.0t/10.0t, 0%), 
+  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | sold cargo lot for Cr7,498 profit
 ```
 
 **Key verbose output features:**
-- **Crew roster displayed at startup**: Shows all NPCs with their skills
-  - Format: "NPC Name: threshold% skill-level skill-level"
-  - Example: "Captain: 80% trader-2 steward-1 admin-1 liaison-1, Medic: medic-1"
-  - Captain shows cargo departure threshold percentage followed by all skills
-  - Streamlined 2-person crew (Captain + Medic) handles all operations
-- Ship class shown at startup (e.g., Scout, Freighter, Liner, Corvette)
+- **Crew roster displayed at startup**: Shows all crew members with their skills
+  - Format for captain: "Captain: X% Skill-Level" where X is cargo departure threshold
+  - Format for crew: "Position: Skill-Level" or "Position N: Skill-Level" for multiple
+  - Example (Scout): "Captain: 77% Pilot-2, Astrogator: Astrogator-2, Engineer: Engineer-3"
+  - Example (Liner): Shows captain with separate pilot, plus all 15+ crew members
+  - Ships with only Pilot display: "Captain: X% Pilot-Y" (pilot serves as captain)
+  - Ships with Captain+Pilot display both separately with specialized roles
+  - Ships with zero cargo capacity (Frigates): Display correctly, skip freight loading
+- Ship class shown at startup (Scout, Freighter, Frigate, Liner)
 - **Traveller date format**: `[DDD.FF-YYYY]` format with fractional days for hour-by-hour tracking
   - Examples: `[360.00-1104]` (day start), `[360.25-1104]` (6 hours), `[360.75-1104]` (18 hours)
 - **Year rollover**: Automatically transitions from day 365 to day 001 of next year
@@ -263,32 +273,32 @@ Bottom 5 ships by balance:
 ```
 t5code/
 ├── src/
-│   ├── t5code/              # Core library (235 tests, 100% coverage)
-│   │   ├── T5Starship.py    # Starship operations
+│   ├── t5code/              # Core library (100% coverage, all modules)
+│   │   ├── T5Starship.py    # Starship operations with CrewPosition system
 │   │   ├── T5World.py       # World generation with subsector/hex location formatting
 │   │   ├── T5Lot.py         # Cargo lot mechanics
-│   │   ├── T5NPC.py         # Character/crew system
+│   │   ├── T5NPC.py         # Character/crew system with cargo_departure_threshold
 │   │   ├── T5Mail.py        # Mail contract system
-│   │   ├── T5ShipClass.py   # Ship design specifications
+│   │   ├── T5ShipClass.py   # Ship design specifications (4 classes: Scout, Freighter, Frigate, Liner)
 │   │   ├── T5RandomTradeGoods.py  # Trade goods tables
 │   │   ├── T5Basics.py      # Core game mechanics
-│   │   ├── T5Tables.py      # Reference tables with sector name lookups
+│   │   ├── T5Tables.py      # Reference tables with sector name lookups and position codes
 │   │   ├── T5Exceptions.py  # Custom exception hierarchy
 │   │   └── GameState.py     # Global game state with sector mapping
-│   └── t5sim/               # Simulation engine (74 tests, 99% coverage)
-│       ├── starship_states.py   # 12-state FSM
+│   └── t5sim/               # Simulation engine (99% coverage)
+│       ├── starship_states.py   # 12-state FSM (98% coverage)
 │       ├── starship_agent.py    # SimPy process agent (99% coverage)
 │       ├── simulation.py        # Main orchestrator (100% coverage)
-│       └── run.py               # CLI interface
+│       └── run.py               # CLI interface (98% coverage)
 ├── tests/
-│   ├── test_t5code/         # 235 tests for core library
-│   └── test_t5sim/          # 74 tests for simulation
+│   ├── test_t5code/         # Comprehensive tests for core library
+│   └── test_t5sim/          # Simulation engine tests
 ├── examples/
 │   ├── GameDriver.py        # Single-ship example
 │   └── sim.py              # Simulation example
 ├── resources/               # Game data files
 │   ├── t5_map.txt          # World data
-│   └── t5_ship_classes.csv # Ship specifications
+│   └── t5_ship_classes.csv # Ship specifications (Scout, Freighter, Frigate, Liner)
 └── README.md
 ```
 
@@ -320,12 +330,16 @@ pytest --cov=src --cov-report=html
 ```
 
 **Current Status:**
-- **t5code**: 235 tests passing, 100% coverage (includes sector lookup tests)
-- **t5sim**: 74 tests passing, 97-98% coverage by module
-  - simulation.py: 97% coverage (114 statements, 3 missed)
-  - starship_agent.py: 98% coverage (274 statements, 5 missed)
-  - starship_states.py: 98% coverage (50 statements, 1 missed)
-- **Total**: 309 tests, 99% overall coverage (1185 statements, 11 missed)
+- **t5code**: All modules at 100% coverage
+  - GameState.py, T5Basics.py, T5Exceptions.py, T5Lot.py, T5Mail.py
+  - T5NPC.py, T5RandomTradeGoods.py, T5ShipClass.py, T5Starship.py
+  - T5Tables.py, T5World.py
+- **t5sim**: High coverage across all modules
+  - simulation.py: 100% coverage
+  - starship_agent.py: 99% coverage (3 lines: defensive code paths)
+  - starship_states.py: 98% coverage (1 line: `if __name__ == "__main__"`)
+  - run.py: 98% coverage (1 line: `if __name__ == "__main__"`)
+- **Total**: 322 tests, 99% overall coverage (1247 statements, 5 missed)
 
 ### Code Quality
 
@@ -354,6 +368,8 @@ mypy src/
 - ✅ **Captain risk profiles** with varied operational personalities
 - ✅ **Intelligent freight loading** with hope mechanism
 - ✅ **Sector name mapping** for readable world locations
+- ✅ **Captain/Pilot architecture** - flexible crew structure (Captain serves as pilot, or Pilot serves as captain)
+- ✅ **Zero cargo capacity handling** - Frigates and other non-cargo ships operate correctly
 
 ---
 
@@ -468,6 +484,8 @@ Contributions welcome! This project follows:
 - [x] Sector name lookup table (SECTORS) for subsector code mapping
 - [x] Captain risk profiles with varied operational personalities
 - [x] Intelligent freight loading with hope mechanism
+- [x] Captain/Pilot flexible architecture with correct display formatting
+- [x] Zero cargo capacity ship handling (Frigates operate without freight/cargo)
 - [ ] Enhanced statistics and visualization
 - [ ] Advanced pathfinding with multi-jump routes
 - [ ] Ship maintenance and repair mechanics

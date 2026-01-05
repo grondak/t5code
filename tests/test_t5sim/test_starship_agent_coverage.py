@@ -9,6 +9,7 @@ from t5code import (
     CapacityExceededError
 )
 from t5sim.simulation import Simulation
+from t5sim.starship_agent import StarshipAgent
 
 
 class TestStarshipAgentCoverage(unittest.TestCase):
@@ -88,9 +89,14 @@ class TestStarshipAgentCoverage(unittest.TestCase):
         sim.game_state.world_data[ship.location] = mock_world
 
         try:
-            # Make ship have space
+            # Make ship have space (and ensure hold_size
+            # > 0 in case of Frigate)
             original_cargo_size = ship.cargo_size
+            original_hold_size = ship.hold_size
             ship.cargo_size = 0
+            if ship.hold_size == 0:
+                # Ensure Frigates have space for this test
+                ship.hold_size = 100
 
             # First lot succeeds, second raises exception
             call_count = 0
@@ -121,6 +127,7 @@ class TestStarshipAgentCoverage(unittest.TestCase):
                     original_world
                 )
             ship.cargo_size = original_cargo_size
+            ship.hold_size = original_hold_size
 
     def test_load_cargo_capacity_exceeded_exception(self):
         """Test _load_cargo handles CapacityExceededError.
@@ -155,9 +162,14 @@ class TestStarshipAgentCoverage(unittest.TestCase):
         sim.game_state.world_data[ship.location] = mock_world
 
         try:
-            # Make ship have space
+            # Make ship have space (and ensure hold_size > 0
+            # in case of Frigate)
             original_cargo_size = ship.cargo_size
+            original_hold_size = ship.hold_size
             ship.cargo_size = 0
+            if ship.hold_size == 0:
+                # Ensure Frigates have space for this test
+                ship.hold_size = 100
 
             # First lot succeeds, second raises exception
             call_count = 0
@@ -189,6 +201,7 @@ class TestStarshipAgentCoverage(unittest.TestCase):
                     original_world
                 )
             ship.cargo_size = original_cargo_size
+            ship.hold_size = original_hold_size
 
     def test_load_cargo_exception_with_verbose(self):
         """Test _load_cargo exception handling with verbose mode.
@@ -226,9 +239,14 @@ class TestStarshipAgentCoverage(unittest.TestCase):
         sim.game_state.world_data[ship.location] = mock_world
 
         try:
-            # Make ship have space
+            # Make ship have space (and ensure hold_size > 0
+            # in case of Frigate)
             original_cargo_size = ship.cargo_size
+            original_hold_size = ship.hold_size
             ship.cargo_size = 0
+            if ship.hold_size == 0:
+                # Ensure Frigates have space for this test
+                ship.hold_size = 100
 
             # First lot succeeds, second succeeds, third raises
             call_count = 0
@@ -263,6 +281,7 @@ class TestStarshipAgentCoverage(unittest.TestCase):
                     original_world
                 )
             ship.cargo_size = original_cargo_size
+            ship.hold_size = original_hold_size
 
     def test_sell_cargo_exception_handling(self):
         """Test _sell_cargo handles exceptions during sale.
@@ -367,6 +386,151 @@ class TestStarshipAgentCoverage(unittest.TestCase):
 
         # Note: sell_cargo_lot was mocked, so the lot wasn't
         # actually removed, but the code path was executed
+
+    def test_pilot_as_captain_initialization(self):
+        """Test agent initialization when pilot serves
+        as captain (line 164)."""
+        # Create a ship class with no Captain, only Pilot
+        from t5code import T5ShipClass, T5Starship, T5NPC
+        ship_class_dict = {
+            "class_name": "Scout",
+            "jump_rating": 2,
+            "maneuver_rating": 2,
+            "powerplant_rating": 2,
+            "cargo_capacity": 10,
+            "staterooms": 0,
+            "low_berths": 0,
+            # Pilot (A), Astrogator (B), Engineer (E) - no Captain (0)
+            "crew_positions": "ABE",
+            "crew_ranks": "123"
+        }
+        ship_class = T5ShipClass("Scout", ship_class_dict)
+        ship = T5Starship("Test_Scout", "Rhylanor", ship_class)
+        ship.credit(1_000_000)
+
+        # Add pilot with cargo threshold
+        pilot = T5NPC("Test Pilot")
+        pilot.cargo_departure_threshold = 0.75
+        ship.crew_position["Pilot"][0].assign(pilot)
+
+        # Create simulation first to get env
+        sim = Simulation(self.game_state, num_ships=1, duration_days=1.0)
+        # Create agent - should use pilot's threshold (line 164)
+        agent = StarshipAgent(sim.env, ship, sim)
+
+        # Verify pilot's threshold is used
+        self.assertEqual(agent.minimum_cargo_threshold, 0.75)
+
+    def test_pilot_displayed_as_captain(self):
+        """Test pilot is displayed as Captain when
+        no explicit captain (line 236)."""
+        # Create ship with only Pilot (no Captain)
+        from t5code import T5ShipClass, T5Starship, T5NPC
+        ship_class_dict = {
+            "class_name": "Scout",
+            "jump_rating": 2,
+            "maneuver_rating": 2,
+            "powerplant_rating": 2,
+            "cargo_capacity": 10,
+            "staterooms": 0,
+            "low_berths": 0,
+            "crew_positions": "ABE",
+            "crew_ranks": "123"
+        }
+        ship_class = T5ShipClass("Scout", ship_class_dict)
+        ship = T5Starship("Test_Scout", "Rhylanor", ship_class)
+
+        # Add pilot
+        pilot = T5NPC("Test Pilot")
+        pilot.set_skill("Pilot", 3)
+        pilot.cargo_departure_threshold = 0.75
+        ship.crew_position["Pilot"][0].assign(pilot)
+
+        # Create simulation first to get env
+        sim = Simulation(self.game_state, num_ships=1, duration_days=1.0)
+        # Create agent and get crew info
+        agent = StarshipAgent(sim.env, ship, sim)
+
+        crew_info = agent._format_crew_info()
+        # Should show "Captain" not "Pilot"
+        self.assertIn("Captain", crew_info)
+        self.assertIn("75%", crew_info)  # Risk threshold
+
+    def test_frigate_zero_cargo_early_return(self):
+        """Test ships with zero cargo capacity return early (line 368)."""
+        # Create Frigate with 0 cargo
+        from t5code import T5ShipClass, T5Starship
+        ship_class_dict = {
+            "class_name": "Frigate",
+            "jump_rating": 3,
+            "maneuver_rating": 3,
+            "powerplant_rating": 3,
+            "cargo_capacity": 0,
+            "staterooms": 0,
+            "low_berths": 0,
+            "crew_positions": "0BE",
+            "crew_ranks": "123"
+        }
+        ship_class = T5ShipClass("Frigate", ship_class_dict)
+        ship = T5Starship("Test_Frigate", "Rhylanor", ship_class)
+
+        sim = Simulation(self.game_state, num_ships=1, duration_days=1.0)
+        agent = StarshipAgent(sim.env, ship, sim)
+
+        # Should return False immediately without attempting division
+        result = agent._should_continue_freight_loading()
+        self.assertFalse(result)
+
+    def test_buy_profitable_cargo_lot(self):
+        """Test purchasing a profitable cargo lot (lines 666-667)."""
+        sim = Simulation(self.game_state, num_ships=1, duration_days=1.0)
+        sim.setup()
+        agent = sim.agents[0]
+        ship = agent.ship
+
+        # Ensure ship has cargo capacity
+        if ship.hold_size == 0:
+            ship.hold_size = 100
+            ship.cargo_size = 0
+
+        # Create a mock lot
+        from unittest.mock import Mock
+        mock_lot = Mock()
+        mock_lot.mass = 5
+        mock_lot.base_price = 1000
+
+        # Set destination
+        ship.set_course_for("Jae Tellona")
+
+        # Mock _is_lot_profitable to return True (profitable)
+        # and mock buy_cargo_lot to avoid actual purchase complexity
+        with patch.object(agent, '_is_lot_profitable',
+                          return_value=(True, 100)):
+            with patch.object(ship, 'buy_cargo_lot') as mock_buy:
+                purchased, mass = agent._try_purchase_lot(mock_lot)
+
+                # Should call buy_cargo_lot and
+                # return True with mass (lines 666-667)
+                mock_buy.assert_called_once_with(mock_lot)
+                self.assertTrue(purchased)
+                self.assertEqual(mass, 5)
+
+    def test_format_cargo_message_with_skipped(self):
+        """Test cargo loading message includes skipped count (line 698)."""
+        sim = Simulation(self.game_state, num_ships=1, duration_days=1.0)
+        sim.setup()
+        agent = sim.agents[0]
+
+        # Test with both loaded and skipped
+        msg = agent._format_cargo_loading_message(2, 10, 3)
+        self.assertIn("loaded 2 cargo lot", msg)
+        self.assertIn("10t", msg)
+        self.assertIn("skipped 3 unprofitable", msg)
+
+        # Test with only skipped
+        msg = agent._format_cargo_loading_message(0, 0, 5)
+        self.assertIn("skipped 5 unprofitable", msg)
+        self.assertNotIn("loaded", msg)
 
 
 if __name__ == '__main__':

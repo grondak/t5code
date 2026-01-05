@@ -1285,3 +1285,51 @@ def test_find_profitable_destinations_invalid_location(setup_test_gamestate,
     # Should raise WorldNotFoundError
     with pytest.raises(WorldNotFoundError):
         ship.find_profitable_destinations(game_state)
+
+
+def test_crew_position_clear(test_ship_data, setup_gamestate):
+    """Test clearing a crew position."""
+    # Add crew positions to ship data
+    ship_data_with_crew = test_ship_data["small"].copy()
+    # Pilot, Astrogator, Engineer
+    ship_data_with_crew["crew_positions"] = ["P", "A", "E"]
+
+    ship_class = T5ShipClass("small", ship_data_with_crew)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+
+    # Get a crew position
+    pilot_position = ship.crew_position["Pilot"][0]
+
+    # Assign an NPC
+    npc = T5NPC("Test Pilot")
+    pilot_position.assign(npc)
+    assert pilot_position.is_filled()
+
+    # Clear the position
+    pilot_position.clear()
+    assert not pilot_position.is_filled()
+    assert pilot_position.npc is None
+
+
+def test_crew_position_repr(test_ship_data, setup_gamestate):
+    """Test CrewPosition __repr__ method."""
+    ship_data_with_crew = test_ship_data["small"].copy()
+    ship_data_with_crew["crew_positions"] = ["P", "A"]
+
+    ship_class = T5ShipClass("small", ship_data_with_crew)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+
+    # Test vacant position repr
+    pilot_position = ship.crew_position["Pilot"][0]
+    repr_str = repr(pilot_position)
+    assert "CrewPosition" in repr_str
+    assert "Pilot" in repr_str
+    assert "vacant" in repr_str
+
+    # Test filled position repr
+    npc = T5NPC("Test Pilot")
+    pilot_position.assign(npc)
+    repr_str = repr(pilot_position)
+    assert "CrewPosition" in repr_str
+    assert "Pilot" in repr_str
+    assert "filled by Test Pilot" in repr_str

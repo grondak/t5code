@@ -358,3 +358,30 @@ def test_full_name_without_subsector_or_hex():
     world = T5World("Unknown", world_data)
     # Should fall back to just the name
     assert world.full_name() == "Unknown"
+
+
+def test_subsector():
+    """Test subsector() method returns correct value."""
+    world_data = {
+        "TestWorld": {
+            "UWP": "A123456-A",
+            "TradeClassifications": "Ag",
+            "Importance": "2",
+            "Subsector": "B"
+        }
+    }
+    world = T5World("TestWorld", world_data)
+    assert world.subsector() == "B"
+
+
+def test_subsector_missing():
+    """Test subsector() returns empty string when not present."""
+    world_data = {
+        "TestWorld": {
+            "UWP": "A123456-A",
+            "TradeClassifications": "Ag",
+            "Importance": "2"
+        }
+    }
+    world = T5World("TestWorld", world_data)
+    assert world.subsector() == ""

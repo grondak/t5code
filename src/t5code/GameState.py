@@ -120,12 +120,13 @@ def load_and_parse_t5_ship_classes_filelike(
         # Parse crew_positions string into list of position codes
         crew_positions_str = row.get("crew_positions", "")
         crew_positions = list(crew_positions_str) if crew_positions_str else []
-        
+
         ships[row["class_name"]] = {
             "class_name": row["class_name"],
             "jump_rating": int(row["jump_rating"]),
             "maneuver_rating": int(row["maneuver_rating"]),
-            "powerplant_rating": int(row.get("powerplant_rating", row["maneuver_rating"])),
+            "powerplant_rating": int(row.get("powerplant_rating",
+                                             row["maneuver_rating"])),
             "cargo_capacity": float(row["cargo_capacity"]),
             "staterooms": int(row["staterooms"]),
             "low_berths": int(row["low_berths"]),
