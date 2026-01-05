@@ -140,7 +140,7 @@ class Simulation:
         Side Effects:
             - Populates self.agents with StarshipAgent instances
             - Each agent automatically starts its SimPy process
-            - Ships randomly distributed across map worlds
+            - Ships only placed at worlds with reachable destinations
             - Each ship picks initial destination in jump range
 
         Note:
@@ -154,15 +154,38 @@ class Simulation:
         ship_classes_data = list(self.game_state.ship_classes.values())
 
         for i in range(self.num_ships):
-            # Pick random starting world and ship class
-            starting_world = random.choice(worlds)
+            # Pick random ship class first
             ship_class_dict = random.choice(ship_classes_data)
-
-            # Convert dict to T5ShipClass object
             class_name = ship_class_dict["class_name"]
             ship_class = T5ShipClass(class_name, ship_class_dict)
 
-            # Create ship
+            # Find a starting world with valid destinations
+            # Try up to 100 times to find ideal location
+            starting_world = None
+            reachable_worlds = []
+            attempts = 100
+            for _ in range(attempts):
+                candidate_world = random.choice(worlds)
+                # Create temporary ship to check jump range
+                temp_ship = T5Starship(
+                    "temp", candidate_world, ship_class
+                )
+                reachable_worlds = temp_ship.get_worlds_in_jump_range(
+                    self.game_state
+                )
+                if reachable_worlds:
+                    starting_world = candidate_world
+                    break
+
+            # Fallback: if no valid location found, use any world
+            # (may happen with small test maps or isolated worlds)
+            if not starting_world:
+                starting_world = random.choice(worlds)
+                # Ship will pick destination during first jump via
+                # _choose_next_destination()
+                reachable_worlds = []
+
+            # Create actual ship
             ship = T5Starship(
                 f"Trader_{i + 1:03d}", starting_world, ship_class
             )
@@ -171,17 +194,13 @@ class Simulation:
             # Add basic crew
             self._add_basic_crew(ship)
 
-            # Pick initial destination within jump range
-            reachable_worlds = ship.get_worlds_in_jump_range(
-                self.game_state
-            )
+            # Pick initial destination from reachable worlds
             if reachable_worlds:
                 destination = random.choice(reachable_worlds)
                 ship.set_course_for(destination)
             else:
-                # If no worlds in range, set destination to current
-                # location to prevent crashes. Ship will pick real
-                # destination after first jump.
+                # No destinations available (isolated world or small map)
+                # Set to current location to prevent crashes
                 ship.set_course_for(starting_world)
 
             # Create agent
