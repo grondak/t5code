@@ -67,31 +67,7 @@ def test_starship_agent_state_transitions(game_state, mock_simulation):
     env.run(until=1.0)  # 1 day
 
     # Agent should have progressed through some states
-    assert agent.state != StarshipState.DOCKED
-
-
-def test_starship_agent_with_no_speculation(game_state, mock_simulation):
-    """Test agent with cargo speculation disabled."""
-    env = simpy.Environment()
-    from t5code import T5ShipClass
-
-    ship_class_dict = next(iter(game_state.ship_classes.values()))
-    class_name = ship_class_dict["class_name"]
-    ship_class = T5ShipClass(class_name, ship_class_dict)
-    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
-    ship.set_course_for("Jae Tellona")
-
-    agent = StarshipAgent(
-        env, ship, mock_simulation, speculate_cargo=False
-    )
-
-    assert agent.speculate_cargo is False
-
-    # Run simulation briefly
-    env.run(until=1.0)
-
-    # Agent should still work without speculation
+    # Agent should still work
     assert agent.state != StarshipState.DOCKED
 
 
@@ -978,3 +954,159 @@ def test_starship_agent_jumping_unknown_world(game_state, capsys):
     captured = capsys.readouterr()
     # Should fall back to using the location name directly
     assert "arrived at UnknownWorld" in captured.out
+
+
+def test_starship_agent_skipping_unprofitable_cargo(game_state, capsys):
+    """Test verbose reporting when skipping unprofitable cargo."""
+    env = simpy.Environment()
+    from t5code import T5ShipClass, T5Lot
+    from unittest.mock import patch
+    from t5sim.simulation import Simulation
+
+    # Use real Simulation object to ensure verbose flag works
+    sim = Simulation(game_state, verbose=True)
+
+    ship_class_dict = next(iter(game_state.ship_classes.values()))
+    class_name = ship_class_dict["class_name"]
+    ship_class = T5ShipClass(class_name, ship_class_dict)
+    ship = T5Starship("Profit Test Ship", "Rhylanor", ship_class)
+    ship.credit(1_000_000)
+    ship.set_course_for("Jae Tellona")
+
+    _agent = StarshipAgent(  # noqa: F841
+        env, ship, sim, starting_state=StarshipState.LOADING_CARGO
+    )
+
+    # Mock generate_speculative_cargo to return lots that will be unprofitable
+    unprofitable_lot = T5Lot("Rhylanor", game_state)
+    unprofitable_lot.mass = 1
+    unprofitable_lot.origin_value = 10000  # High purchase price
+
+    with patch.object(
+        game_state.world_data["Rhylanor"],
+        'generate_speculative_cargo',
+        return_value=[unprofitable_lot]
+    ):
+        # Mock determine_sale_value_on to return a loss
+        with patch.object(
+            unprofitable_lot,
+            'determine_sale_value_on',
+            return_value=100  # Low sale price (loss)
+        ):
+            # Run cargo loading state
+            env.run(until=0.5)
+
+    captured = capsys.readouterr()
+    # Should report skipping unprofitable cargo
+    assert "skipped" in captured.out
+    assert "unprofitable" in captured.out
+
+
+def test_starship_agent_profitable_destination_verbose(game_state, capsys):
+    """Test verbose reporting when choosing profitable destination."""
+    env = simpy.Environment()
+    from t5code import T5ShipClass
+    from t5sim.simulation import Simulation
+
+    # Use real Simulation object with verbose flag
+    sim = Simulation(game_state, verbose=True)
+
+    ship_class_dict = next(iter(game_state.ship_classes.values()))
+    class_name = ship_class_dict["class_name"]
+    ship_class = T5ShipClass(class_name, ship_class_dict)
+    ship = T5Starship("Route Test Ship", "Rhylanor", ship_class)
+    ship.credit(1_000_000)
+    ship.set_course_for("Jae Tellona")  # Set initial destination
+
+    _agent = StarshipAgent(  # noqa: F841
+        env, ship, sim, starting_state=StarshipState.LOADING_PASSENGERS
+    )
+
+    # Run through loading passengers to departing
+    # (which triggers destination choice)
+    env.run(until=8.0)
+
+    captured = capsys.readouterr()
+    # Should report choosing profitable destination with name
+    assert (
+        "picked destination" in captured.out and
+        "showed cargo profit" in captured.out)
+
+
+def test_starship_agent_no_profitable_destination_verbose(game_state, capsys):
+    """Test verbose reporting when no profitable destinations exist."""
+    env = simpy.Environment()
+    from t5code import T5ShipClass
+    from unittest.mock import patch
+    from t5sim.simulation import Simulation
+
+    # Use real Simulation object with verbose flag
+    sim = Simulation(game_state, verbose=True)
+
+    # Use a ship with Jump-3 to ensure worlds in range
+    ship_class_data = {
+        "class_name": "Test Trader",
+        "jump_rating": 3,
+        "maneuver_rating": 2,
+        "cargo_capacity": 50,
+        "staterooms": 5,
+        "low_berths": 10,
+    }
+    ship_class = T5ShipClass("Test Trader", ship_class_data)
+    ship = T5Starship("No Profit Ship", "Rhylanor", ship_class)
+    ship.credit(1_000_000)
+    ship.set_course_for("Jae Tellona")  # Set initial destination
+
+    _agent = StarshipAgent(  # noqa: F841
+        env, ship, sim, starting_state=StarshipState.LOADING_PASSENGERS
+    )
+
+    # Mock find_profitable_destinations to return empty list
+    with patch.object(ship, 'find_profitable_destinations', return_value=[]):
+        # Run through loading passengers to departing
+        env.run(until=8.0)
+
+    captured = capsys.readouterr()
+    # Should report choosing destination with no profitable cargo
+    assert "picked destination" in captured.out
+    assert "randomly because no in-range system" in captured.out
+
+
+def test_starship_agent_no_worlds_in_range_verbose(game_state, capsys):
+    """Test verbose reporting when no worlds are in jump range."""
+    env = simpy.Environment()
+    from t5code import T5ShipClass
+    from unittest.mock import patch
+    from t5sim.simulation import Simulation
+
+    # Use real Simulation object with verbose flag
+    sim = Simulation(game_state, verbose=True)
+
+    # Use a ship with Jump-0 (no range)
+    ship_class_data = {
+        "class_name": "No Jump",
+        "jump_rating": 0,
+        "maneuver_rating": 2,
+        "cargo_capacity": 50,
+        "staterooms": 5,
+        "low_berths": 10,
+    }
+    ship_class = T5ShipClass("No Jump", ship_class_data)
+    ship = T5Starship("No Range Ship", "Rhylanor", ship_class)
+    ship.credit(1_000_000)
+    ship.set_course_for("Jae Tellona")  # Set initial destination
+
+    _agent = StarshipAgent(  # noqa: F841
+        env, ship, sim, starting_state=StarshipState.LOADING_PASSENGERS
+    )
+
+    # Mock find_profitable_destinations and
+    # get_worlds_in_jump_range to return empty
+    with patch.object(ship, 'find_profitable_destinations', return_value=[]):
+        with patch.object(ship, 'get_worlds_in_jump_range', return_value=[]):
+            # Run through loading passengers to departing
+            env.run(until=1.0)
+
+    captured = capsys.readouterr()
+    # Should report no worlds in jump range
+    assert "no worlds in jump range" in captured.out

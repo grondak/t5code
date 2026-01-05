@@ -1166,3 +1166,122 @@ def test_offload_all_freight_leaves_cargo(
     assert len(list(ship.cargo_manifest.get("freight", []))) == 0
     assert len(list(ship.cargo_manifest.get("cargo", []))) == 1
     assert ship.cargo_size == 5
+
+
+def test_get_worlds_in_jump_range(setup_test_gamestate, test_ship_data):
+    """Test finding worlds within ship's jump range."""
+    game_state = setup_test_gamestate
+
+    # Create ship with Jump-3 drive at Rhylanor
+    # (Jump-1 wouldn't reach any worlds in test map)
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+
+    # Get worlds in range
+    reachable = ship.get_worlds_in_jump_range(game_state)
+
+    # Should return a list of world names
+    assert isinstance(reachable, list)
+    assert len(reachable) > 0
+
+    # Current location should not be in the list
+    assert "Rhylanor" not in reachable
+
+    # All returned worlds should exist in world_data
+    for world_name in reachable:
+        assert world_name in game_state.world_data
+
+
+def test_get_worlds_in_jump_range_different_ratings(setup_test_gamestate,
+                                                    test_ship_data):
+    """Test that higher jump rating returns more worlds."""
+    game_state = setup_test_gamestate
+
+    # Create ships with different jump ratings
+    small_ship_class = T5ShipClass("small", test_ship_data["small"])  # Jump-1
+    large_ship_class = T5ShipClass("large", test_ship_data["large"])  # Jump-3
+
+    small_ship = T5Starship("Small Ship", "Rhylanor", small_ship_class)
+    large_ship = T5Starship("Large Ship", "Rhylanor", large_ship_class)
+
+    # Get reachable worlds for each ship
+    small_ship_range = small_ship.get_worlds_in_jump_range(game_state)
+    large_ship_range = large_ship.get_worlds_in_jump_range(game_state)
+
+    # Ship with higher jump rating should reach at least as many worlds
+    assert len(large_ship_range) >= len(small_ship_range)
+
+    # All worlds reachable by Jump-1 should also be reachable by Jump-3
+    for world in small_ship_range:
+        assert world in large_ship_range
+
+
+def test_get_worlds_in_jump_range_invalid_location(setup_test_gamestate,
+                                                   test_ship_data):
+    """Test error handling when ship is at invalid location."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    ship = T5Starship("Test Ship", "NonexistentWorld", ship_class)
+
+    # Should raise WorldNotFoundError
+    with pytest.raises(WorldNotFoundError):
+        ship.get_worlds_in_jump_range(game_state)
+
+
+def test_find_profitable_destinations(setup_test_gamestate, test_ship_data):
+    """Test finding profitable trade destinations."""
+    game_state = setup_test_gamestate
+
+    # Create ship with Jump-3 at Rhylanor
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    ship.set_course_for("Jae Tellona")  # Set a destination
+
+    # Get profitable destinations
+    profitable = ship.find_profitable_destinations(game_state)
+
+    # Should return a list of (world_name, profit) tuples
+    assert isinstance(profitable, list)
+
+    # Each entry should be a tuple of (str, int)
+    for entry in profitable:
+        assert isinstance(entry, tuple)
+        assert len(entry) == 2
+        world_name, profit = entry
+        assert isinstance(world_name, str)
+        assert isinstance(profit, int)
+        assert profit > 0  # Should only include profitable destinations
+        assert world_name in game_state.world_data
+
+    # Should be sorted by profit descending
+    if len(profitable) > 1:
+        for i in range(len(profitable) - 1):
+            assert profitable[i][1] >= profitable[i+1][1]
+
+
+def test_find_profitable_destinations_no_worlds_in_range(setup_test_gamestate,
+                                                         test_ship_data):
+    """Test profitable destinations when no worlds are in range."""
+    game_state = setup_test_gamestate
+
+    # Create ship with Jump-0 (no range)
+    zero_jump_data = test_ship_data["small"].copy()
+    zero_jump_data["jump_rating"] = 0
+    ship_class = T5ShipClass("zero_jump", zero_jump_data)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+
+    # Should return empty list
+    profitable = ship.find_profitable_destinations(game_state)
+    assert profitable == []
+
+
+def test_find_profitable_destinations_invalid_location(setup_test_gamestate,
+                                                       test_ship_data):
+    """Test error handling when ship is at invalid location."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    ship = T5Starship("Test Ship", "NonexistentWorld", ship_class)
+
+    # Should raise WorldNotFoundError
+    with pytest.raises(WorldNotFoundError):
+        ship.find_profitable_destinations(game_state)

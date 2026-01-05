@@ -39,14 +39,6 @@ def main():
         help="Path to ship classes file",
     )
     parser.add_argument(
-        "--no-speculation",
-        type=float,
-        default=0.0,
-        metavar="PERCENT",
-        help="Percentage of ships with 'no speculation'"
-        "policy (0.0-1.0, default: 0.0)",
-    )
-    parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -72,10 +64,6 @@ def main():
     print("=" * 70)
     print(f"Ships: {args.ships}")
     print(f"Duration: {args.days} days")
-    if args.no_speculation > 0:
-        no_spec_count = int(args.ships * args.no_speculation)
-        print(f"No-speculation policy: {no_spec_count} ships "
-              f"({args.no_speculation*100:.0f}%)")
     print()
 
     start_time = time.time()
@@ -84,7 +72,6 @@ def main():
         ship_classes_file=args.ships_file,
         num_ships=args.ships,
         duration_days=args.days,
-        speculate_cargo_pct=1.0 - args.no_speculation,
         verbose=args.verbose,
         starting_year=args.year,
         starting_day=args.day,
@@ -100,10 +87,7 @@ def main():
 
     # Build timing message with parameters
     timing_msg = (f"Simulation time: {elapsed_time:.2f} seconds "
-                  f"({args.ships} ships, {args.days} days")
-    if args.no_speculation > 0:
-        timing_msg += f", {args.no_speculation*100:.0f}% no-speculation"
-    timing_msg += ")"
+                  f"({args.ships} ships, {args.days} days)")
     print(timing_msg)
 
     print("\nAverage per ship:")

@@ -55,11 +55,16 @@ class StarshipAgent:
                      if self.ship.hold_size > 0 else 0)
 
         # Format location with subsector and hex
-        world = self.simulation.game_state.world_data.get(self.ship.location)
-        if world:
-            location_display = world.full_name()
+        # During JUMPING state, ship is in jump space, not at a location
+        if display_state == StarshipState.JUMPING:
+            location_display = "jump space"
         else:
-            location_display = self.ship.location
+            world = self.simulation.game_state.world_data.get(
+                self.ship.location)
+            if world:
+                location_display = world.full_name()
+            else:
+                location_display = self.ship.location
 
         # Extract values for cleaner formatting
         cargo_lots = len(list(self.ship.cargo_manifest.get('cargo', [])))
@@ -95,7 +100,7 @@ class StarshipAgent:
         ship: T5Starship,
         simulation: "Simulation",
         starting_state: StarshipState = StarshipState.DOCKED,
-        speculate_cargo: bool = True,
+
     ):
         """Initialize starship agent.
 
@@ -104,15 +109,12 @@ class StarshipAgent:
             ship: T5Starship instance to control
             simulation: Parent simulation for data access
             starting_state: Initial state (default: DOCKED)
-            speculate_cargo: Whether to buy/sell
-              speculative cargo (default: True)
         """
         self.env = env
         self.ship = ship
         self.simulation = simulation
         self.state = starting_state
         self.voyage_count = 0
-        self.speculate_cargo = speculate_cargo
         # Captain won't depart until 80% full
         self.minimum_cargo_threshold = 0.8
         self.freight_loading_attempts = 0
@@ -146,7 +148,7 @@ class StarshipAgent:
                                 state=old_state)
         elif old_state == StarshipState.OFFLOADING:
             self._report_status("offloading complete", state=old_state)
-        elif old_state == StarshipState.SELLING_CARGO and self.speculate_cargo:
+        elif old_state == StarshipState.SELLING_CARGO:
             self._report_status("cargo sales complete", state=old_state)
         elif old_state == StarshipState.LOADING_PASSENGERS:
             self._report_status("loading complete, ready to depart",
@@ -240,13 +242,11 @@ class StarshipAgent:
         if self.state == StarshipState.OFFLOADING:
             self._offload_cargo()
         elif self.state == StarshipState.SELLING_CARGO:
-            if self.speculate_cargo:
-                self._sell_cargo()
+            self._sell_cargo()
         elif self.state == StarshipState.LOADING_FREIGHT:
             self._load_freight()
         elif self.state == StarshipState.LOADING_CARGO:
-            if self.speculate_cargo:
-                self._load_cargo()
+            self._load_cargo()
         elif self.state == StarshipState.LOADING_MAIL:
             self._load_mail()
         elif self.state == StarshipState.LOADING_PASSENGERS:
@@ -315,32 +315,97 @@ class StarshipAgent:
         except (ValueError, CapacityExceededError):
             pass  # Hold full or other issue
 
+    def _is_lot_profitable(self, lot) -> tuple[bool, float]:
+        """Check if a cargo lot would be profitable at destination.
+
+        Returns:
+            Tuple of (is_profitable, profit_amount)
+        """
+        purchase_price = lot.origin_value * lot.mass
+        sale_value = lot.determine_sale_value_on(
+            self.ship.destination,
+            self.simulation.game_state
+        )
+        profit = sale_value - purchase_price
+        return profit > 0, profit
+
+    def _try_purchase_lot(self, lot) -> tuple[bool, int]:
+        """Try to purchase a cargo lot if profitable.
+
+        Returns:
+            Tuple of (purchased, mass) where purchased is True if bought
+
+        Raises:
+            InsufficientFundsError: If ship can't afford the lot
+            CapacityExceededError: If ship doesn't have space
+        """
+        is_profitable, _ = self._is_lot_profitable(lot)
+
+        if not is_profitable:
+            return False, 0
+
+        self.ship.buy_cargo_lot(lot)
+        return True, lot.mass
+
+    def _format_cargo_loading_message(
+        self,
+        loaded_count: int,
+        loaded_mass: int,
+        skipped_count: int
+    ) -> str:
+        """Format verbose message for cargo loading results."""
+        if loaded_count == 0 and skipped_count == 0:
+            return ""
+
+        parts = []
+        if loaded_count > 0:
+            parts.append(f"loaded {loaded_count} cargo lot(s), "
+                         f"{loaded_mass}t total")
+        if skipped_count > 0:
+            parts.append(f"skipped {skipped_count} unprofitable")
+
+        return ", ".join(parts) if parts else ""
+
     def _load_cargo(self):
-        """Purchase speculative cargo."""
+        """Purchase speculative cargo, only if profitable at destination."""
         try:
             world = self.simulation.game_state.world_data.get(
                 self.ship.location)
-            if world:
-                available_space = self.ship.hold_size - self.ship.cargo_size
-                if available_space > 0:
-                    lots = world.generate_speculative_cargo(
-                        self.simulation.game_state,
-                        max_total_tons=available_space,
-                        max_lot_size=available_space,
-                    )
-                    loaded_count = 0
-                    loaded_mass = 0
-                    for lot in lots:
-                        try:
-                            self.ship.buy_cargo_lot(lot)
-                            loaded_count += 1
-                            loaded_mass += lot.mass
-                        except (InsufficientFundsError, CapacityExceededError):
-                            break
-                    if self.simulation.verbose and loaded_count > 0:
-                        self._report_status(
-                            f"loaded {loaded_count} cargo lot(s), "
-                            f"{loaded_mass}t total")
+            if not world:
+                return
+
+            available_space = self.ship.hold_size - self.ship.cargo_size
+            if available_space <= 0:
+                return
+
+            lots = world.generate_speculative_cargo(
+                self.simulation.game_state,
+                max_total_tons=available_space,
+                max_lot_size=available_space,
+            )
+
+            loaded_count = 0
+            loaded_mass = 0
+            skipped_unprofitable = 0
+
+            for lot in lots:
+                try:
+                    purchased, mass = self._try_purchase_lot(lot)
+                    if purchased:
+                        loaded_count += 1
+                        loaded_mass += mass
+                    else:
+                        skipped_unprofitable += 1
+                except (InsufficientFundsError, CapacityExceededError):
+                    break
+
+            if self.simulation.verbose:
+                msg = self._format_cargo_loading_message(
+                    loaded_count, loaded_mass, skipped_unprofitable
+                )
+                if msg:
+                    self._report_status(msg)
+
         except Exception as e:
             print(f"{self.ship.ship_name}: Cargo purchase error: {e}")
 
@@ -402,19 +467,50 @@ class StarshipAgent:
             print(f"{self.ship.ship_name}: Jump error: {e}")
 
     def _choose_next_destination(self):
-        """Choose next destination world.
+        """Choose next destination world, preferring profitable trade routes.
 
-        Simple implementation: Pick a random neighboring world.
-        TODO: Implement trade route optimization.
+        Strategy:
+        1. Find worlds within jump range that offer profitable cargo sales
+        2. If profitable destinations exist, randomly choose from them
+        3. If no profitable destinations,
+        randomly choose from all reachable worlds
+        4. If no worlds in range, stay at current location
+
+        This creates realistic merchant behavior where ships seek profit
+        opportunities but will still travel
+        if no immediate profit is available.
         """
         import random
 
-        current = self.ship.location
-        all_worlds = list(self.simulation.game_state.world_data.keys())
+        # First, try to find profitable destinations
+        profitable = self.ship.find_profitable_destinations(
+            self.simulation.game_state)
 
-        # Remove current world
-        candidates = [w for w in all_worlds if w != current]
-
-        if candidates:
-            next_dest = random.choice(candidates)
+        if profitable:
+            # Choose randomly from profitable destinations
+            # (could be enhanced to weight by profit amount)
+            next_dest, expected_profit = random.choice(profitable)
             self.ship.set_course_for(next_dest)
+            if self.simulation.verbose:
+                self._report_status(
+                    f"picked destination '{next_dest}' because it showed "
+                    f"cargo profit of +Cr{expected_profit}/ton")
+        else:
+            # No profitable destinations - fall back to any reachable world
+            reachable = self.ship.get_worlds_in_jump_range(
+                self.simulation.game_state)
+
+            if reachable:
+                next_dest = random.choice(reachable)
+                self.ship.set_course_for(next_dest)
+                if self.simulation.verbose:
+                    self._report_status(
+                        f"picked destination '{next_dest}' randomly because "
+                        f"no in-range system could buy cargo from "
+                        f"'{self.ship.location}' for a profit")
+            else:
+                # No worlds in range - stay at current location
+                # This shouldn't happen with proper map design
+                self.ship.set_course_for(self.ship.location)
+                if self.simulation.verbose:
+                    self._report_status("no worlds in jump range!")

@@ -101,3 +101,26 @@ def test_format_traveller_date_mid_year(game_state):
     assert sim.format_traveller_date(0.0) == "180-1104"
     assert sim.format_traveller_date(185.0) == "365-1104"
     assert sim.format_traveller_date(186.0) == "001-1105"  # Year rollover
+
+
+def test_run_simulation_function():
+    """Test the run_simulation convenience function
+    loads data and runs simulation."""
+    from t5sim.simulation import run_simulation
+
+    # Call the actual function with test data
+    results = run_simulation(
+        map_file="tests/test_t5code/t5_test_map.txt",
+        ship_classes_file="resources/t5_ship_classes.csv",
+        num_ships=2,
+        duration_days=1.0
+    )
+
+    # Verify it returns expected structure
+    assert results["num_ships"] == 2
+    assert results["duration_days"] == pytest.approx(1.0)
+    assert "total_profit" in results
+    assert "cargo_sales" in results
+    assert "ships" in results
+    assert len(results["ships"]) == 2
+    assert "total_voyages" in results

@@ -29,7 +29,6 @@ class Simulation:
         num_ships: int = 10,
         duration_days: float = 365.0,
         starting_capital: float = 1_000_000.0,
-        speculate_cargo_pct: float = 1.0,
         verbose: bool = False,
         starting_year: int = 1104,
         starting_day: int = 360,
@@ -41,8 +40,6 @@ class Simulation:
             num_ships: Number of starships to simulate
             duration_days: Simulation duration in days
             starting_capital: Starting capital per ship in credits
-            speculate_cargo_pct: Percentage of ships
-               that speculate on cargo (0.0-1.0)
             verbose: Whether to print detailed status updates during simulation
             starting_year: Starting year in Traveller calendar (default: 1104)
             starting_day: Starting day of year (1-365, default: 360)
@@ -52,7 +49,6 @@ class Simulation:
         self.num_ships = num_ships
         self.duration_days = duration_days
         self.starting_capital = starting_capital
-        self.speculate_cargo_pct = speculate_cargo_pct
         self.verbose = verbose
         self.starting_year = starting_year
         self.starting_day = starting_day
@@ -118,20 +114,17 @@ class Simulation:
             # Add basic crew
             self._add_basic_crew(ship)
 
-            # Pick initial destination
-            destination = random.choice(
-                [w for w in worlds if w != starting_world]
-            )
-            ship.set_course_for(destination)
-
-            # Determine if this ship speculates on cargo
-            speculate = i < int(self.num_ships * self.speculate_cargo_pct)
+            # Pick initial destination within jump range
+            reachable_worlds = ship.get_worlds_in_jump_range(self.game_state)
+            if reachable_worlds:
+                destination = random.choice(reachable_worlds)
+                ship.set_course_for(destination)
+            # If no worlds in range, ship will pick destination on first jump
 
             # Create agent
             agent = StarshipAgent(
                 self.env, ship, self,
-                starting_state=StarshipState.DOCKED,
-                speculate_cargo=speculate
+                starting_state=StarshipState.DOCKED
             )
             self.agents.append(agent)
 
@@ -234,7 +227,6 @@ def run_simulation(
     ship_classes_file: str = "resources/t5_ship_classes.csv",
     num_ships: int = 10,
     duration_days: float = 365.0,
-    speculate_cargo_pct: float = 1.0,
     verbose: bool = False,
     starting_year: int = 1104,
     starting_day: int = 360,
@@ -246,8 +238,6 @@ def run_simulation(
         ship_classes_file: Path to ship classes CSV
         num_ships: Number of ships to simulate
         duration_days: Simulation duration in days
-        speculate_cargo_pct: Percentage of ships that
-          speculate on cargo (0.0-1.0)
         verbose: Whether to print detailed status updates during simulation
         starting_year: Starting year in Traveller calendar (default: 1104)
         starting_day: Starting day of year (1-365, default: 360)
@@ -271,7 +261,6 @@ def run_simulation(
     sim = Simulation(game_state,
                      num_ships=num_ships,
                      duration_days=duration_days,
-                     speculate_cargo_pct=speculate_cargo_pct,
                      verbose=verbose,
                      starting_year=starting_year,
                      starting_day=starting_day)

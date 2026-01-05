@@ -5,7 +5,7 @@ passenger and crew management, cargo handling, and financial tracking.
 """
 
 import uuid
-from typing import Dict, List, Set, TYPE_CHECKING
+from typing import Dict, List, Set, Tuple, TYPE_CHECKING
 from t5code.T5Basics import check_success
 from t5code.T5Lot import T5Lot
 from t5code.T5NPC import T5NPC
@@ -119,6 +119,7 @@ class T5Starship:
         self.location: str = ship_location
         self.ship_class: str = ship_class.class_name
         self.hold_size: int = ship_class.cargo_capacity
+        self.jump_rating: int = ship_class.jump_rating
 
         # Passenger capacity (high and mid use staterooms, low uses low berths)
         self.staterooms: int = ship_class.staterooms
@@ -747,6 +748,105 @@ class T5Starship:
         # Ship is now maneuvering to starport
         self.status = "docked"
         # Ship has docked at starport
+
+    def get_worlds_in_jump_range(self, game_state) -> List[str]:
+        """Get all worlds reachable with this ship's jump drive.
+
+        Calculates hex distance from current location to all other worlds
+        and returns those within the ship's jump rating.
+
+        Args:
+            game_state: GameState instance with world_data
+
+        Returns:
+            List of world names reachable by this ship's jump drive
+
+        Raises:
+            WorldNotFoundError: If current location not found in world_data
+        """
+        # Get current world data
+        current_world = game_state.world_data.get(self.location)
+        if not current_world:
+            raise WorldNotFoundError(self.location)
+
+        current_coords = current_world.world_data["Coordinates"]
+        reachable_worlds = []
+
+        for world_name, world_obj in game_state.world_data.items():
+            # Skip current world
+            if world_name == self.location:
+                continue
+
+            # Skip Amber/Red zones
+            zone = world_obj.world_data.get("Zone", "G")
+            if zone in ["A", "R"]:
+                continue
+
+            # Calculate hex distance using Traveller formula:
+            # max of absolute differences in x, y, and diagonal
+            target_coords = world_obj.world_data["Coordinates"]
+            x1, y1 = current_coords
+            x2, y2 = target_coords
+            distance = max(
+                abs(x1 - x2),
+                abs(y1 - y2),
+                abs((x1 - y1) - (x2 - y2))
+            )
+
+            if distance <= self.jump_rating:
+                reachable_worlds.append(world_name)
+
+        return reachable_worlds
+
+    def find_profitable_destinations(self,
+                                     game_state) -> List[Tuple[str, int]]:
+        """Find destinations where cargo from
+        current location can sell at profit.
+
+        Creates a sample cargo lot from the current world and evaluates
+        potential profit at each reachable destination. Only returns
+        destinations where profit is positive.
+
+        Args:
+            game_state: GameState instance with world_data
+
+        Returns:
+            List of (world_name, estimated_profit) tuples,
+            sorted by profit descending
+
+        Raises:
+            WorldNotFoundError: If current location not found in world_data
+
+        Example:
+            >>> profitable = ship.find_profitable_destinations(game_state)
+            >>> if profitable:
+            ...     best_dest, profit = profitable[0]
+            ...     print(f"{best_dest}: +Cr{profit}/ton")
+        """
+        from t5code.T5Lot import T5Lot
+
+        # Get worlds in jump range
+        reachable_worlds = self.get_worlds_in_jump_range(game_state)
+        if not reachable_worlds:
+            return []
+
+        # Create sample lot from current world
+        sample_lot = T5Lot(self.location, game_state)
+        sample_lot.mass = 1  # 1 ton for per-ton profit calculation
+        purchase_price = sample_lot.origin_value
+
+        profitable_destinations = []
+        for world_name in reachable_worlds:
+            sale_value = sample_lot.determine_sale_value_on(world_name,
+                                                            game_state)
+            profit_per_ton = sale_value - purchase_price
+
+            if profit_per_ton > 0:
+                profitable_destinations.append((world_name, profit_per_ton))
+
+        # Sort by profit descending
+        profitable_destinations.sort(key=lambda x: x[1], reverse=True)
+        return profitable_destinations
 
     def offload_all_freight(self) -> List[T5Lot]:
         """Offload all freight lots from the ship.

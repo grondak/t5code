@@ -1,6 +1,6 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-290%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-296%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -20,6 +20,8 @@ Built for realistic simulation of merchant starship operations, trade economics,
 ### 🎯 Discrete-Event Simulation (t5sim)
 - **SimPy-based simulation** with concurrent multi-ship operations
 - **12-state starship FSM** (DOCKED → OFFLOADING → SELLING_CARGO → LOADING_FREIGHT → ...)
+- **Profit-aware routing** - ships evaluate destinations for cargo profitability
+- **Smart cargo purchasing** - skips lots that would result in losses
 - **Realistic time modeling** with configurable state durations
 - **Trade route tracking** and profit analysis
 - **Statistics collection** for voyages, sales, and balances
@@ -27,6 +29,8 @@ Built for realistic simulation of merchant starship operations, trade economics,
 
 ### 🚀 Starship Operations (t5code)
 - **Complete starship management** with cargo holds, passenger berths, and mail lockers
+- **Jump range calculation** based on ship drive capability and hex distance
+- **Profitable destination finding** - evaluate all reachable worlds for trade opportunities
 - **Crew skill system** with position-based skill checks (Pilot, Engineer, Steward, Admin, etc.)
 - **Property-based API** for clean, intuitive access to ship state
 - **Financial tracking** with credit/debit operations and transaction validation
@@ -132,9 +136,6 @@ python -m t5sim.run --ships 50 --days 365
 # Verbose mode - see detailed ship status at each state transition
 python -m t5sim.run --ships 3 --days 30 --verbose
 
-# No-speculation policy (80% of ships avoid cargo speculation)
-python -m t5sim.run --ships 20 --days 365 --no-speculation 0.8
-
 # Custom starting date (Traveller calendar format)
 python -m t5sim.run --ships 5 --days 30 --year 1105 --day 1 --verbose
 ```
@@ -169,8 +170,8 @@ Trader_001 (Liner) starting simulation
 [002-1105] Trader_001 at Enos/J (1130) (MANEUVERING_TO_JUMP): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
   cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | entering jump space
 
-[009-1105] Trader_001 at 899-076/F (0912) (JUMPING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
-  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | arrived at 899-076/F (0912)
+[009-1105] Trader_001 at jump space (JUMPING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | in jump space
 
 [010-1105] Trader_001 at 899-076/F (0912) (MANEUVERING_TO_PORT): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
   cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | docking at starport
@@ -187,6 +188,10 @@ Trader_001 (Liner) starting simulation
 - **Traveller date format**: `[DDD-YYYY]` format (e.g., `[360-1104]`, `[001-1105]`)
 - **Year rollover**: Automatically transitions from day 365 to day 001 of next year
 - Location format includes subsector and hex: `WorldName/Subsector (Hex)` e.g., `Enos/J (1130)`
+- **Jump space display**: Shows `at jump space (JUMPING)` during transit instead of destination
+- **Destination selection reasoning**: Shows why each destination was picked:
+  - `picked destination 'WorldName' because it showed cargo profit of +CrX/ton`
+  - `picked destination 'WorldName' randomly because no in-range system could buy cargo`
 - Full status header: day, location, state, balance, hold capacity with percentage
 - Single-line format with pipe separator for actions
 - Financial tracking: income from freight/passengers, profit from cargo sales
@@ -283,8 +288,8 @@ pytest --cov=src --cov-report=html
 
 **Current Status:**
 - **t5code**: 232 tests passing, 100% coverage
-- **t5sim**: 58 tests passing, 99% coverage
-- **Total**: 290 tests, 99% overall coverage
+- **t5sim**: 64 tests passing, 98% coverage
+- **Total**: 296 tests, 99% overall coverage
 
 ### Code Quality
 
@@ -314,6 +319,27 @@ mypy src/
 ---
 
 ## API Highlights
+
+### Jump Range Calculation
+
+```python
+# Get worlds reachable by this ship's jump drive
+reachable_worlds = ship.get_worlds_in_jump_range(game_state)
+
+# Jump rating determines range (1-6 parsecs)
+scout = T5Starship("Scout", "Rhylanor", scout_class)  # Jump-1
+print(f"Jump-{scout.jump_rating} can reach {len(reachable_worlds)} worlds")
+
+# Automatically filters by:
+# - Hex distance (Traveller formula)
+# - Ship's jump rating
+# - Travel zones (excludes Amber/Red)
+
+# Example: Compare different ship capabilities
+jump1_reach = jump1_ship.get_worlds_in_jump_range(game_state)
+jump3_reach = jump3_ship.get_worlds_in_jump_range(game_state)
+print(f"Jump-3 reaches {len(jump3_reach) - len(jump1_reach)} more worlds")
+```
 
 ### Exception Handling
 
@@ -397,10 +423,11 @@ Contributions welcome! This project follows:
 ### Near Term
 - [x] SimPy integration for discrete-event simulation
 - [x] Multi-starship trade network simulation
-- [ ] Intelligent route planning (currently random)
+- [x] Profit-aware route planning with destination evaluation
+- [x] Smart cargo purchasing (skip unprofitable lots)
+- [x] Jump range validation and reachability checking
 - [ ] Enhanced statistics and visualization
-- [ ] Jump route pathfinding optimization
-- [ ] Crew experience/advancement system
+- [ ] Advanced pathfinding with multi-jump routes
 - [ ] Ship maintenance and repair mechanics
 
 ### Long Term

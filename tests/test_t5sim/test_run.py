@@ -41,7 +41,6 @@ def test_main_default_args(mock_run_simulation, capsys):
         ship_classes_file='resources/t5_ship_classes.csv',
         num_ships=10,
         duration_days=365.0,
-        speculate_cargo_pct=1.0,
         verbose=False,
         starting_year=1104,
         starting_day=360,
@@ -97,20 +96,6 @@ def test_main_custom_files(mock_run_simulation):
     assert call_kwargs['ship_classes_file'] == 'custom/ships.csv'
 
 
-def test_main_no_speculation(mock_run_simulation, capsys):
-    """Test main with no-speculation policy."""
-    with patch('sys.argv',
-               ['run.py', '--ships', '20', '--no-speculation', '0.25']):
-        main()
-
-    mock_run_simulation.assert_called_once()
-    call_kwargs = mock_run_simulation.call_args[1]
-    assert call_kwargs['speculate_cargo_pct'] == pytest.approx(0.75)
-
-    captured = capsys.readouterr()
-    assert "No-speculation policy: 5 ships (25%)" in captured.out
-
-
 def test_main_verbose(mock_run_simulation):
     """Test main with verbose flag."""
     with patch('sys.argv', ['run.py', '--verbose']):
@@ -137,7 +122,6 @@ def test_main_combined_args(mock_run_simulation, capsys):
         'run.py',
         '--ships', '15',
         '--days', '180',
-        '--no-speculation', '0.5',
         '--verbose'
     ]):
         main()
@@ -146,13 +130,11 @@ def test_main_combined_args(mock_run_simulation, capsys):
     call_kwargs = mock_run_simulation.call_args[1]
     assert call_kwargs['num_ships'] == 15
     assert call_kwargs['duration_days'] == pytest.approx(180.0)
-    assert call_kwargs['speculate_cargo_pct'] == pytest.approx(0.5)
     assert call_kwargs['verbose'] is True
 
     captured = capsys.readouterr()
     assert "Ships: 15" in captured.out
     assert "Duration: 180.0 days" in captured.out
-    assert "No-speculation policy: 7 ships (50%)" in captured.out
 
 
 def test_main_results_output(mock_run_simulation, capsys):
@@ -188,15 +170,6 @@ def test_main_results_output(mock_run_simulation, capsys):
     assert "5. Ship10: Cr750,000.00 (2 voyages)" in captured.out
 
 
-def test_main_no_speculation_zero(mock_run_simulation, capsys):
-    """Test that zero no-speculation doesn't print the policy line."""
-    with patch('sys.argv', ['run.py', '--no-speculation', '0.0']):
-        main()
-
-    captured = capsys.readouterr()
-    assert "No-speculation policy" not in captured.out
-
-
 def test_main_module_execution():
     """Test running the module as __main__."""
     import subprocess
@@ -211,24 +184,6 @@ def test_main_module_execution():
 
     assert result.returncode == 0
     assert "Traveller 5 trade simulation" in result.stdout
-
-
-def test_main_timing_with_no_speculation(mock_run_simulation, capsys):
-    """Test timing output includes no-speculation parameter when set."""
-    with patch('sys.argv',
-               ['run.py', '--ships', '20', '--no-speculation', '0.25']):
-        main()
-
-    captured = capsys.readouterr()
-    import re
-    timing_match = re.search(
-        r'Simulation time: [\d.]+ seconds '
-        r'\((\d+) ships, ([\d.]+) days, (\d+)% no-speculation\)',
-        captured.out)
-    assert timing_match is not None, \
-        "Timing should include no-speculation percentage"
-    assert timing_match.group(1) == '20'
-    assert timing_match.group(3) == '25'
 
 
 def test_main_timing_output(mock_run_simulation, capsys):
