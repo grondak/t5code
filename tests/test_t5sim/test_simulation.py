@@ -74,12 +74,13 @@ def test_format_traveller_date_default_start(game_state):
     """Test Traveller date formatting with default starting date."""
     sim = Simulation(game_state, num_ships=1, duration_days=10.0)
 
-    # Default is 360-1104
-    assert sim.format_traveller_date(0.0) == "360-1104"
-    assert sim.format_traveller_date(1.0) == "361-1104"
-    assert sim.format_traveller_date(5.0) == "365-1104"
-    assert sim.format_traveller_date(6.0) == "001-1105"  # Year rollover
-    assert sim.format_traveller_date(10.0) == "005-1105"
+    # Default is 360-1104, now with fractional days
+    assert sim.format_traveller_date(0.0) == "360.00-1104"
+    assert sim.format_traveller_date(1.0) == "361.00-1104"
+    assert sim.format_traveller_date(1.5) == "361.50-1104"
+    assert sim.format_traveller_date(5.0) == "365.00-1104"
+    assert sim.format_traveller_date(6.0) == "001.00-1105"  # Year rollover
+    assert sim.format_traveller_date(10.0) == "005.00-1105"
 
 
 def test_format_traveller_date_custom_start(game_state):
@@ -87,10 +88,11 @@ def test_format_traveller_date_custom_start(game_state):
     sim = Simulation(game_state, num_ships=1, duration_days=10.0,
                      starting_year=1105, starting_day=1)
 
-    assert sim.format_traveller_date(0.0) == "001-1105"
-    assert sim.format_traveller_date(1.0) == "002-1105"
-    assert sim.format_traveller_date(364.0) == "365-1105"
-    assert sim.format_traveller_date(365.0) == "001-1106"  # Year rollover
+    assert sim.format_traveller_date(0.0) == "001.00-1105"
+    assert sim.format_traveller_date(1.0) == "002.00-1105"
+    assert sim.format_traveller_date(1.25) == "002.25-1105"
+    assert sim.format_traveller_date(364.0) == "365.00-1105"
+    assert sim.format_traveller_date(365.0) == "001.00-1106"  # Year rollover
 
 
 def test_format_traveller_date_mid_year(game_state):
@@ -98,9 +100,10 @@ def test_format_traveller_date_mid_year(game_state):
     sim = Simulation(game_state, num_ships=1, duration_days=10.0,
                      starting_year=1104, starting_day=180)
 
-    assert sim.format_traveller_date(0.0) == "180-1104"
-    assert sim.format_traveller_date(185.0) == "365-1104"
-    assert sim.format_traveller_date(186.0) == "001-1105"  # Year rollover
+    assert sim.format_traveller_date(0.0) == "180.00-1104"
+    assert sim.format_traveller_date(0.75) == "180.75-1104"
+    assert sim.format_traveller_date(185.0) == "365.00-1104"
+    assert sim.format_traveller_date(186.0) == "001.00-1105"  # Year rollover
 
 
 def test_run_simulation_function():

@@ -61,32 +61,36 @@ class Simulation:
         }
 
     def format_traveller_date(self, sim_time: float) -> str:
-        """Convert simulation time to Traveller date format (DDD-YYYY).
+        """Convert simulation time to Traveller date format (DDD.FF-YYYY).
 
         Args:
             sim_time: Simulation time in days (can be fractional)
 
         Returns:
-            Formatted date string like '001-1105' or '365-1104'
+            Formatted date string like '001.00-1105' or '365.50-1104'
 
         Example:
             >>> sim.format_traveller_date(0.0)
-            # '360-1104' (if starting_day=360)
+            # '360.00-1104' (if starting_day=360)
             >>> sim.format_traveller_date(1.5)
-            # '361-1104'
+            # '361.50-1104'
             >>> sim.format_traveller_date(6.0)
-            # '001-1105' (if starting_day=360)
+            # '001.00-1105' (if starting_day=360)
         """
-        # Calculate absolute day from start
-        total_days = int(self.starting_day + sim_time)
+        # Calculate absolute day from start (preserve fractional part)
+        total_days = self.starting_day + sim_time
 
         # Calculate year offset (every 365 days = 1 year)
-        years_elapsed = (total_days - 1) // 365
+        years_elapsed = int((total_days - 1) // 365)
         day_of_year = ((total_days - 1) % 365) + 1
 
         current_year = self.starting_year + years_elapsed
 
-        return f"{day_of_year:03d}-{current_year}"
+        # Split into integer and fractional parts
+        day_int = int(day_of_year)
+        day_frac = day_of_year - day_int
+
+        return f"{day_int:03d}.{day_frac * 100:02.0f}-{current_year}"
 
     def setup(self):
         """Create starships and agents."""

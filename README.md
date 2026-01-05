@@ -140,52 +140,56 @@ python -m t5sim.run --ships 3 --days 30 --verbose
 python -m t5sim.run --ships 5 --days 30 --year 1105 --day 1 --verbose
 ```
 
-**Verbose output example (Traveller date format DDD-YYYY):**
+**Verbose output example (Traveller date format DDD.FF-YYYY with fractional days):**
 ```
 Trader_001 (Liner) starting simulation
-[360-1104] Trader_001 at Enos/J (1130) (DOCKED): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
+[360.00-1104] Trader_001 at Enos/J (1130) (DOCKED): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
 
-[360-1104] Trader_001 at Enos/J (1130) (OFFLOADING): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
+[360.25-1104] Trader_001 at Enos/J (1130) (OFFLOADING): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
 
-[360-1104] Trader_001 at Enos/J (1130) (SELLING_CARGO): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
+[360.75-1104] Trader_001 at Enos/J (1130) (SELLING_CARGO): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | cargo sales complete
 
-[361-1104] Trader_001 at Enos/J (1130) (LOADING_FREIGHT): balance=Cr1,004,000, hold (4t/120.0t, 3%), 
+[361.75-1104] Trader_001 at Enos/J (1130) (LOADING_FREIGHT): balance=Cr1,004,000, hold (4t/120.0t, 3%), 
   cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 4t freight lot, income Cr4,000
 
-[362-1104] Trader_001 at Enos/J (1130) (LOADING_FREIGHT): balance=Cr1,004,000, hold (4t/120.0t, 3%), 
+[362.75-1104] Trader_001 at Enos/J (1130) (LOADING_FREIGHT): balance=Cr1,004,000, hold (4t/120.0t, 3%), 
   cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 3% full, need 80% (continuing freight loading, attempt 0.25)
 
-[001-1105] Trader_001 at Enos/J (1130) (LOADING_PASSENGERS): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+[001.35-1105] Trader_001 at Enos/J (1130) (LOADING_PASSENGERS): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
   cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | loaded 7 high, 7 mid, 0 low passengers, income Cr126,000
 
-[001-1105] Trader_001 at Enos/J (1130) (LOADING_PASSENGERS): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+[001.60-1105] Trader_001 at Enos/J (1130) (LOADING_PASSENGERS): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
   cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | loading complete, ready to depart
 
-[002-1105] Trader_001 at Enos/J (1130) (DEPARTING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
-  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | departing starport
+[002.10-1105] Trader_001 at Enos/J (1130) (DEPARTING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | departing starport for Worldname/A (1234)
 
-[002-1105] Trader_001 at Enos/J (1130) (MANEUVERING_TO_JUMP): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
-  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | entering jump space
+[002.60-1105] Trader_001 at Enos/J (1130) (MANEUVERING_TO_JUMP): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | entering jump space to Worldname/A (1234)
 
-[009-1105] Trader_001 at jump space (JUMPING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
-  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | in jump space
+[002.60-1105] Trader_001 at jump space (JUMPING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | picked destination 'Worldname' because it showed cargo profit of +Cr2000/ton
 
-[010-1105] Trader_001 at 899-076/F (0912) (MANEUVERING_TO_PORT): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+[009.60-1105] Trader_001 at jump space (JUMPING): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
+  cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | arrived at Worldname/A (1234)
+
+[010.10-1105] Trader_001 at Worldname/A (1234) (MANEUVERING_TO_PORT): balance=Cr679,000, hold (120.0t/120.0t, 100%), 
   cargo=1 lots, freight=4 lots, passengers=(7H/7M/0L), mail=0 bundles | docking at starport
 
-[010-1105] Trader_001 at 899-076/F (0912) (OFFLOADING): balance=Cr679,000, hold (105.0t/120.0t, 88%), 
+[010.20-1105] Trader_001 at Worldname/A (1234) (OFFLOADING): balance=Cr679,000, hold (105.0t/120.0t, 88%), 
   cargo=1 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
 
-[010-1105] Trader_001 at 899-076/F (0912) (SELLING_CARGO): balance=Cr682,135, hold (0.0t/120.0t, 0%), 
-  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | sold cargo lot for Cr-458,865 profit
+[010.70-1105] Trader_001 at Worldname/A (1234) (SELLING_CARGO): balance=Cr682,135, hold (0.0t/120.0t, 0%), 
+  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | sold cargo lot for Cr3,135 profit
 ```
 
 **Key verbose output features:**
 - Ship class shown at startup (e.g., Scout, Freighter, Liner, Corvette)
-- **Traveller date format**: `[DDD-YYYY]` format (e.g., `[360-1104]`, `[001-1105]`)
+- **Traveller date format**: `[DDD.FF-YYYY]` format with fractional days for hour-by-hour tracking
+  - Examples: `[360.00-1104]` (day start), `[360.25-1104]` (6 hours), `[360.75-1104]` (18 hours)
 - **Year rollover**: Automatically transitions from day 365 to day 001 of next year
 - Location format includes subsector and hex: `WorldName/Subsector (Hex)` e.g., `Enos/J (1130)`
 - **Jump space display**: Shows `at jump space (JUMPING)` during transit instead of destination
