@@ -120,12 +120,34 @@ class StarshipAgent:
         self.freight_loading_attempts = 0
         self.max_freight_attempts = 4  # Give up after 4 cycles (12 days)
 
-        # Report initial status
+        # Report initial status with destination
+        dest_display = self._get_destination_display()
         self._report_status(context=f"{self.ship.ship_name} "
-                            f"({self.ship.ship_class}) starting simulation")
+                            f"({self.ship.ship_class}) starting simulation, "
+                            f"destination: {dest_display}")
 
         # Start the agent's process
         self.process = env.process(self.run())
+
+    def _get_world_display_name(self, world_name: str) -> str:
+        """Get formatted display name for a world.
+
+        Args:
+            world_name: World identifier
+
+        Returns:
+            Formatted world name with subsector/hex or just the name
+        """
+        world = self.simulation.game_state.world_data.get(world_name)
+        return world.full_name() if world else world_name
+
+    def _get_destination_display(self) -> str:
+        """Get formatted display name for current destination.
+
+        Returns:
+            Formatted destination name with subsector/hex or just the name
+        """
+        return self._get_world_display_name(self.ship.destination)
 
     def _report_transition(self, old_state: StarshipState) -> None:
         """Report status after specific state transitions.
@@ -137,13 +159,7 @@ class StarshipAgent:
             return
 
         if old_state == StarshipState.JUMPING:
-            # Format location name with subsector/hex
-            world = self.simulation.game_state.world_data.get(
-                self.ship.location)
-            if world:
-                location_name = world.full_name()
-            else:
-                location_name = self.ship.location
+            location_name = self._get_world_display_name(self.ship.location)
             self._report_status(f"arrived at {location_name}",
                                 state=old_state)
         elif old_state == StarshipState.OFFLOADING:
@@ -154,9 +170,13 @@ class StarshipAgent:
             self._report_status("loading complete, ready to depart",
                                 state=old_state)
         elif old_state == StarshipState.DEPARTING:
-            self._report_status("departing starport", state=old_state)
+            dest_display = self._get_destination_display()
+            self._report_status(f"departing starport for {dest_display}",
+                                state=old_state)
         elif old_state == StarshipState.MANEUVERING_TO_JUMP:
-            self._report_status("entering jump space", state=old_state)
+            dest_display = self._get_destination_display()
+            self._report_status(f"entering jump space to {dest_display}",
+                                state=old_state)
         elif old_state == StarshipState.MANEUVERING_TO_PORT:
             self._report_status("docking at starport", state=old_state)
         elif old_state == StarshipState.ARRIVING:
