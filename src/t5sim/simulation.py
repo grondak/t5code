@@ -231,21 +231,12 @@ class Simulation:
             # ship stores class_name string)
             self._add_basic_crew(ship, ship_class)
 
-            # Pick initial destination using same logic as agent's
-            # _choose_next_destination(): prefer profitable routes
+            # Pick initial destination using StarshipAgent's logic
             if reachable_worlds:
-                # First, try to find profitable destinations
-                profitable = ship.find_profitable_destinations(
-                    self.game_state
+                destination = StarshipAgent.pick_destination(
+                    ship, self.game_state
                 )
-                if profitable:
-                    # Choose randomly from profitable destinations
-                    destination, _ = random.choice(profitable)
-                    ship.set_course_for(destination)
-                else:
-                    # No profitable destinations, pick any reachable
-                    destination = random.choice(reachable_worlds)
-                    ship.set_course_for(destination)
+                ship.set_course_for(destination)
             else:
                 # No destinations available (isolated world or small map)
                 # Set to current location to prevent crashes

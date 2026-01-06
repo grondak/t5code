@@ -172,7 +172,7 @@ class StarshipAgent:
         self.freight_loaded_this_cycle = False  # Track if freight obtained
 
         # Report initial status with destination and crew
-        dest_display = self._get_destination_display()
+        dest_display = self._get_world_display_name(self.ship.destination)
         crew_info = self._format_crew_info()
         self._report_status(context=f"{self.ship.ship_name} "
                             f"({self.ship.ship_class}) starting simulation, "
@@ -289,14 +289,6 @@ class StarshipAgent:
         world = self.simulation.game_state.world_data.get(world_name)
         return world.full_name() if world else world_name
 
-    def _get_destination_display(self) -> str:
-        """Get formatted display name for current destination.
-
-        Returns:
-            Formatted destination name with subsector/hex or just the name
-        """
-        return self._get_world_display_name(self.ship.destination)
-
     def _report_transition(self, old_state: StarshipState) -> None:
         """Report status after specific state transitions.
 
@@ -332,11 +324,11 @@ class StarshipAgent:
             self._report_status("loading complete, ready to depart",
                                 state=old_state)
         elif old_state == StarshipState.DEPARTING:
-            dest_display = self._get_destination_display()
+            dest_display = self._get_world_display_name(self.ship.destination)
             self._report_status(f"departing starport for {dest_display}",
                                 state=old_state)
         elif old_state == StarshipState.MANEUVERING_TO_JUMP:
-            dest_display = self._get_destination_display()
+            dest_display = self._get_world_display_name(self.ship.destination)
             self._report_status(f"entering jump space to {dest_display}",
                                 state=old_state)
         elif old_state == StarshipState.MANEUVERING_TO_PORT:
@@ -870,8 +862,30 @@ class StarshipAgent:
         except Exception as e:
             print(f"{self.ship.ship_name}: Jump error: {e}")
 
-    def _choose_next_destination(self):
-        """Choose next destination, preferring profitable routes.
+    @staticmethod
+    def _report_destination_choice(
+        verbose: bool,
+        report_callback,
+        message: str
+    ) -> None:
+        """Helper to report destination choice in verbose mode.
+
+        Args:
+            verbose: Whether verbose reporting is enabled
+            report_callback: Optional callback function for reporting
+            message: Message to report
+        """
+        if verbose and report_callback:
+            report_callback(message)
+
+    @staticmethod
+    def pick_destination(
+        ship: T5Starship,
+        game_state,
+        verbose: bool = False,
+        report_callback=None
+    ) -> str:
+        """Choose destination for a ship, preferring profitable routes.
 
         Implements intelligent merchant captain decision-making:
         1. Find worlds in jump range with profitable cargo sales
@@ -879,14 +893,14 @@ class StarshipAgent:
         3. If none profitable, randomly choose any reachable world
         4. If no worlds in range, stay at current location
 
-        Uses ship.find_profitable_destinations() to identify worlds
-        where cargo from current location can be sold for profit.
-        This creates realistic merchant behavior seeking profit but
-        willing to travel speculatively if needed.
+        Args:
+            ship: T5Starship to pick destination for
+            game_state: GameState with world data
+            verbose: Whether to print status messages
+            report_callback: Optional callback(message) for status reporting
 
-        Side Effects:
-            - Sets ship.destination via ship.set_course_for()
-            - Prints destination choice rationale in verbose mode
+        Returns:
+            Name of chosen destination world
 
         Note:
             Enhanced destination selection could weight choices by
@@ -895,34 +909,54 @@ class StarshipAgent:
         import random
 
         # First, try to find profitable destinations
-        profitable = self.ship.find_profitable_destinations(
-            self.simulation.game_state)
+        profitable = ship.find_profitable_destinations(game_state)
 
         if profitable:
-            # Choose randomly from profitable destinations
-            # (could be enhanced to weight by profit amount)
             next_dest, expected_profit = random.choice(profitable)
-            self.ship.set_course_for(next_dest)
-            if self.simulation.verbose:
-                self._report_status(
-                    f"picked destination '{next_dest}' because it showed "
-                    f"cargo profit of +Cr{expected_profit}/ton")
-        else:
-            # No profitable destinations - fall back to any reachable world
-            reachable = self.ship.get_worlds_in_jump_range(
-                self.simulation.game_state)
+            StarshipAgent._report_destination_choice(
+                verbose,
+                report_callback,
+                f"picked destination '{next_dest}' because it showed "
+                f"cargo profit of +Cr{expected_profit}/ton"
+            )
+            return next_dest
 
-            if reachable:
-                next_dest = random.choice(reachable)
-                self.ship.set_course_for(next_dest)
-                if self.simulation.verbose:
-                    self._report_status(
-                        f"picked destination '{next_dest}' randomly because "
-                        f"no in-range system could buy cargo from "
-                        f"'{self.ship.location}' for a profit")
-            else:
-                # No worlds in range - stay at current location
-                # This shouldn't happen with proper map design
-                self.ship.set_course_for(self.ship.location)
-                if self.simulation.verbose:
-                    self._report_status("no worlds in jump range!")
+        # No profitable destinations - fall back to any reachable world
+        reachable = ship.get_worlds_in_jump_range(game_state)
+
+        if reachable:
+            next_dest = random.choice(reachable)
+            StarshipAgent._report_destination_choice(
+                verbose,
+                report_callback,
+                f"picked destination '{next_dest}' randomly because "
+                f"no in-range system could buy cargo from "
+                f"'{ship.location}' for a profit"
+            )
+            return next_dest
+
+        # No worlds in range - stay at current location
+        StarshipAgent._report_destination_choice(
+            verbose,
+            report_callback,
+            "no worlds in jump range!"
+        )
+        return ship.location
+
+    def _choose_next_destination(self):
+        """Choose next destination and set ship course.
+
+        Wrapper around pick_destination() that sets the ship's course
+        and handles verbose reporting via _report_status().
+
+        Side Effects:
+            - Sets ship.destination via ship.set_course_for()
+            - Prints destination choice rationale in verbose mode
+        """
+        next_dest = self.pick_destination(
+            self.ship,
+            self.simulation.game_state,
+            verbose=self.simulation.verbose,
+            report_callback=self._report_status
+        )
+        self.ship.set_course_for(next_dest)
