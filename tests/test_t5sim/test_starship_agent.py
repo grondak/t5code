@@ -30,6 +30,7 @@ def mock_simulation(game_state):
     sim = Mock()
     sim.game_state = game_state
     sim.record_cargo_sale = Mock()
+    sim.starting_day = 1
     return sim
 
 
@@ -980,6 +981,7 @@ def test_starship_agent_jumping_unknown_world(game_state, capsys):
     sim.game_state = game_state
     sim.record_cargo_sale = Mock()
     sim.verbose = True  # Enable verbose output
+    sim.starting_day = 1
 
     ship_class_dict = next(iter(game_state.ship_classes.values()))
     class_name = ship_class_dict["class_name"]

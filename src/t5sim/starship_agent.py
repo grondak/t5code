@@ -29,6 +29,7 @@ from t5code import (
     CapacityExceededError,
     WorldNotFoundError
 )
+from t5code.T5Basics import TravellerCalendar
 from t5sim.starship_states import (
     StarshipState,
     get_next_state,
@@ -189,6 +190,7 @@ class StarshipAgent:
         self.max_freight_attempts = 4  # Give up after 4 cycles (12 days)
         self.freight_loaded_this_cycle = False  # Track if freight obtained
         self.broke = False  # Ship has insufficient funds for operations
+        self.calendar = TravellerCalendar()
 
         # Report initial status with destination and crew
         dest_display = self._get_world_display_name(self.ship.destination)
@@ -206,8 +208,9 @@ class StarshipAgent:
                             f"{company_info}"
                             f"  Crew: {crew_info}")
 
-        # Start the agent's process
+        # Start the agent's processes
         self.process = env.process(self.run())
+        self.payroll_process = env.process(self.run_payroll())
 
     def _build_crew_skills_list(
         self, npc: T5NPC, position_name: str, is_captain: bool = False
@@ -955,14 +958,143 @@ class StarshipAgent:
             - Sets self.broke = True to suspend operations
             - Reports status in verbose mode
         """
-        self.broke = True
+        self._mark_ship_broke(
+            f"insufficient funds for fuel (need "
+            f"Cr{needed_total * 500:,.0f}, have Cr{self.ship.owner.balance:,})"
+        )
+
+    def run_payroll(self):
+        """Separate SimPy process for monthly crew payroll.
+
+        Runs independently from the main state machine, processing payroll
+        on the first day of each month (Days 002, 030, 058, etc.).
+        Crew members are paid 100 Cr each. If the ship cannot afford
+        payroll, it becomes broke and suspends operations.
+
+        Yields:
+            SimPy timeout events until next payroll date
+
+        Side Effects:
+            - Debits ship owner account for crew salaries monthly
+            - Sets self.broke = True if insufficient funds
+            - Reports payroll in verbose mode
+        """
+        # Process immediate payroll if starting on first day of month
+        total_days = self.simulation.starting_day + self.env.now
+        day_of_year = int(((total_days - 1) % 365) + 1)
+        current_month = self.calendar.get_month(day_of_year)
+        if current_month is not None:
+            first_day_of_current_month = (
+                self.calendar.get_first_day_of_month(current_month)
+            )
+            if day_of_year == first_day_of_current_month:
+                # Starting on first day of month, process payroll immediately
+                self._process_monthly_payroll()
+
+        while True:
+            # If ship is broke, sleep indefinitely
+            if self.broke:
+                yield self.env.timeout(1000)
+                continue
+
+            # Calculate days until next month starts
+            days_until_next_month = self._calculate_days_until_next_month()
+
+            # Wait until next month
+            yield self.env.timeout(days_until_next_month)
+
+            # Process payroll if ship is still operational
+            if not self.broke:
+                self._process_monthly_payroll()
+
+    def _calculate_days_until_next_month(self) -> float:
+        """Calculate simulation days until the next month starts.
+
+        Returns:
+            Float number of days until first day of next month
+        """
+        # Calculate current day of year
+        total_days = self.simulation.starting_day + self.env.now
+        day_of_year = int(((total_days - 1) % 365) + 1)
+
+        # Get next month start day
+        next_month_start = self.calendar.get_next_month_start(day_of_year)
+
+        # Calculate days until next month
+        if next_month_start > day_of_year:
+            # Next month is still this year
+            days_until = next_month_start - day_of_year
+        else:
+            # Next month is next year (wrap around from Month 13)
+            days_until = (365 - day_of_year) + next_month_start
+
+        return float(days_until)
+
+    def _process_monthly_payroll(self):
+        """Process monthly crew payroll - pay each crew member 100 Cr.
+
+        Side Effects:
+            - Debits ship owner account for crew salaries
+            - Sets self.broke = True if insufficient funds
+            - Reports payroll in verbose mode
+        """
+        # Count crew members
+        crew_count = 0
+        for position_list in self.ship.crew_position.values():
+            for crew_position in position_list:
+                if crew_position.is_filled():
+                    crew_count += 1
+
+        if crew_count == 0:
+            return
+
+        # Calculate total payroll
+        salary_per_crew = 100
+        total_payroll = crew_count * salary_per_crew
+
+        # Calculate current month for reporting
+        total_days = self.simulation.starting_day + self.env.now
+        day_of_year = int(((total_days - 1) % 365) + 1)
+        current_month = self.calendar.get_month(day_of_year)
+
+        # Check if we can afford payroll
+        if self.ship.owner.balance < total_payroll:
+            self._mark_ship_broke(
+                f"insufficient funds for crew payroll (need "
+                f"Cr{total_payroll:,}, have Cr{self.ship.owner.balance:,})"
+            )
+            return
+
+        # Debit from company account
+        self.ship.debit(
+            self.env.now,
+            total_payroll,
+            f"Crew payroll: {crew_count} crew @ Cr{salary_per_crew} "
+            f"(Month {current_month})"
+        )
 
         if self.simulation.verbose:
             self._report_status(
-                "insufficient funds for fuel (need "
-                f"Cr{needed_total * 500:,.0f}, "
-                f"have Cr{self.ship.owner.balance:,.0f}), "
-                "suspending operations")
+                f"paid crew payroll: {crew_count} crew × Cr{salary_per_crew} "
+                f"= Cr{total_payroll:,} (Month {current_month})"
+            )
+
+    def _mark_ship_broke(self, reason: str):
+        """Mark ship as broke and suspend operations.
+
+        Consolidates broke-ship handling for both fuel and payroll failures.
+
+        Args:
+            reason: Description of why ship is broke
+
+        Side Effects:
+            - Sets self.broke = True to suspend all operations
+            - Reports status in verbose mode
+        """
+        self.broke = True
+
+        if self.simulation.verbose:
+            self._report_status(f"{reason}, suspending operations")
 
     def _load_fuel(self):
         """Refuel jump and operations tanks at Cr500 per ton.

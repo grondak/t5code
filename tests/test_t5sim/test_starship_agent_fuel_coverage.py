@@ -30,6 +30,7 @@ def mock_simulation(game_state):
     sim.game_state = game_state
     sim.verbose = True  # Enable verbose for some tests
     sim.record_cargo_sale = Mock()
+    sim.starting_day = 1
     return sim
 
 
@@ -41,6 +42,7 @@ def non_verbose_simulation(game_state):
     sim.game_state = game_state
     sim.verbose = False  # Disable verbose
     sim.record_cargo_sale = Mock()
+    sim.starting_day = 1
     return sim
 
 
