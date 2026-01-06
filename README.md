@@ -314,7 +314,7 @@ Bottom 5 ships by balance:
 **Complete ledger output (with --ledger or --ledger-all):**
 ```
 ================================================================================
-LEDGER FOR Trader_001 Inc (Trader_001)
+LEDGER FOR Trader_001 Inc (Trader_001, a Scout @ Tarsus/Trin's Veil (2826))
 Final Balance: Cr1,365,000
 ================================================================================
 Date                     Amount         Balance Memo
@@ -334,6 +334,7 @@ Date                     Amount         Balance Memo
 ```
 
 **Key features:**
+- **Ship context**: Ledger header shows company, ship name, ship class, and final location with hex
 - **Traveller date format**: Shows exact simulation time (DDD.FF-YYYY) for each transaction
 - **Complete audit trail**: Every credit, debit, and transfer with descriptive memo
 - **Running balance**: Balance after each transaction for easy verification

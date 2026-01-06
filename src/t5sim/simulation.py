@@ -468,8 +468,16 @@ class Simulation:
             )
 
         company = agent.ship.owner
+
+        # Get ship class and final location with hex
+        ship_class = agent.ship.ship_class
+        location = agent.ship.location
+        world = self.game_state.world_data.get(location)
+        location_display = world.full_name() if world else location
+
         print(f"\n{'='*80}")
-        print(f"LEDGER FOR {company.name} ({ship_name})")
+        print(f"LEDGER FOR {company.name} ({ship_name}, "
+              f"a {ship_class} @ {location_display})")
         print(f"Final Balance: Cr{company.balance:,.0f}")
         print(f"{'='*80}")
         print(f"{'Date':<15} {'Amount':>15} {'Balance':>15} {'Memo':<35}")
