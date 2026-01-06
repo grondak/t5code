@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-384%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-393%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1468%20%7C%207%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1502%20%7C%207%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -95,6 +95,11 @@ Built for realistic simulation of merchant starship operations, trade economics,
 - **Task resolution** with skill modifiers
 - **Random trade goods** generation with classification-specific tables
 - **Imbalance goods** with bonus opportunities
+- **Imperial Calendar** with 13 months of 28 days plus Holiday
+  - `TravellerCalendar` class for month calculations
+  - Query current month from day of year
+  - Get first day of any month or next month
+  - Full integration with Traveller date format (DDD-YYYY)
 
 ---
 
@@ -451,6 +456,37 @@ mypy src/
 ---
 
 ## API Highlights
+
+### Imperial Calendar
+
+```python
+from t5code.T5Basics import TravellerCalendar
+
+cal = TravellerCalendar()
+
+# Get month from day of year
+month = cal.get_month(100)  # Returns 4
+month = cal.get_month(1)    # Returns None (Holiday)
+
+# Get first day of a month
+first_day = cal.get_first_day_of_month(1)   # Returns 2
+first_day = cal.get_first_day_of_month(13)  # Returns 338
+
+# Get next month start
+next_month = cal.get_next_month_start(15)   # Returns 30 (Month 2)
+next_month = cal.get_next_month_start(365)  # Returns 2 (Month 1, next year)
+
+# Get comprehensive info
+info = cal.get_month_info(100)
+# {'day': 100, 'month': 4, 'day_of_month': 15, 'is_holiday': False}
+
+# Integration with Traveller dates
+traveller_date = "180-1105"
+day = int(traveller_date.split('-')[0])
+info = cal.get_month_info(day)
+print(f"Month {info['month']}, Day {info['day_of_month']}")
+# Output: Month 7, Day 11
+```
 
 ### Jump Range Calculation
 

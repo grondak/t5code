@@ -9,6 +9,7 @@ from t5code.T5Basics import (
     check_success,
     roll_flux,
     SequentialFlux,
+    TravellerCalendar,
 )
 
 
@@ -270,3 +271,147 @@ def test_sequential_flux_deferred_decision():
 
     # In this case, we didn't roll second
     assert flux.second_die is None
+
+
+# ============================================================================
+# TravellerCalendar Tests
+# ============================================================================
+
+def test_traveller_calendar_holiday():
+    """Test that Day 001 is recognized as Holiday with no month."""
+    cal = TravellerCalendar()
+    assert cal.get_month(1) is None
+
+    info = cal.get_month_info(1)
+    assert info['day'] == 1
+    assert info['month'] is None
+    assert info['day_of_month'] is None
+    assert info['is_holiday'] is True
+
+
+def test_traveller_calendar_month_boundaries():
+    """Test month boundaries are correct for all 13 months."""
+    cal = TravellerCalendar()
+
+    # Month 1: Days 2-29
+    assert cal.get_month(2) == 1
+    assert cal.get_month(29) == 1
+    assert cal.get_month(30) == 2
+
+    # Month 2: Days 30-57
+    assert cal.get_month(30) == 2
+    assert cal.get_month(57) == 2
+    assert cal.get_month(58) == 3
+
+    # Month 13: Days 338-365
+    assert cal.get_month(338) == 13
+    assert cal.get_month(365) == 13
+
+
+def test_traveller_calendar_get_first_day_of_month():
+    """Test getting first day of each month."""
+    cal = TravellerCalendar()
+
+    assert cal.get_first_day_of_month(1) == 2
+    assert cal.get_first_day_of_month(2) == 30
+    assert cal.get_first_day_of_month(3) == 58
+    assert cal.get_first_day_of_month(4) == 86
+    assert cal.get_first_day_of_month(5) == 114
+    assert cal.get_first_day_of_month(6) == 142
+    assert cal.get_first_day_of_month(7) == 170
+    assert cal.get_first_day_of_month(8) == 198
+    assert cal.get_first_day_of_month(9) == 226
+    assert cal.get_first_day_of_month(10) == 254
+    assert cal.get_first_day_of_month(11) == 282
+    assert cal.get_first_day_of_month(12) == 310
+    assert cal.get_first_day_of_month(13) == 338
+
+
+def test_traveller_calendar_get_next_month_start():
+    """Test getting first day of next month."""
+    cal = TravellerCalendar()
+
+    # From Holiday -> Month 1
+    assert cal.get_next_month_start(1) == 2
+
+    # From Month 1 -> Month 2
+    assert cal.get_next_month_start(15) == 30
+    assert cal.get_next_month_start(29) == 30
+
+    # From Month 2 -> Month 3
+    assert cal.get_next_month_start(30) == 58
+    assert cal.get_next_month_start(50) == 58
+
+    # From Month 13 -> Month 1 (next year)
+    assert cal.get_next_month_start(350) == 2
+    assert cal.get_next_month_start(365) == 2
+
+
+def test_traveller_calendar_get_month_info():
+    """Test comprehensive month information."""
+    cal = TravellerCalendar()
+
+    # Test various days
+    info = cal.get_month_info(100)
+    assert info['day'] == 100
+    assert info['month'] == 4
+    # math for correct day of month 100 - 86 + 1 = 15
+    assert info['day_of_month'] == 15
+    assert info['is_holiday'] is False
+
+    # First day of a month
+    info = cal.get_month_info(30)
+    assert info['month'] == 2
+    assert info['day_of_month'] == 1
+
+    # Last day of a month
+    info = cal.get_month_info(57)
+    assert info['month'] == 2
+    assert info['day_of_month'] == 28
+
+
+def test_traveller_calendar_invalid_day():
+    """Test that invalid days raise ValueError."""
+    cal = TravellerCalendar()
+
+    with pytest.raises(ValueError,
+                       match="Day of year must be between 1 and 365"):
+        cal.get_month(0)
+
+    with pytest.raises(ValueError,
+                       match="Day of year must be between 1 and 365"):
+        cal.get_month(366)
+
+    with pytest.raises(ValueError):
+        cal.get_month_info(-5)
+
+    with pytest.raises(ValueError):
+        cal.get_next_month_start(400)
+
+
+def test_traveller_calendar_invalid_month():
+    """Test that invalid month numbers raise ValueError."""
+    cal = TravellerCalendar()
+
+    with pytest.raises(ValueError, match="Month must be between 1 and 13"):
+        cal.get_first_day_of_month(0)
+
+    with pytest.raises(ValueError, match="Month must be between 1 and 13"):
+        cal.get_first_day_of_month(14)
+
+
+def test_traveller_calendar_all_days_have_month():
+    """Test that every day 2-365 has a valid month."""
+    cal = TravellerCalendar()
+
+    for day in range(2, 366):
+        month = cal.get_month(day)
+        assert 1 <= month <= 13, (f"Day {day} should "
+                                  f"have month 1-13, got {month}")
+
+
+def test_traveller_calendar_repr():
+    """Test string representation."""
+    cal = TravellerCalendar()
+    assert "13 months" in repr(cal)
+    assert "28 days" in repr(cal)
