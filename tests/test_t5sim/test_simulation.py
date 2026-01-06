@@ -5,7 +5,7 @@ from unittest.mock import patch
 from t5code import GameState as gs_module, T5World, T5ShipClass
 from t5code.GameState import GameState
 from t5sim import Simulation
-from t5sim.simulation import generate_captain_risk_profile
+from t5code.T5NPC import generate_captain_risk_profile
 
 
 @pytest.fixture
@@ -139,8 +139,8 @@ def test_run_simulation_function():
 def test_generate_captain_risk_profile_very_cautious():
     """Test very cautious captain risk profile (91-95%)."""
     # Force roll between 0.90 and 0.98 for very cautious
-    with patch('t5sim.simulation.random.random', return_value=0.95):
-        with patch('t5sim.simulation.random.uniform', return_value=0.93):
+    with patch('t5code.T5NPC.random.random', return_value=0.95):
+        with patch('t5code.T5NPC.random.uniform', return_value=0.93):
             threshold = generate_captain_risk_profile()
             assert threshold == pytest.approx(0.93)
 
@@ -148,8 +148,8 @@ def test_generate_captain_risk_profile_very_cautious():
 def test_generate_captain_risk_profile_aggressive():
     """Test aggressive captain risk profile (65-69%)."""
     # Force roll above 0.98 for aggressive
-    with patch('t5sim.simulation.random.random', return_value=0.99):
-        with patch('t5sim.simulation.random.uniform', return_value=0.67):
+    with patch('t5code.T5NPC.random.random', return_value=0.99):
+        with patch('t5code.T5NPC.random.uniform', return_value=0.67):
             threshold = generate_captain_risk_profile()
             assert threshold == pytest.approx(0.67)
 

@@ -15,48 +15,13 @@ days) to complete in seconds while maintaining game-accurate mechanics.
 """
 
 from typing import List, Dict, Any
-import random
 import simpy
 from t5code import T5NPC, T5ShipClass
+from t5code.T5NPC import generate_captain_risk_profile
 from t5code.GameState import GameState
 from t5code.T5Starship import T5Starship
 from t5sim.starship_agent import StarshipAgent
 from t5sim.starship_states import StarshipState
-
-
-def generate_captain_risk_profile() -> float:
-    """Generate cargo departure threshold based on captain risk profile.
-
-    Creates realistic distribution of captain behavior:
-    - 60% chance: Standard (0.80) - cautious but practical
-    - 30% chance: Moderate (0.70-0.90) - normal variance
-    - 8% chance: Very cautious (0.91-0.95) - waits for full holds
-    - 2% chance: Aggressive (0.65-0.69) - leaves early for speed
-
-    Range is constrained to 0.60-0.98 to ensure reasonable behavior.
-
-    Returns:
-        Float between 0.60 and 0.98 representing cargo fill threshold
-
-    Example:
-        >>> threshold = generate_captain_risk_profile()
-        >>> 0.60 <= threshold <= 0.98
-        True
-    """
-    roll = random.random()
-
-    if roll < 0.60:
-        # 60% chance: Standard threshold
-        return 0.80
-    elif roll < 0.90:
-        # 30% chance: Moderate range (70-90%)
-        return random.uniform(0.70, 0.90)
-    elif roll < 0.98:
-        # 8% chance: Very cautious (91-95%)
-        return random.uniform(0.91, 0.95)
-    else:
-        # 2% chance: Aggressive (65-69%)
-        return random.uniform(0.65, 0.69)
 
 
 class Simulation:

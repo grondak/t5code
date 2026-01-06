@@ -616,15 +616,13 @@ class StarshipAgent:
             profit_amount is the Cr profit or loss
 
         Note:
-            Uses lot.determine_sale_value_on() which factors in
+            Delegates to lot.calculate_profit_at() which factors in
             trade codes and market conditions at destination.
         """
-        purchase_price = lot.origin_value * lot.mass
-        sale_value = lot.determine_sale_value_on(
+        _, _, profit = lot.calculate_profit_at(
             self.ship.destination,
             self.simulation.game_state
         )
-        profit = sale_value - purchase_price
         return profit > 0, profit
 
     def _try_purchase_lot(self, lot) -> tuple[bool, int]:

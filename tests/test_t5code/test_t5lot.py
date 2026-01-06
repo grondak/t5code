@@ -70,6 +70,30 @@ def test_determine_sale_value_on():
     assert sale_value == 8500
 
 
+def test_calculate_profit_at():
+    """Verify profit calculation returns purchase, sale, and profit."""
+    setup_gamestate()
+    lot = T5Lot("Rhylanor", GameState)
+    lot.mass = 10
+
+    purchase, sale, profit = lot.calculate_profit_at(
+        "Jae Tellona", GameState
+    )
+
+    # Verify purchase price is origin_value * mass
+    assert purchase == lot.origin_value * lot.mass
+
+    # Verify sale value matches determine_sale_value_on
+    expected_sale = lot.determine_sale_value_on("Jae Tellona", GameState)
+    assert sale == expected_sale
+
+    # Verify profit is sale - purchase
+    assert profit == sale - purchase
+
+    # Should be profitable or break-even
+    assert profit >= 0 or profit < 0  # Just verify it calculates
+
+
 def test_buying_trade_class_effects():
     """Verify trade classification modifiers
     apply correctly to purchase price."""

@@ -140,6 +140,40 @@ class T5Lot:
         )
         return result
 
+    def calculate_profit_at(self,
+                            destination_world: str,
+                            game_state: "GameState") -> Tuple[int, int, int]:
+        """Calculate profit/loss for selling this lot at destination.
+
+        Computes purchase price (origin_value × mass), sale value at
+        destination, and profit (sale - purchase). Useful for
+        evaluating cargo deals before purchase.
+
+        Args:
+            destination_world: Name of world where lot would be sold
+            game_state: GameState with initialized world_data
+
+        Returns:
+            Tuple of (purchase_price, sale_value, profit):
+            - purchase_price: Cost to buy lot (credits)
+            - sale_value: Revenue from selling (credits)
+            - profit: Net profit/loss (credits, can be negative)
+
+        Example:
+            >>> lot = T5Lot("Rhylanor", game_state)
+            >>> lot.mass = 10
+            >>> purchase, sale, profit = lot.calculate_profit_at(
+            ...     "Jae Tellona", game_state)
+            >>> if profit > 0:
+            ...     print(f"Profitable: Cr{profit}")
+        """
+        purchase_price = self.origin_value * self.mass
+        sale_value = self.determine_sale_value_on(
+            destination_world, game_state
+        )
+        profit = sale_value - purchase_price
+        return purchase_price, sale_value, profit
+
     def generate_lot_id(self) -> str:
         """Generate human-readable lot identifier.
 

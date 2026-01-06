@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-322%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-319%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1247%20%7C%205%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1250%20%7C%203%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -336,10 +336,10 @@ pytest --cov=src --cov-report=html
   - T5Tables.py, T5World.py
 - **t5sim**: High coverage across all modules
   - simulation.py: 100% coverage
-  - starship_agent.py: 99% coverage (3 lines: defensive code paths)
-  - starship_states.py: 98% coverage (1 line: `if __name__ == "__main__"`)
-  - run.py: 98% coverage (1 line: `if __name__ == "__main__"`)
-- **Total**: 322 tests, 99% overall coverage (1247 statements, 5 missed)
+  - starship_agent.py: 99% coverage (1 line: defensive exception handler)
+  - starship_states.py: 98% coverage (1 line: describe_state method)
+  - run.py: 98% coverage (1 line: main block guard)
+- **Total**: 319 tests, 99% overall coverage (1250 statements, 3 missed)
 
 ### Code Quality
 
