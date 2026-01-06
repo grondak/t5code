@@ -659,7 +659,8 @@ def test_starship_agent_full_cycle(game_state, mock_simulation):
     initial_voyages = agent.voyage_count
 
     # Run for full cycle (should complete at least one jump)
-    env.run(until=15.0)
+    # Note: May include 14-day maintenance if maintenance day has passed
+    env.run(until=30.0)
 
     # Should have completed at least one voyage
     assert agent.voyage_count > initial_voyages
@@ -798,6 +799,10 @@ def test_starship_agent_stuck_in_invalid_state(game_state,
     ship = T5Starship("Stuck Ship", "Rhylanor", ship_class, owner=company)
     ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
+
+    # Prevent maintenance from interfering with stuck state test
+    ship.last_maintenance_year = 2000  # Far future year
+    ship.needs_maintenance = False
 
     # Create agent
     agent = StarshipAgent(env, ship, mock_simulation)

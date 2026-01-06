@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-409%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-429%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1502%20%7C%207%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1624%20%7C%2024%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -20,7 +20,15 @@ Built for realistic simulation of merchant starship operations, trade economics,
 
 ### 🎯 Discrete-Event Simulation (t5sim)
 - **SimPy-based simulation** with concurrent multi-ship operations
-- **12-state starship FSM** (DOCKED → OFFLOADING → SELLING_CARGO → LOADING_FREIGHT → ...)
+- **14-state starship FSM** (DOCKED → OFFLOADING → SELLING_CARGO → MAINTENANCE → LOADING_FREIGHT → ...)
+- **Annual maintenance scheduling** - 2-week maintenance period triggered after selling cargo when maintenance day is reached
+  - Each ship assigned random annual maintenance day (days 2-365, excluding holiday day 1)
+  - Maintenance checked after SELLING_CARGO (after commercial transactions complete)
+  - 14-day maintenance period suspends all activities except crew payroll
+  - Once-per-year enforcement (tracks last_maintenance_year)
+  - **Maintenance costs**: 1/1000th of ship cost (e.g., MCr 100 ship costs Cr 100,000)
+  - Ships with insufficient funds become "broke" and suspend operations
+  - Maintenance cost displayed at startup and when performed
 - **Profit-aware routing** - ships evaluate destinations for cargo profitability
 - **Smart cargo purchasing** - skips lots that would result in losses
 - **Skill-based crew payroll** - monthly salaries calculated from position skill requirements
@@ -209,14 +217,16 @@ python -m t5sim.run --ships 3 --days 45 --ledger-all
 
 **Verbose output example (Traveller date format DDD.FF-YYYY with fractional days):**
 ```
-Trader_001 (Liner) starting simulation, destination: Derchon/Lunion (2024)
+Trader_001 (Liner) starting simulation, cost: MCr228.7, destination: Derchon/Lunion (2024)
   Company: Trader_001 Inc, balance: Cr1,000,000
+  Annual maintenance day: 199
   Crew: Captain: 80%, Pilot: Pilot-2, Astrogator 1: Astrogator-1, Astrogator 2: Astrogator-1, Astrogator 3: Astrogator-1, 
   Engineer 1: Engineer-3, Engineer 2: Engineer-2, Engineer 3: Engineer-2, Engineer 4: Engineer-2, Medic: Medic-2, 
   Steward: Steward-3, Freightmaster, Cook 1, Cook 2, Cook 3
 
-Trader_002 (Scout) starting simulation, destination: Powaza/Rhylanor (3220)
+Trader_002 (Scout) starting simulation, cost: MCr28.57, destination: Powaza/Rhylanor (3220)
   Company: Trader_002 Inc, balance: Cr1,000,000
+  Annual maintenance day: 6
   Crew: Captain: 76% Pilot-2, Astrogator: Astrogator-2, Engineer: Engineer-3, Sensop
   
 [360.00-1104] Trader_001 at Shirene/Lunion (2125) (DOCKED): company=Cr1,000,000, hold (0t/120.0t, 0%), 
@@ -257,11 +267,22 @@ Trader_002 (Scout) starting simulation, destination: Powaza/Rhylanor (3220)
 
 [006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (SELLING_CARGO): company=Cr1,016,498, hold (0.0t/10.0t, 0%), 
   fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | sold cargo lot for Cr7,498 profit
+
+[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (MAINTENANCE): company=Cr987,928, hold (0.0t/10.0t, 0%), 
+  fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | undergoing annual maintenance (14 days), cost Cr28,570
+
+[020.05-1105] Trader_002 at Powaza/Rhylanor (3220) (LOADING_FREIGHT): company=Cr987,928, hold (0.0t/10.0t, 0%), 
+  fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | no freight available
 ```
 
 **Key verbose output features:**
 - **Company balance tracking**: Shows `company=CrX,XXX,XXX` instead of `balance=` for owned ships
 - **Company announcement at startup**: Displays company name and starting capital
+- **Annual maintenance day**: Displayed at startup for each ship (e.g., "Annual maintenance day: 199")
+- **Annual maintenance operations**: Triggered after SELLING_CARGO when maintenance day reached
+  - Example: "[207.10-1105] MAINTENANCE: undergoing annual maintenance (14 days), cost Cr228,700"
+  - Ships with insufficient funds display: "insufficient funds for annual maintenance (need CrX,XXX, have CrY,YYY), suspending operations"
+  - Maintenance happens at most once per year, automatically tracks last_maintenance_year
 - **Monthly crew payroll**: Ledger entries show skill-based salary calculations
   - Example: "Crew payroll: 7 crew, Cr1,900 total (Month 1)" for a Frigate
   - Payroll processed on day 002, 030, 058, etc. (first day of each month)
@@ -346,6 +367,7 @@ Date                     Amount         Balance Memo
 017.00-1105              -3,600     1,039,600.0 Cargo purchase: 6-Ag Ni 3600 at Traltha
 018.00-1105               6,120     1,045,720.0 Cargo sale: 6-Ag Ni 3600 at Traltha
 030.00-1105                -800     1,044,920.0 Crew payroll: 4 crew, Cr800 total (Month 2)
+199.00-1105             -28,570     1,016,350.0 Annual maintenance (year 1105)
 ...
 ================================================================================
 ```
@@ -355,8 +377,9 @@ Date                     Amount         Balance Memo
 - **Traveller date format**: Shows exact simulation time (DDD.FF-YYYY) for each transaction
 - **Complete audit trail**: Every credit, debit, and transfer with descriptive memo
 - **Monthly payroll entries**: Shows crew count and total salary with month number
+- **Annual maintenance entries**: Shows maintenance cost (1/1000th of ship cost) with year
 - **Running balance**: Balance after each transaction for easy verification
-- **Transaction types**: Initial capital, freight income, passenger fares, cargo purchases/sales, crew payroll
+- **Transaction types**: Initial capital, freight income, passenger fares, cargo purchases/sales, crew payroll, maintenance costs
 - **Location tracking**: Memos include world names where transactions occurred
 
 ---
@@ -381,7 +404,7 @@ t5code/
 │   │   ├── T5Exceptions.py  # Custom exception hierarchy
 │   │   └── GameState.py     # Global game state with sector mapping
 │   └── t5sim/               # Simulation engine (99% coverage)
-│       ├── starship_states.py   # 12-state FSM (98% coverage)
+│       ├── starship_states.py   # 14-state FSM (98% coverage)
 │       ├── starship_agent.py    # SimPy process agent (99% coverage)
 │       ├── simulation.py        # Main orchestrator (100% coverage)
 │       └── run.py               # CLI interface (98% coverage)
@@ -431,10 +454,10 @@ pytest --cov=src --cov-report=html
   - T5ShipClass.py, T5Starship.py, T5Tables.py, T5World.py
 - **t5sim**: High coverage across all modules
   - simulation.py: 100% coverage
-  - starship_agent.py: 99% coverage (1 line: defensive exception handler)
-  - starship_states.py: 98% coverage (1 line: describe_state method)
-  - run.py: 98% coverage (1 line: main block guard)
-- **Total**: 364 tests, 99% overall coverage (1319 statements, 3 missed)
+  - starship_agent.py: 99% coverage (edge cases and verbose branches)
+  - starship_states.py: 98% coverage (describe_state method)
+  - run.py: 98% coverage (main block guard)
+- **Total**: 429 tests, 99% overall coverage (1624 statements, 24 missed)
 
 ### Code Quality
 
@@ -641,9 +664,10 @@ Contributions welcome! This project follows:
 - [x] Zero cargo capacity ship handling (Frigates operate without freight/cargo)
 - [x] Company ownership integration with double-entry accounting
 - [x] Complete financial audit trail through ledger system
+- [x] Annual maintenance scheduling with 2-week downtime periods
 - [ ] Enhanced statistics and visualization
 - [ ] Advanced pathfinding with multi-jump routes
-- [ ] Ship maintenance and repair mechanics
+- [ ] Ship component wear and aging mechanics
 
 ### Long Term
 - [ ] Complete subsector generation

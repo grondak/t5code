@@ -4,6 +4,7 @@ Defines the T5Starship class for simulating starship operations including
 passenger and crew management, cargo handling, and financial tracking.
 """
 
+import random
 import uuid
 from typing import Dict, List, Set, Tuple, TYPE_CHECKING, Optional
 from t5code.T5Basics import check_success
@@ -145,6 +146,9 @@ class T5Starship:
         cargo: Dict of cargo/freight lots by type
         cargo_size: Current cargo tonnage
         mail_locker_size: Maximum mail bundles
+        annual_maintenance_day: Day of year (2-365) for annual maintenance
+        needs_maintenance: Flag indicating maintenance is due
+        last_maintenance_year: Year of last completed maintenance
 
     Properties:
         destination: Destination world name
@@ -237,6 +241,15 @@ class T5Starship:
         self.jump_fuel: int = ship_class.jump_fuel_capacity
         # Current fuel (starts full)
         self.ops_fuel: int = ship_class.ops_fuel_capacity
+
+        # Annual maintenance day (days 2-365, avoiding holiday on day 1)
+        self.annual_maintenance_day: int = random.randint(2, 365)
+        # Maintenance tracking
+        self.needs_maintenance: bool = False
+        # Start with maintenance current for default simulation year (1104)
+        # Ships won't need maintenance until next
+        # year when maintenance day arrives
+        self.last_maintenance_year: int = 1104
 
     def set_course_for(self, destination: str) -> None:
         """Set the ship's destination world.

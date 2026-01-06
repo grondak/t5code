@@ -215,6 +215,8 @@ class StarshipAgent:
                             f"cost: MCr{ship_cost_mcr}, "
                             f"destination: {dest_display}\n"
                             f"{company_info}"
+                            "  Annual maintenance day: "
+                            f"{self.ship.annual_maintenance_day}\n"
                             f"  Crew: {crew_info}")
 
         # Start the agent's processes
@@ -433,11 +435,123 @@ class StarshipAgent:
         self.freight_loaded_this_cycle = False
         return False
 
+    def _check_if_maintenance_needed(self):
+        """Check if annual maintenance is needed.
+
+        Maintenance is needed if:
+        1. We've passed the ship's annual maintenance day in the current year
+        2. The last maintenance wasn't done this year
+
+        Side Effects:
+            Sets ship.needs_maintenance flag if maintenance is due
+        """
+        # Get starting values (with defaults for mocked simulations)
+        starting_day = getattr(self.simulation, 'starting_day', 360)
+        starting_year = getattr(self.simulation, 'starting_year', 1104)
+
+        # Ensure starting_year is an integer (handles Mock objects)
+        try:
+            starting_year = int(starting_year)
+            starting_day = int(starting_day)
+        except (TypeError, ValueError):
+            starting_year = 1104
+            starting_day = 360
+
+        # Calculate absolute day (starting_day + elapsed time)
+        absolute_day = starting_day + self.env.now
+
+        # Calculate year and day of year
+        years_elapsed = int(absolute_day // 365)
+        current_year = starting_year + years_elapsed
+        current_day_of_year = int((absolute_day % 365)) + 1
+        if current_day_of_year > 365:
+            current_day_of_year = 365
+
+        # Check if we've passed maintenance day and haven't done it this year
+        if (current_day_of_year >= self.ship.annual_maintenance_day and
+           self.ship.last_maintenance_year < current_year):
+            self.ship.needs_maintenance = True
+
+    def _perform_maintenance(self):
+        """Perform annual maintenance.
+
+        Clears the needs_maintenance flag and updates last_maintenance_year.
+        During the MAINTENANCE state, all activities are suspended except
+        crew pay (handled by payroll process).
+
+        Maintenance cost is 1/1000th of ship cost (MCr converted to Cr).
+        For example, a MCr 100 ship costs Cr 100,000 for maintenance.
+
+        Side Effects:
+            - Clears ship.needs_maintenance flag
+            - Updates ship.last_maintenance_year
+            - Debits ship account for maintenance cost
+            - Sets self.broke = True if insufficient funds
+        """
+        # Get starting values (with defaults for mocked simulations)
+        starting_day = getattr(self.simulation, 'starting_day', 360)
+        starting_year = getattr(self.simulation, 'starting_year', 1104)
+
+        # Ensure starting_year is an integer (handles Mock objects)
+        try:
+            starting_year = int(starting_year)
+            starting_day = int(starting_day)
+        except (TypeError, ValueError):
+            starting_year = 1104
+            starting_day = 360
+
+        # Calculate absolute day (starting_day + elapsed time)
+        absolute_day = starting_day + self.env.now
+
+        # Calculate year
+        years_elapsed = int(absolute_day // 365)
+        current_year = starting_year + years_elapsed
+
+        # Calculate maintenance cost (1/1000th of ship cost)
+        # Ship cost is in MCr (megacredits = millions of credits)
+        # So MCr 1.0 = Cr 1,000,000, and maintenance = Cr 1,000
+        ship_cost_mcr = 0.0
+        ship_class_data = self.simulation.game_state.ship_classes.get(
+            self.ship.ship_class
+        )
+        if ship_class_data:
+            ship_cost_mcr = ship_class_data.get("ship_cost", 0.0)
+
+        maintenance_cost = int(ship_cost_mcr * 1000)
+
+        # Check if we can afford maintenance
+        if self.ship.owner.balance < maintenance_cost:
+            self._mark_ship_broke(
+                f"insufficient funds for annual maintenance (need "
+                f"Cr{maintenance_cost:,}, have Cr{self.ship.owner.balance:,})"
+            )
+            return
+
+        # Debit maintenance cost
+        if maintenance_cost > 0:
+            self.ship.debit(
+                self.env.now,
+                maintenance_cost,
+                f"Annual maintenance (year {current_year})"
+            )
+
+        self.ship.needs_maintenance = False
+        self.ship.last_maintenance_year = current_year
+
+        if maintenance_cost > 0:
+            self._report_status(
+                message=f"undergoing annual maintenance (14 days), "
+                f"cost Cr{maintenance_cost:,}"
+            )
+        else:
+            self._report_status(
+                message="undergoing annual maintenance (14 days)")
+
     def _transition_to_next_state(self) -> bool:
         """Transition to the next state in the state machine.
 
-        Handles special case logic (freight loading threshold) then
-        advances to the next state using get_next_state(). Calls
+        Handles special case logic (freight loading threshold, maintenance)
+        then advances to the next state using get_next_state(). Calls
         _report_transition() for status updates.
 
         Returns:
@@ -445,6 +559,8 @@ class StarshipAgent:
             False if stuck (no valid next state)
 
         Special Cases:
+            - SELLING_CARGO: May go to MAINTENANCE
+            - if needed, else LOADING_FREIGHT
             - LOADING_FREIGHT: May loop if cargo threshold not met
             - All others: Advance to next state in sequence
 
@@ -452,6 +568,15 @@ class StarshipAgent:
             If this returns False, the agent's run() loop will
             terminate, effectively parking the ship.
         """
+        # Special check: after selling cargo, check if maintenance is needed
+        if self.state == StarshipState.SELLING_CARGO:
+            self._check_if_maintenance_needed()
+            if self.ship.needs_maintenance:
+                old_state = self.state
+                self.state = StarshipState.MAINTENANCE
+                self._report_transition(old_state)
+                return True
+
         # Special check: after loading freight, verify minimum cargo threshold
         if self.state == StarshipState.LOADING_FREIGHT:
             if self._should_continue_freight_loading():
@@ -525,6 +650,8 @@ class StarshipAgent:
         # State-specific logic
         if self.state == StarshipState.OFFLOADING:
             self._offload_cargo()
+        elif self.state == StarshipState.MAINTENANCE:
+            self._perform_maintenance()
         elif self.state == StarshipState.SELLING_CARGO:
             self._sell_cargo()
         elif self.state == StarshipState.LOADING_FREIGHT:

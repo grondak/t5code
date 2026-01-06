@@ -41,6 +41,7 @@ class StarshipState(Enum):
     # At origin/current location
     DOCKED = auto()  # Ship at starport, can do business
     OFFLOADING = auto()  # Unloading passengers, mail, freight
+    MAINTENANCE = auto()  # Annual maintenance (14 days)
     SELLING_CARGO = auto()  # Selling speculative cargo
     LOADING_FREIGHT = auto()  # Loading freight lots (multi-day search)
     LOADING_CARGO = auto()  # Buying speculative cargo
@@ -90,6 +91,7 @@ STATE_TRANSITIONS = {
     StarshipState.DOCKED: [StarshipState.OFFLOADING,
                            StarshipState.LOADING_FREIGHT],
     StarshipState.OFFLOADING: [StarshipState.SELLING_CARGO],
+    StarshipState.MAINTENANCE: [StarshipState.LOADING_FREIGHT],
     StarshipState.SELLING_CARGO: [StarshipState.LOADING_FREIGHT],
     StarshipState.LOADING_FREIGHT: [StarshipState.LOADING_CARGO],
     StarshipState.LOADING_CARGO: [StarshipState.LOADING_MAIL],
@@ -108,6 +110,7 @@ STATE_TRANSITIONS = {
 STATE_DURATIONS = {
     StarshipState.DOCKED: 0.0,  # Instant transition
     StarshipState.OFFLOADING: 0.25,  # 6 hours
+    StarshipState.MAINTENANCE: 14.0,  # 14 days (2 weeks)
     StarshipState.SELLING_CARGO: 0.5,  # 12 hours (broker negotiations)
     StarshipState.LOADING_FREIGHT: 1.0,  # 1 day per freight loading cycle
     StarshipState.LOADING_CARGO: 0.5,  # 12 hours (market shopping)
