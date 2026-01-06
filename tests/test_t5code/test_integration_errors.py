@@ -5,7 +5,7 @@ import pytest
 from t5code import (
     T5Lot, T5Mail, T5NPC, T5ShipClass, T5Starship, T5World,
     load_and_parse_t5_map, load_and_parse_t5_ship_classes
-)
+, T5Company)
 from t5code.T5Exceptions import (
     CapacityExceededError,
     InvalidPassageClassError,
@@ -66,7 +66,7 @@ def test_invalid_world_in_lot_creation(game_state):
 def test_ship_overload_protection(game_state):
     """Test ship refuses cargo beyond capacity."""
     ship_class = next(iter(game_state.ship_data.values()))
-    ship = T5Starship("Overloaded", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000); ship = T5Starship("Overloaded", "Rhylanor", ship_class, owner=company)
 
     # Create lot larger than ship capacity
     huge_lot = T5Lot("Rhylanor", game_state)
@@ -80,7 +80,7 @@ def test_ship_overload_protection(game_state):
 def test_offload_nonexistent_lot(game_state):
     """Test offloading a lot that doesn't exist."""
     ship_class = next(iter(game_state.ship_data.values()))
-    ship = T5Starship("Empty Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000); ship = T5Starship("Empty Ship", "Rhylanor", ship_class, owner=company)
 
     # Try to offload non-existent lot
     with pytest.raises(ValueError, match="Invalid lot serial number"):
@@ -103,7 +103,7 @@ def test_negative_lot_mass(game_state):
 def test_invalid_passenger_class(game_state):
     """Test loading passenger with invalid class."""
     ship_class = next(iter(game_state.ship_data.values()))
-    ship = T5Starship("Passenger Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000); ship = T5Starship("Passenger Ship", "Rhylanor", ship_class, owner=company)
     passenger = T5NPC("Test Passenger")
 
     # Valid classes are "high", "mid", "low"
@@ -115,7 +115,7 @@ def test_invalid_passenger_class(game_state):
 def test_offload_from_empty_passenger_berth(game_state):
     """Test offloading passengers when none are aboard."""
     ship_class = next(iter(game_state.ship_data.values()))
-    ship = T5Starship("Empty Liner", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000); ship = T5Starship("Empty Liner", "Rhylanor", ship_class, owner=company)
 
     # Offload from empty berth (should return empty set)
     passengers = ship.offload_passengers("high")
@@ -172,7 +172,7 @@ def test_mail_with_invalid_destination(game_state):
 def test_debit_more_than_balance(game_state):
     """Test debiting more money than ship has."""
     ship_class = next(iter(game_state.ship_data.values()))
-    ship = T5Starship("Broke Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000); ship = T5Starship("Broke Ship", "Rhylanor", ship_class, owner=company)
 
     initial_balance = ship.balance
 

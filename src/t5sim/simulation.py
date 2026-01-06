@@ -16,7 +16,7 @@ days) to complete in seconds while maintaining game-accurate mechanics.
 
 from typing import List, Dict, Any
 import simpy
-from t5code import T5NPC, T5ShipClass, T5Company
+from t5code import T5NPC, T5ShipClass
 from t5code.T5NPC import generate_captain_risk_profile
 from t5code.GameState import GameState
 from t5code.T5Starship import T5Starship
@@ -168,8 +168,11 @@ class Simulation:
             for _ in range(attempts):
                 candidate_world = random.choice(worlds)
                 # Create temporary ship to check jump range
+                from t5code.T5Company import T5Company
+                temp_company = T5Company("Temp Company",
+                                         starting_capital=1_000_000)
                 temp_ship = T5Starship(
-                    "temp", candidate_world, ship_class
+                    "temp", candidate_world, ship_class, owner=temp_company
                 )
                 reachable_worlds = temp_ship.get_worlds_in_jump_range(
                     self.game_state

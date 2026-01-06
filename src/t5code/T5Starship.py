@@ -173,20 +173,20 @@ class T5Starship:
                  ship_name: str,
                  ship_location: str,
                  ship_class: T5ShipClass,
-                 owner: Optional["T5Company"] = None) -> None:
+                 owner: "T5Company") -> None:
         """Create a new starship.
 
         Args:
             ship_name: Name of the ship
             ship_location: Starting world/location
             ship_class: T5ShipClass instance defining ship specifications
-            owner: Optional T5Company that owns this starship
+            owner: T5Company that owns this starship
         """
         # Core identity
         self.ship_name: str = ship_name
         self.location: str = ship_location
         self.ship_class: str = ship_class.class_name
-        self.owner: Optional["T5Company"] = owner
+        self.owner: "T5Company" = owner
         self.hold_size: int = ship_class.cargo_capacity
         self.jump_rating: int = ship_class.jump_rating
 
@@ -229,8 +229,6 @@ class T5Starship:
         # Navigation
         # Destination world assigned when a flight plan is set
         self._destination: str = "Unassigned"
-        # Financials # in credits (millions, thousands — your scale)
-        self._balance: float = 0.0
 
     def set_course_for(self, destination: str) -> None:
         """Set the ship's destination world.
@@ -509,23 +507,17 @@ class T5Starship:
 
     @property
     def balance(self):
-        """Ship's current credit balance.
-
-        Returns owner's company balance if ship has an owner,
-        otherwise returns ship's internal balance.
+        """Ship's current credit balance from owner company.
 
         Returns:
-            Current balance in credits (float)
+            Current balance in credits from the owner's company account
         """
-        if self.owner:
-            return self.owner.balance
-        return self._balance
+        return self.owner.balance
 
     def credit(self, time: float, amount, memo: str = "Ship income"):
-        """Add credits to the ship's balance or owner's cash account.
+        """Add credits to the ship's owner company's cash account.
 
-        If ship has an owner company, posts credit to company's cash account.
-        Otherwise, updates ship's internal balance.
+        Posts credit to the owner company's cash account.
 
         Args:
             time: Simulation time for ledger entry
@@ -541,18 +533,12 @@ class T5Starship:
         if amount < 0:
             raise ValueError("Cannot credit a negative amount")
 
-        if self.owner:
-            # Use company's cash account for owner-operated ships
-            self.owner.cash.post(time=int(time), amount=int(amount), memo=memo)
-        else:
-            # Legacy: direct ship balance for ships without owners
-            self._balance += amount
+        self.owner.cash.post(time=int(time), amount=int(amount), memo=memo)
 
     def debit(self, time: float, amount, memo: str = "Ship expense"):
-        """Subtract money from the ship's balance or owner's cash account.
+        """Subtract money from the ship's owner company's cash account.
 
-        If ship has an owner company, posts debit to company's cash account.
-        Otherwise, updates ship's internal balance.
+        Posts debit to the owner company's cash account.
 
         Args:
             time: Simulation time for ledger entry
@@ -569,23 +555,14 @@ class T5Starship:
         if amount < 0:
             raise ValueError("Cannot debit a negative amount")
 
-        if self.owner:
-            # Use company's cash account for owner-operated ships
-            available = self.owner.balance
-            if amount > available:
-                raise InsufficientFundsError(
-                    required=amount,
-                    available=available)
-            self.owner.cash.post(time=int(time),
-                                 amount=-int(amount),
-                                 memo=memo)
-        else:
-            # Legacy: direct ship balance for ships without owners
-            if amount > self._balance:
-                raise InsufficientFundsError(
-                    required=amount,
-                    available=self._balance)
-            self._balance -= amount
+        available = self.owner.balance
+        if amount > available:
+            raise InsufficientFundsError(
+                required=amount,
+                available=available)
+        self.owner.cash.post(time=int(time),
+                             amount=-int(amount),
+                             memo=memo)
 
     def load_passengers(self, time: float, world) -> Dict[str, int]:
         """Search for and load passengers based on crew skills and capacity.

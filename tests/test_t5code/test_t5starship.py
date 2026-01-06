@@ -3,6 +3,7 @@ cargo, and balance tracking."""
 
 import pytest
 from t5code.T5Starship import T5Starship
+from t5code.T5Company import T5Company
 from t5code.T5Exceptions import (
     InsufficientFundsError,
     CapacityExceededError,
@@ -61,7 +62,8 @@ def setup_gamestate():
 @pytest.fixture
 def basic_starship(test_ship_data, setup_gamestate):
     test_ship_class = T5ShipClass("small", test_ship_data["small"])
-    ship = T5Starship("Steamboat", "Rhylanor", test_ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Steamboat", "Rhylanor", test_ship_class, owner=company)
 
     ship.holdSize = 100
     ship.cargoSize = 0
@@ -70,7 +72,8 @@ def basic_starship(test_ship_data, setup_gamestate):
 
 def get_me_a_starship(name, world, test_ship_data):
     test_ship_class = T5ShipClass("small", test_ship_data["small"])
-    return T5Starship(name, world, test_ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    return T5Starship(name, world, test_ship_class, owner=company)
 
 
 def test_create_starship_with_name(test_ship_data):
@@ -128,7 +131,8 @@ def test_offload_passengers(test_ship_data):
     """Verify passenger offloading by class with medic requirement."""
     # Use large ship with 10 staterooms and 50 low berths
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    starship = T5Starship("Pequod", "Nantucket", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    starship = T5Starship("Pequod", "Nantucket", ship_class, owner=company)
     npc1 = T5NPC("Bob")
     starship.onload_passenger(npc1, "high")
     npc2 = T5NPC("Doug")
@@ -196,7 +200,8 @@ def test_awaken_passenger(test_ship_data):
     """Verify low berth awakening with medic skill check."""
     # Use large ship with 50 low berths
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    starship = T5Starship("Steamboat", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    starship = T5Starship("Steamboat", "Rhylanor", ship_class, owner=company)
     npc1 = T5NPC("Bones")
     npc1.set_skill("Medic", 3)
     starship.hire_crew("medic", npc1)
@@ -284,21 +289,21 @@ def crewed_ship(test_ship_data, setup_gamestate):
 
 
 def test_initial_balance(crewed_ship):
-    """Verify starship balance initializes to zero."""
-    assert crewed_ship.balance == pytest.approx(0.0)
+    """Verify starship balance comes from owner company."""
+    assert crewed_ship.balance == pytest.approx(1_000_000.0)
 
 
 def test_credit_valid_amount(crewed_ship):
     """Verify crediting funds increases balance."""
     crewed_ship.credit(0, 100)
-    assert crewed_ship.balance == pytest.approx(100.0)
+    assert crewed_ship.balance == pytest.approx(1_000_100.0)
 
 
 def test_debit_valid_amount(crewed_ship):
     """Verify debiting funds decreases balance."""
     crewed_ship.credit(0, 200)
     crewed_ship.debit(0, 50)
-    assert crewed_ship.balance == pytest.approx(150.0)
+    assert crewed_ship.balance == pytest.approx(1_000_150.0)
 
 
 def test_credit_invalid_type(crewed_ship):
@@ -329,7 +334,7 @@ def test_debit_insufficient_funds(crewed_ship):
     """Verify debiting more than balance raises InsufficientFundsError."""
     crewed_ship.credit(0, 50)
     with pytest.raises(InsufficientFundsError):
-        crewed_ship.debit(0, 100)
+        crewed_ship.debit(0, 2_000_000)  # More than 1,000,050
 
 
 def test_best_crew_skill_known(crewed_ship):
@@ -392,12 +397,13 @@ def test_stateroom_capacity_initialization(test_ship_data, setup_gamestate):
     """Verify ship initializes with correct
     stateroom and low berth capacity."""
     small_class = T5ShipClass("small", test_ship_data["small"])
-    small_ship = T5Starship("Tiny", "Rhylanor", small_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    small_ship = T5Starship("Tiny", "Rhylanor", small_class, owner=company)
     assert small_ship.staterooms == 2
     assert small_ship.low_berths == 0
 
     large_class = T5ShipClass("large", test_ship_data["large"])
-    large_ship = T5Starship("Big", "Rhylanor", large_class)
+    large_ship = T5Starship("Big", "Rhylanor", large_class, owner=company)
     assert large_ship.staterooms == 10
     assert large_ship.low_berths == 50
 
@@ -405,7 +411,8 @@ def test_stateroom_capacity_initialization(test_ship_data, setup_gamestate):
 def test_high_passenger_capacity_limit(test_ship_data, setup_gamestate):
     """Verify high passengers are limited by stateroom capacity."""
     ship_class = T5ShipClass("small", test_ship_data["small"])
-    ship = T5Starship("Overcrowded", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Overcrowded", "Rhylanor", ship_class, owner=company)
 
     # Should be able to board 2 high passengers (2 staterooms)
     passenger1 = T5NPC("High Roller 1")
@@ -422,7 +429,8 @@ def test_high_passenger_capacity_limit(test_ship_data, setup_gamestate):
 def test_mid_passenger_capacity_limit(test_ship_data, setup_gamestate):
     """Verify mid passengers are limited by stateroom capacity."""
     ship_class = T5ShipClass("small", test_ship_data["small"])
-    ship = T5Starship("Cramped", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Cramped", "Rhylanor", ship_class, owner=company)
 
     # Should be able to board 2 mid passengers
     passenger1 = T5NPC("Mid Traveler 1")
@@ -440,7 +448,8 @@ def test_get_stateroom_passenger_count(test_ship_data, setup_gamestate):
     """Verify _get_stateroom_passenger_count returns correct count."""
     # Use large ship which has low berths
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("TestShip", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("TestShip", "Rhylanor", ship_class, owner=company)
 
     # Initially should be 0
     assert ship._get_stateroom_passenger_count() == 0
@@ -467,7 +476,8 @@ def test_high_and_mid_passengers_share_staterooms(
         setup_gamestate):
     """Verify high and mid passengers both count against stateroom limit."""
     ship_class = T5ShipClass("small", test_ship_data["small"])
-    ship = T5Starship("Mixed", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Mixed", "Rhylanor", ship_class, owner=company)
 
     # Board 1 high and 1 mid passenger (uses 2 staterooms)
     high_pass = T5NPC("VIP Guest")
@@ -488,7 +498,8 @@ def test_high_and_mid_passengers_share_staterooms(
 def test_low_passenger_capacity_limit(test_ship_data, setup_gamestate):
     """Verify low passengers are limited by low berth capacity."""
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Budget Cruiser", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Budget Cruiser", "Rhylanor", ship_class, owner=company)
 
     # Board 50 low passengers (50 low berths available)
     for i in range(50):
@@ -506,7 +517,8 @@ def test_low_passengers_independent_of_staterooms(
         setup_gamestate):
     """Verify low passengers don't affect stateroom capacity."""
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Flexible", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Flexible", "Rhylanor", ship_class, owner=company)
 
     # Fill all 10 staterooms with high/mid passengers
     for i in range(10):
@@ -522,7 +534,8 @@ def test_low_passengers_independent_of_staterooms(
 def test_ship_with_no_low_berths(test_ship_data, setup_gamestate):
     """Verify ship with no low berths rejects low passengers."""
     ship_class = T5ShipClass("small", test_ship_data["small"])
-    ship = T5Starship("No Budget", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("No Budget", "Rhylanor", ship_class, owner=company)
 
     passenger = T5NPC("Hopeful Budget Traveler")
     with pytest.raises(CapacityExceededError):
@@ -544,7 +557,8 @@ def test_load_passengers(test_ship_data):
 
     # Create ship with capacity
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Liner", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Liner", "Rhylanor", ship_class, owner=company)
 
     # Add crew with skills
     steward = T5NPC("Chief Steward")
@@ -596,7 +610,8 @@ def test_load_passengers_exception_handling_high(test_ship_data):
     }
 
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
     ship.staterooms = 10
 
     steward = T5NPC("Chief Steward")
@@ -651,7 +666,8 @@ def test_load_passengers_exception_handling_mid(test_ship_data):
     }
 
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
     ship.staterooms = 10
 
     admin = T5NPC("Purser")
@@ -702,7 +718,8 @@ def test_load_passengers_exception_handling_low(test_ship_data):
     }
 
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
     ship.low_berths = 10
 
     fixer = T5NPC("Fixer")
@@ -746,7 +763,8 @@ def test_sell_cargo_lot_without_trader(test_ship_data, setup_test_gamestate):
 
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Trader", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Trader", "Rhylanor", ship_class, owner=company)
 
     # Create and load a cargo lot
     lot = T5Lot("Rhylanor", game_state)
@@ -789,7 +807,8 @@ def test_sell_cargo_lot_with_trader(test_ship_data, setup_test_gamestate):
 
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Trader", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Trader", "Rhylanor", ship_class, owner=company)
 
     # Add trader to crew
     trader = T5NPC("Merchant Marcus")
@@ -823,7 +842,8 @@ def test_sell_cargo_lot_not_in_hold(test_ship_data, setup_test_gamestate):
 
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Trader", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Trader", "Rhylanor", ship_class, owner=company)
 
     # Create a lot but don't load it
     lot = T5Lot("Rhylanor", game_state)
@@ -839,7 +859,8 @@ def test_buy_cargo_lot(test_ship_data, setup_test_gamestate):
 
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Trader", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Trader", "Rhylanor", ship_class, owner=company)
 
     lot = T5Lot("Rhylanor", game_state)
     lot.mass = 5
@@ -865,7 +886,8 @@ def test_buy_cargo_lot_insufficient_funds(
 
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Trader", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Trader", "Rhylanor", ship_class, owner=company)
 
     # Set balance too low
     ship._balance = 100
@@ -888,7 +910,8 @@ def test_buy_cargo_lot_rollback_on_capacity_error(
 
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("small", test_ship_data["small"])
-    ship = T5Starship("Tiny Trader", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Tiny Trader", "Rhylanor", ship_class, owner=company)
 
     lot = T5Lot("Rhylanor", game_state)
     lot.mass = 1000  # Too big for small ship
@@ -911,7 +934,8 @@ def test_load_freight_lot(test_ship_data, setup_test_gamestate):
 
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Freighter", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Freighter", "Rhylanor", ship_class, owner=company)
 
     lot = T5Lot("Rhylanor", game_state)
     lot.mass = 10
@@ -935,7 +959,8 @@ def test_load_freight_lot_no_capacity(test_ship_data, setup_test_gamestate):
 
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("small", test_ship_data["small"])
-    ship = T5Starship("Tiny Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Tiny Ship", "Rhylanor", ship_class, owner=company)
 
     lot = T5Lot("Rhylanor", game_state)
     lot.mass = 1000  # Too big
@@ -953,7 +978,8 @@ def test_load_mail(test_ship_data, setup_test_gamestate):
     """Test loading mail creates and loads bundle correctly."""
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Courier", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Courier", "Rhylanor", ship_class, owner=company)
     ship.set_course_for("Jae Tellona")
 
     mail_lot = ship.load_mail(game_state, "Jae Tellona")
@@ -972,7 +998,11 @@ def test_sell_cargo_lot_world_not_found(test_ship_data, setup_test_gamestate):
     """Test sell_cargo_lot raises ValueError when world not found."""
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Merchant", "NonExistentWorld", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Merchant",
+                      "NonExistentWorld",
+                      ship_class,
+                      owner=company)
 
     # Create a cargo lot using valid GameState
     lot = T5Lot("Rhylanor", game_state)
@@ -997,9 +1027,10 @@ def test_buy_cargo_lot_rollback_preserves_balance(
     capacity error preserves original balance."""
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Merchant", "Rhylanor", ship_class)
-    initial_balance = 500000  # Large balance to avoid insufficient funds
-    ship.credit(0, initial_balance)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Merchant", "Rhylanor", ship_class, owner=company)
+    ship.credit(0, 500_000)  # Add to starting balance
+    initial_balance = ship.balance  # Should be 1,500,000
 
     # Create a lot
     lot = T5Lot("Rhylanor", game_state)
@@ -1034,7 +1065,8 @@ def test_is_hold_mostly_full_default_threshold(
     """Test is_hold_mostly_full with default 80% threshold."""
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Merchant", "Rhylanor", ship_class, owner=company)
 
     # Ship starts empty
     assert ship.is_hold_mostly_full() is False
@@ -1059,7 +1091,8 @@ def test_is_hold_mostly_full_custom_threshold(
     """Test is_hold_mostly_full with custom threshold."""
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Merchant", "Rhylanor", ship_class, owner=company)
 
     # Load to 50% capacity (hold_size = 200)
     from t5code.T5Lot import T5Lot
@@ -1078,7 +1111,8 @@ def test_is_hold_mostly_full_invalid_threshold(test_ship_data):
     """Test is_hold_mostly_full raises
     InvalidThresholdError for invalid threshold."""
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Merchant", "Rhylanor", ship_class, owner=company)
 
     with pytest.raises(InvalidThresholdError):
         ship.is_hold_mostly_full(threshold=-0.1)
@@ -1090,7 +1124,8 @@ def test_is_hold_mostly_full_invalid_threshold(test_ship_data):
 def test_execute_jump(test_ship_data):
     """Test execute_jump performs correct status transitions."""
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Merchant", "Rhylanor", ship_class, owner=company)
 
     # Execute jump to Jae Tellona
     ship.execute_jump("Jae Tellona")
@@ -1104,7 +1139,8 @@ def test_execute_jump(test_ship_data):
 def test_execute_jump_updates_location(test_ship_data):
     """Test execute_jump updates location correctly."""
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Merchant", "Rhylanor", ship_class, owner=company)
 
     initial_location = ship.location
     assert initial_location == "Rhylanor"
@@ -1119,7 +1155,8 @@ def test_execute_jump_updates_location(test_ship_data):
 def test_offload_all_freight_empty_hold(test_ship_data):
     """Test offload_all_freight with no freight on board."""
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Merchant", "Rhylanor", ship_class, owner=company)
 
     offloaded = ship.offload_all_freight()
 
@@ -1131,7 +1168,8 @@ def test_offload_all_freight_with_lots(test_ship_data, setup_test_gamestate):
     """Test offload_all_freight removes all freight."""
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Merchant", "Rhylanor", ship_class, owner=company)
 
     # Load multiple freight lots
     from t5code.T5Lot import T5Lot
@@ -1170,7 +1208,8 @@ def test_offload_all_freight_leaves_cargo(
     """Test offload_all_freight only removes freight, not cargo."""
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Merchant", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Merchant", "Rhylanor", ship_class, owner=company)
 
     # Load freight and cargo
     from t5code.T5Lot import T5Lot
@@ -1204,7 +1243,8 @@ def test_get_worlds_in_jump_range(setup_test_gamestate, test_ship_data):
     # Create ship with Jump-3 drive at Rhylanor
     # (Jump-1 wouldn't reach any worlds in test map)
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
 
     # Get worlds in range
     reachable = ship.get_worlds_in_jump_range(game_state)
@@ -1230,8 +1270,15 @@ def test_get_worlds_in_jump_range_different_ratings(setup_test_gamestate,
     small_ship_class = T5ShipClass("small", test_ship_data["small"])  # Jump-1
     large_ship_class = T5ShipClass("large", test_ship_data["large"])  # Jump-3
 
-    small_ship = T5Starship("Small Ship", "Rhylanor", small_ship_class)
-    large_ship = T5Starship("Large Ship", "Rhylanor", large_ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    small_ship = T5Starship("Small Ship",
+                            "Rhylanor",
+                            small_ship_class,
+                            owner=company)
+    large_ship = T5Starship("Large Ship",
+                            "Rhylanor",
+                            large_ship_class,
+                            owner=company)
 
     # Get reachable worlds for each ship
     small_ship_range = small_ship.get_worlds_in_jump_range(game_state)
@@ -1250,7 +1297,11 @@ def test_get_worlds_in_jump_range_invalid_location(setup_test_gamestate,
     """Test error handling when ship is at invalid location."""
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("small", test_ship_data["small"])
-    ship = T5Starship("Test Ship", "NonexistentWorld", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Test Ship",
+                      "NonexistentWorld",
+                      ship_class,
+                      owner=company)
 
     # Should raise WorldNotFoundError
     with pytest.raises(WorldNotFoundError):
@@ -1263,7 +1314,8 @@ def test_find_profitable_destinations(setup_test_gamestate, test_ship_data):
 
     # Create ship with Jump-3 at Rhylanor
     ship_class = T5ShipClass("large", test_ship_data["large"])
-    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
     ship.set_course_for("Jae Tellona")  # Set a destination
 
     # Get profitable destinations
@@ -1297,7 +1349,8 @@ def test_find_profitable_destinations_no_worlds_in_range(setup_test_gamestate,
     zero_jump_data = test_ship_data["small"].copy()
     zero_jump_data["jump_rating"] = 0
     ship_class = T5ShipClass("zero_jump", zero_jump_data)
-    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
 
     # Should return empty list
     profitable = ship.find_profitable_destinations(game_state)
@@ -1309,7 +1362,11 @@ def test_find_profitable_destinations_invalid_location(setup_test_gamestate,
     """Test error handling when ship is at invalid location."""
     game_state = setup_test_gamestate
     ship_class = T5ShipClass("small", test_ship_data["small"])
-    ship = T5Starship("Test Ship", "NonexistentWorld", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Test Ship",
+                      "NonexistentWorld",
+                      ship_class,
+                      owner=company)
 
     # Should raise WorldNotFoundError
     with pytest.raises(WorldNotFoundError):
@@ -1324,7 +1381,8 @@ def test_crew_position_clear(test_ship_data, setup_gamestate):
     ship_data_with_crew["crew_positions"] = ["P", "A", "E"]
 
     ship_class = T5ShipClass("small", ship_data_with_crew)
-    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
 
     # Get a crew position
     pilot_position = ship.crew_position["Pilot"][0]
@@ -1346,7 +1404,8 @@ def test_crew_position_repr(test_ship_data, setup_gamestate):
     ship_data_with_crew["crew_positions"] = ["P", "A"]
 
     ship_class = T5ShipClass("small", ship_data_with_crew)
-    ship = T5Starship("Test Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
 
     # Test vacant position repr
     pilot_position = ship.crew_position["Pilot"][0]

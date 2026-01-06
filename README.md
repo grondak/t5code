@@ -453,7 +453,8 @@ mypy src/
 reachable_worlds = ship.get_worlds_in_jump_range(game_state)
 
 # Jump rating determines range (1-6 parsecs)
-scout = T5Starship("Scout", "Rhylanor", scout_class)  # Jump-1
+scout_company = T5Company("Scout Corp", starting_capital=1_000_000)
+scout = T5Starship("Scout", "Rhylanor", scout_class, owner=scout_company)  # Jump-1
 print(f"Jump-{scout.jump_rating} can reach {len(reachable_worlds)} worlds")
 
 # Automatically filters by:

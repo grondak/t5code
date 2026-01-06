@@ -199,7 +199,9 @@ class TestStarshipAgentCoverage(unittest.TestCase):
             "crew_ranks": "123"
         }
         ship_class = T5ShipClass("Scout", ship_class_dict)
-        ship = T5Starship("Test_Scout", "Rhylanor", ship_class)
+        from t5code.T5Company import T5Company
+        company = T5Company("Test Company", starting_capital=1_000_000)
+        ship = T5Starship("Test_Scout", "Rhylanor", ship_class, owner=company)
         ship.credit(0, 1_000_000)
 
         # Add pilot with cargo threshold
@@ -232,7 +234,9 @@ class TestStarshipAgentCoverage(unittest.TestCase):
             "crew_ranks": "123"
         }
         ship_class = T5ShipClass("Scout", ship_class_dict)
-        ship = T5Starship("Test_Scout", "Rhylanor", ship_class)
+        from t5code.T5Company import T5Company
+        company = T5Company("Test Company", starting_capital=1_000_000)
+        ship = T5Starship("Test_Scout", "Rhylanor", ship_class, owner=company)
 
         # Add pilot
         pilot = T5NPC("Test Pilot")
@@ -266,7 +270,12 @@ class TestStarshipAgentCoverage(unittest.TestCase):
             "crew_ranks": "123"
         }
         ship_class = T5ShipClass("Frigate", ship_class_dict)
-        ship = T5Starship("Test_Frigate", "Rhylanor", ship_class)
+        from t5code.T5Company import T5Company
+        company = T5Company("Test Company", starting_capital=1_000_000)
+        ship = T5Starship("Test_Frigate",
+                          "Rhylanor",
+                          ship_class,
+                          owner=company)
 
         sim = Simulation(self.game_state, num_ships=1, duration_days=1.0)
         agent = StarshipAgent(sim.env, ship, sim)

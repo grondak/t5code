@@ -4,7 +4,7 @@ import pytest
 from t5code import (
     T5Mail, T5Starship, T5ShipClass, T5World,
     load_and_parse_t5_map, load_and_parse_t5_ship_classes
-)
+, T5Company)
 
 
 class MockGameState:
@@ -29,7 +29,8 @@ def game_state():
 def ship(game_state):
     """Create a test starship."""
     ship_class = next(iter(game_state.ship_data.values()))
-    return T5Starship("Mail Runner", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    return T5Starship("Mail Runner", "Rhylanor", ship_class, owner=company)
 
 
 def test_mail_generation_and_delivery(game_state, ship):

@@ -4,7 +4,7 @@ import pytest
 from t5code import (
     T5Lot, T5NPC, T5ShipClass, T5Starship, T5World,
     load_and_parse_t5_map, load_and_parse_t5_ship_classes
-)
+, T5Company)
 
 
 class MockGameState:
@@ -37,8 +37,8 @@ def test_two_ships_at_same_port(game_state, ship_class):
     origin = "Rhylanor"
 
     # Create two ships at same port
-    ship1 = T5Starship("Trader One", origin, ship_class)
-    ship2 = T5Starship("Trader Two", origin, ship_class)
+    company1 = T5Company("Test Company 1", starting_capital=1_000_000); ship1 = T5Starship("Trader One", origin, ship_class, owner=company1)
+    company2 = T5Company("Test Company 2", starting_capital=1_000_000); ship2 = T5Starship("Trader Two", origin, ship_class, owner=company2)
 
     # Both try to load cargo
     lot1 = T5Lot(origin, game_state)
@@ -68,7 +68,7 @@ def test_ship_journey_sequence(game_state, ship_class):
     origin = "Rhylanor"
     destination = "Jae Tellona"
 
-    ship = T5Starship("Wanderer", origin, ship_class)
+    company = T5Company("Test Company ", starting_capital=1_000_000); ship = T5Starship("Wanderer", origin, ship_class, owner=company)
     initial_balance = ship.balance
 
     # Cycle 1: Load at origin
@@ -115,14 +115,14 @@ def test_ship_journey_sequence(game_state, ship_class):
 def test_multiple_ships_different_routes(game_state, ship_class):
     """Test multiple ships operating on different routes simultaneously."""
     # Ship 1: Rhylanor route
-    ship1 = T5Starship("Route Alpha", "Rhylanor", ship_class)
+    company1 = T5Company("Test Company 1", starting_capital=1_000_000); ship1 = T5Starship("Route Alpha", "Rhylanor", ship_class, owner=company1)
     lot1 = T5Lot("Rhylanor", game_state)
     lot1.mass = 5
     ship1.onload_lot(lot1, "cargo")
     ship1.set_course_for("Jae Tellona")
 
     # Ship 2: Different starting location
-    ship2 = T5Starship("Route Beta", "Jae Tellona", ship_class)
+    company2 = T5Company("Test Company 2", starting_capital=1_000_000); ship2 = T5Starship("Route Beta", "Jae Tellona", ship_class, owner=company2)
     lot2 = T5Lot("Jae Tellona", game_state)
     lot2.mass = 6
     ship2.onload_lot(lot2, "cargo")
@@ -139,8 +139,8 @@ def test_multiple_ships_different_routes(game_state, ship_class):
 
 def test_concurrent_crew_hiring(game_state, ship_class):
     """Test multiple ships hiring crew from same pool."""
-    ship1 = T5Starship("Crew Ship 1", "Rhylanor", ship_class)
-    ship2 = T5Starship("Crew Ship 2", "Rhylanor", ship_class)
+    company1 = T5Company("Test Company 1", starting_capital=1_000_000); ship1 = T5Starship("Crew Ship 1", "Rhylanor", ship_class, owner=company1)
+    company2 = T5Company("Test Company 2", starting_capital=1_000_000); ship2 = T5Starship("Crew Ship 2", "Rhylanor", ship_class, owner=company2)
 
     # Create crew members
     medic = T5NPC("Dr. Bones")
@@ -179,7 +179,7 @@ def test_sequential_lot_generation(game_state):
 
 def test_ship_status_transitions(game_state, ship_class):
     """Test ship location changes through journey."""
-    ship = T5Starship("Status Test", "Rhylanor", ship_class)
+    company = T5Company("Test Company ", starting_capital=1_000_000); ship = T5Starship("Status Test", "Rhylanor", ship_class, owner=company)
 
     # Initially at origin
     assert ship.location == "Rhylanor"
@@ -217,7 +217,7 @@ def test_world_freight_availability_varies(game_state):
 
 def test_ship_balance_persistence(game_state, ship_class):
     """Test that ship balance persists across operations."""
-    ship = T5Starship("Money Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company ", starting_capital=1_000_000); ship = T5Starship("Money Ship", "Rhylanor", ship_class, owner=company)
 
     # Record initial balance
     balance1 = ship.balance
@@ -240,8 +240,8 @@ def test_passenger_manifest_across_multiple_ships(game_state):
     """Test passenger tracking across multiple ships."""
     # Use Liner class which has passenger capacity
     liner_class = game_state.ship_data["Liner"]
-    ship1 = T5Starship("Liner One", "Rhylanor", liner_class)
-    ship2 = T5Starship("Liner Two", "Rhylanor", liner_class)
+    company1 = T5Company("Test Company 1", starting_capital=1_000_000); ship1 = T5Starship("Liner One", "Rhylanor", liner_class, owner=company1)
+    company2 = T5Company("Test Company 2", starting_capital=1_000_000); ship2 = T5Starship("Liner Two", "Rhylanor", liner_class, owner=company2)
 
     # Create passengers
     passenger1 = T5NPC("Alice")

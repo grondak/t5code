@@ -4,7 +4,7 @@ import pytest
 from t5code import (
     T5Lot, T5ShipClass, T5Starship, T5World,
     find_best_broker, load_and_parse_t5_map, load_and_parse_t5_ship_classes
-)
+, T5Company, T5Company)
 from t5code.T5Exceptions import CapacityExceededError
 
 
@@ -30,7 +30,8 @@ def game_state():
 def ship(game_state):
     """Create a test starship."""
     ship_class = next(iter(game_state.ship_data.values()))
-    return T5Starship("Test Ship", "Rhylanor", ship_class)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    return T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
 
 
 def test_complete_trade_journey(game_state, ship):
