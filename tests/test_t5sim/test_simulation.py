@@ -195,3 +195,57 @@ def test_get_skill_for_position_counsellor(game_state):
 
     skill = sim._get_skill_for_position("Counsellor", 0, ship_class)
     assert skill == ("Counsellor", 2)
+
+
+def test_print_ledger(game_state, capsys):
+    """Test print_ledger outputs correctly formatted ledger."""
+    sim = Simulation(game_state, num_ships=1, duration_days=10.0)
+    sim.setup()
+
+    # Get the ship
+    ship = sim.agents[0].ship
+    ship_name = ship.ship_name
+    company = ship.owner
+
+    # Add some transactions via the ship
+    ship.credit(0, 50000, "Test credit")
+    ship.debit(1, 10000, "Test debit")
+
+    # Print the ledger
+    sim.print_ledger(ship_name)
+
+    captured = capsys.readouterr()
+    assert f"LEDGER FOR {company.name}" in captured.out
+    assert f"({ship_name})" in captured.out
+    assert f"Final Balance: Cr{company.balance:,.0f}" in captured.out
+    assert "Test credit" in captured.out
+    assert "Test debit" in captured.out
+
+
+def test_print_ledger_invalid_ship(game_state):
+    """Test print_ledger raises ValueError for invalid ship name."""
+    sim = Simulation(game_state, num_ships=1, duration_days=10.0)
+    sim.setup()
+
+    with pytest.raises(ValueError, match="Ship 'InvalidShip' not found"):
+        sim.print_ledger("InvalidShip")
+
+
+def test_print_all_ledgers(game_state, capsys):
+    """Test print_all_ledgers outputs ledgers for all ships."""
+    sim = Simulation(game_state, num_ships=2, duration_days=10.0)
+    sim.setup()
+
+    # Add transactions to both ships
+    for agent in sim.agents:
+        agent.ship.credit(0, 25000, "Initial credit")
+
+    sim.print_all_ledgers()
+
+    captured = capsys.readouterr()
+    assert "COMPLETE LEDGER DUMP - ALL SHIPS" in captured.out
+
+    # Check that both ships appear
+    for agent in sim.agents:
+        assert agent.ship.ship_name in captured.out
+        assert agent.ship.owner.name in captured.out

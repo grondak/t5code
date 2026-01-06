@@ -843,8 +843,9 @@ class T5Starship:
         1. Set course for destination
         2. Maneuver to jump point (status: maneuvering)
         3. Jump to destination system (status: traveling)
-        4. Arrive and maneuver to starport (status: maneuvering)
-        5. Dock at starport (status: docked)
+        4. Consume jump fuel based on distance
+        5. Arrive and maneuver to starport (status: maneuvering)
+        6. Dock at starport (status: docked)
 
         Args:
             destination: Name of destination world
@@ -853,12 +854,29 @@ class T5Starship:
         self.status = "maneuvering"
         # Ship is now maneuvering to jump point
         self.status = "traveling"
-        # Ship is now jumping
+        # Ship is now jumping - consume fuel proportional to distance
+        # Note: game_state is not passed to execute_jump, so we can't
+        # calculate exact distance here. This is handled by the agent.
         self.location = self.destination
         self.status = "maneuvering"
         # Ship is now maneuvering to starport
         self.status = "docked"
         # Ship has docked at starport
+
+    def consume_jump_fuel(self, distance: int) -> None:
+        """Consume jump fuel based on distance jumped.
+
+        Fuel consumption is proportional to distance jumped relative
+        to the ship's maximum jump rating:
+        fuel_used = (distance / jump_rating) * jump_fuel_capacity
+
+        Args:
+            distance: Number of hexes jumped
+        """
+        if self.jump_rating > 0:
+            fuel_fraction = distance / self.jump_rating
+            fuel_used = int(fuel_fraction * self.jump_fuel_capacity)
+            self.jump_fuel = max(0, self.jump_fuel - fuel_used)
 
     def get_worlds_in_jump_range(self, game_state) -> List[str]:
         """Get all worlds reachable with this ship's jump drive.
@@ -893,21 +911,62 @@ class T5Starship:
             if zone in ["A", "R"]:
                 continue
 
-            # Calculate hex distance using Traveller formula:
-            # max of absolute differences in x, y, and diagonal
+            # Calculate hex distance
             target_coords = world_obj.world_data["Coordinates"]
-            x1, y1 = current_coords
-            x2, y2 = target_coords
-            distance = max(
-                abs(x1 - x2),
-                abs(y1 - y2),
-                abs((x1 - y1) - (x2 - y2))
-            )
+            distance = self._calculate_hex_distance(current_coords,
+                                                    target_coords)
 
             if distance <= self.jump_rating:
                 reachable_worlds.append(world_name)
 
         return reachable_worlds
+
+    def _calculate_hex_distance(self, coords1: tuple, coords2: tuple) -> int:
+        """Calculate hex distance between two coordinates.
+
+        Uses Traveller hex distance formula: max of absolute differences
+        in x, y, and diagonal.
+
+        Args:
+            coords1: (x1, y1) coordinates
+            coords2: (x2, y2) coordinates
+
+        Returns:
+            Distance in hexes
+        """
+        x1, y1 = coords1
+        x2, y2 = coords2
+        return max(
+            abs(x1 - x2),
+            abs(y1 - y2),
+            abs((x1 - y1) - (x2 - y2))
+        )
+
+    def get_distance_to(self, destination: str, game_state) -> int:
+        """Get hex distance from current location to destination.
+
+        Args:
+            destination: Name of destination world
+            game_state: GameState instance with world_data
+
+        Returns:
+            Distance in hexes
+
+        Raises:
+            WorldNotFoundError: If current location or destination not found
+        """
+        current_world = game_state.world_data.get(self.location)
+        if not current_world:
+            raise WorldNotFoundError(self.location)
+
+        dest_world = game_state.world_data.get(destination)
+        if not dest_world:
+            raise WorldNotFoundError(destination)
+
+        current_coords = current_world.world_data["Coordinates"]
+        dest_coords = dest_world.world_data["Coordinates"]
+
+        return self._calculate_hex_distance(current_coords, dest_coords)
 
     def find_profitable_destinations(self,
                                      game_state) -> List[Tuple[str, int]]:

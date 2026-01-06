@@ -24,7 +24,8 @@ from t5code import (
     T5Starship,
     T5NPC,
     InsufficientFundsError,
-    CapacityExceededError
+    CapacityExceededError,
+    WorldNotFoundError
 )
 from t5sim.starship_states import (
     StarshipState,
@@ -868,7 +869,29 @@ class StarshipAgent:
             duration, not this method.
         """
         try:
-            self.ship.execute_jump(self.ship.destination)
+            # Calculate distance to destination (if world is known)
+            try:
+                distance = self.ship.get_distance_to(
+                    self.ship.destination,
+                    self.simulation.game_state
+                )
+
+                # Execute jump and consume fuel
+                self.ship.execute_jump(self.ship.destination)
+                self.ship.consume_jump_fuel(distance)
+
+                if self.simulation.verbose:
+                    print(f"{self.ship.ship_name}: Jumped {distance} hexes, "
+                          f"fuel remaining: {self.ship.jump_fuel}/"
+                          f"{self.ship.jump_fuel_capacity}t")
+            except WorldNotFoundError:
+                # For unknown worlds, just execute
+                # the jump without fuel consumption
+                self.ship.execute_jump(self.ship.destination)
+                if self.simulation.verbose:
+                    print(f"{self.ship.ship_name}: Jumped to unknown world "
+                          f"{self.ship.destination} (fuel not consumed)")
+
             self.voyage_count += 1
 
             # Pick new destination (simple: alternate between two worlds)

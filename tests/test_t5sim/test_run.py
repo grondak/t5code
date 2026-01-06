@@ -209,3 +209,56 @@ def test_main_timing_output(mock_run_simulation, capsys):
     # Verify parameters are captured correctly
     assert timing_match.group(2) == '10', "Ships count should be 10"
     assert timing_match.group(3) == '365.0', "Days should be 365.0"
+
+
+def test_main_ledger_flag(mock_run_simulation, capsys):
+    """Test main with --ledger flag."""
+    with patch('sys.argv', ['run.py', '--ledger', 'Ship1']):
+        # Mock the Simulation instance to test ledger printing
+        with patch('t5sim.run.Simulation') as MockSim:
+            mock_sim_instance = MockSim.return_value
+            mock_sim_instance.run.return_value = (
+                mock_run_simulation.return_value
+            )
+
+            main()
+
+            # Verify print_ledger was called with the ship name
+            mock_sim_instance.print_ledger.assert_called_once_with('Ship1')
+
+
+def test_main_ledger_all_flag(mock_run_simulation, capsys):
+    """Test main with --ledger-all flag."""
+    with patch('sys.argv', ['run.py', '--ledger-all']):
+        # Mock the Simulation instance to test ledger printing
+        with patch('t5sim.run.Simulation') as MockSim:
+            mock_sim_instance = MockSim.return_value
+            mock_sim_instance.run.return_value = (
+                mock_run_simulation.return_value
+            )
+
+            main()
+
+            # Verify print_all_ledgers was called
+            mock_sim_instance.print_all_ledgers.assert_called_once()
+
+
+def test_main_ledger_invalid_ship(mock_run_simulation, capsys):
+    """Test main with --ledger flag for invalid ship name."""
+    with patch('sys.argv', ['run.py', '--ledger', 'InvalidShip']):
+        # Mock the Simulation instance to raise ValueError
+        with patch('t5sim.run.Simulation') as MockSim:
+            mock_sim_instance = MockSim.return_value
+            mock_sim_instance.run.return_value = (
+                mock_run_simulation.return_value
+            )
+            mock_sim_instance.print_ledger.side_effect = ValueError(
+                "Ship 'InvalidShip' not found. "
+                "Available ships: ['Ship1', 'Ship2']"
+            )
+
+            main()
+
+            # Verify error message was printed
+            captured = capsys.readouterr()
+            assert "Error: Ship 'InvalidShip' not found" in captured.out

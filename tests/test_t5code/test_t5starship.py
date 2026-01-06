@@ -1152,6 +1152,42 @@ def test_execute_jump_updates_location(test_ship_data):
     assert ship.location != initial_location
 
 
+def test_fuel_consumption_jump3_ship(test_ship_data):
+    """Test proportional fuel consumption for Jump-3 ship."""
+    # Create a Jump-3 ship with 108t fuel capacity
+    jump3_data = {
+        "class_name": "test_jump3",
+        "jump_rating": 3,
+        "maneuver_rating": 3,
+        "cargo_capacity": 100,
+        "staterooms": 5,
+        "low_berths": 0,
+        "jump_fuel_capacity": 108,
+        "ops_fuel_capacity": 10,
+    }
+    ship_class = T5ShipClass("test_jump3", jump3_data)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Test Frigate", "Rhylanor", ship_class, owner=company)
+
+    # Verify initial fuel state
+    assert ship.jump_fuel == 108
+    assert ship.jump_fuel_capacity == 108
+
+    # Test 1-hex jump: should use 1/3 of capacity (36t)
+    ship.consume_jump_fuel(1)
+    # distance: 108 - 36 = 72
+    assert ship.jump_fuel == 72
+
+    # Test 2-hex jump: should use 2/3 of capacity (72t)
+    ship.consume_jump_fuel(2)
+    # distance:72 - 72 = 0
+    assert ship.jump_fuel == 0
+
+    # Test that consuming more fuel doesn't go negative
+    ship.consume_jump_fuel(3)
+    assert ship.jump_fuel == 0
+
+
 def test_offload_all_freight_empty_hold(test_ship_data):
     """Test offload_all_freight with no freight on board."""
     ship_class = T5ShipClass("large", test_ship_data["large"])
