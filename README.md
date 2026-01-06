@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-319%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-347%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1250%20%7C%203%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1291%20%7C%206%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -43,7 +43,10 @@ Built for realistic simulation of merchant starship operations, trade economics,
 - **Profitable destination finding** - evaluate all reachable worlds for trade opportunities
 - **Crew skill system** with position-based skill checks (Pilot, Engineer, Steward, Admin, etc.)
 - **Property-based API** for clean, intuitive access to ship state
-- **Financial tracking** with credit/debit operations and transaction validation
+- **Double-entry accounting system** with Account, Ledger, and LedgerEntry classes
+  - Transaction history with timestamps and counterparty tracking
+  - Immutable audit trail for all financial operations
+  - Support for credits, debits, and inter-account transfers
 
 ### 🌍 World System
 - **T5 world generation** with UWP (Universal World Profile) support
@@ -279,6 +282,7 @@ t5code/
 │   │   ├── T5Lot.py         # Cargo lot mechanics
 │   │   ├── T5NPC.py         # Character/crew system with cargo_departure_threshold
 │   │   ├── T5Mail.py        # Mail contract system
+│   │   ├── T5Finance.py     # Double-entry accounting system (Account, Ledger, LedgerEntry)
 │   │   ├── T5ShipClass.py   # Ship design specifications (4 classes: Scout, Freighter, Frigate, Liner)
 │   │   ├── T5RandomTradeGoods.py  # Trade goods tables
 │   │   ├── T5Basics.py      # Core game mechanics
@@ -331,15 +335,15 @@ pytest --cov=src --cov-report=html
 
 **Current Status:**
 - **t5code**: All modules at 100% coverage
-  - GameState.py, T5Basics.py, T5Exceptions.py, T5Lot.py, T5Mail.py
-  - T5NPC.py, T5RandomTradeGoods.py, T5ShipClass.py, T5Starship.py
-  - T5Tables.py, T5World.py
+  - GameState.py, T5Basics.py, T5Exceptions.py, T5Finance.py, T5Lot.py
+  - T5Mail.py, T5NPC.py, T5RandomTradeGoods.py, T5ShipClass.py
+  - T5Starship.py, T5Tables.py, T5World.py
 - **t5sim**: High coverage across all modules
   - simulation.py: 100% coverage
-  - starship_agent.py: 99% coverage (1 line: defensive exception handler)
+  - starship_agent.py: 99% coverage (4 lines: defensive code paths)
   - starship_states.py: 98% coverage (1 line: describe_state method)
   - run.py: 98% coverage (1 line: main block guard)
-- **Total**: 319 tests, 99% overall coverage (1250 statements, 3 missed)
+- **Total**: 347 tests, 99% overall coverage (1291 statements, 6 missed)
 
 ### Code Quality
 
