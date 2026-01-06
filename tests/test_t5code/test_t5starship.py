@@ -1457,3 +1457,65 @@ def test_crew_position_repr(test_ship_data, setup_gamestate):
     assert "CrewPosition" in repr_str
     assert "Pilot" in repr_str
     assert "filled by Test Pilot" in repr_str
+
+
+def test_get_distance_to_valid_worlds(test_ship_data, setup_test_gamestate):
+    """Test get_distance_to calculates correct hex distance."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    company = T5Company("Test Company", starting_capital=1_000_000)
+
+    # Create ship at a known location
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
+
+    # Calculate distance to another world in the test map
+    distance = ship.get_distance_to("Jae Tellona", game_state)
+
+    # Distance should be a positive integer
+    assert isinstance(distance, int)
+    assert distance > 0
+
+
+def test_get_distance_to_invalid_destination(
+        test_ship_data,
+        setup_test_gamestate):
+    """Test get_distance_to raises WorldNotFoundError
+    for invalid destination."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    company = T5Company("Test Company", starting_capital=1_000_000)
+
+    # Create ship at a valid location
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
+
+    # Try to get distance to non-existent world - catch manually
+    try:
+        ship.get_distance_to("NonExistentWorld", game_state)
+        assert False, "Should have raised WorldNotFoundError"
+    except WorldNotFoundError as e:
+        # Verify the error message contains the destination
+        assert "NonExistentWorld" in str(e)
+
+
+def test_get_distance_to_invalid_current_location(
+        test_ship_data,
+        setup_test_gamestate):
+    """Test get_distance_to raises WorldNotFoundError
+    for invalid current location."""
+    game_state = setup_test_gamestate
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    company = T5Company("Test Company", starting_capital=1_000_000)
+
+    # Create ship at an invalid location
+    ship = T5Starship("Test Ship",
+                      "InvalidLocation",
+                      ship_class,
+                      owner=company)
+
+    # Try to get distance - should fail on current location check
+    try:
+        ship.get_distance_to("Rhylanor", game_state)
+        assert False, "Should have raised WorldNotFoundError"
+    except WorldNotFoundError as e:
+        # Verify the error message contains the current location
+        assert "InvalidLocation" in str(e)

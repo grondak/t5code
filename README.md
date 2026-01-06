@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-381%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-384%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1319%20%7C%203%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1468%20%7C%207%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 

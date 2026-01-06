@@ -216,7 +216,10 @@ def test_print_ledger(game_state, capsys):
 
     captured = capsys.readouterr()
     assert f"LEDGER FOR {company.name}" in captured.out
-    assert f"({ship_name})" in captured.out
+    # Now includes ship class and location
+    assert f"({ship_name}," in captured.out
+    assert ship.ship_class in captured.out
+    assert "@" in captured.out  # Location separator
     assert f"Final Balance: Cr{company.balance:,.0f}" in captured.out
     assert "Test credit" in captured.out
     assert "Test debit" in captured.out
