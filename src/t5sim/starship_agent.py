@@ -1030,27 +1030,80 @@ class StarshipAgent:
 
         return float(days_until)
 
+    def calculate_total_payroll(self) -> tuple[int, int]:
+        """Calculate total monthly payroll for all crew members.
+
+        Salary is based on skill level required for each position:
+        100 Cr per skill level. Positions without skills earn 100 Cr.
+
+        Returns:
+            Tuple of (total_payroll, crew_count)
+
+        Raises:
+            ValueError: If ship class data not found in game_state.ship_classes
+
+        Example:
+            >>> # Ship with Pilot-2, Engineer-3, Steward-3
+            >>> total, count = agent.calculate_total_payroll()
+            >>> # total = 200 + 300 + 300 = 800, count = 3
+        """
+        ship_class_data = self.simulation.game_state.ship_classes.get(
+            self.ship.ship_class
+        )
+
+        if not ship_class_data:
+            raise ValueError(
+                f"Ship class '{self.ship.ship_class}' not found in "
+                f"game_state.ship_classes. Available classes: "
+                f"{list(self.simulation.game_state.ship_classes.keys())}"
+            )
+
+        return self._calculate_skill_based_payroll(ship_class_data)
+
+    def _calculate_skill_based_payroll(self,
+                                       ship_class_data: dict) -> (
+                                           tuple[int, int]):
+        """Calculate payroll based on skill requirements.
+
+        Args:
+            ship_class_data: Dictionary with ship class specifications
+
+        Returns:
+            Tuple of (total_payroll, crew_count)
+        """
+        from t5code import T5ShipClass
+        ship_class = T5ShipClass(self.ship.ship_class, ship_class_data)
+
+        total_payroll = 0
+        crew_count = 0
+
+        for position_name, position_list in self.ship.crew_position.items():
+            for i, crew_position in enumerate(position_list):
+                if crew_position.is_filled():
+                    crew_count += 1
+                    salary = self.simulation.get_crew_salary(
+                        position_name, i, ship_class
+                    )
+                    total_payroll += salary
+
+        return total_payroll, crew_count
+
     def _process_monthly_payroll(self):
-        """Process monthly crew payroll - pay each crew member 100 Cr.
+        """Process monthly crew payroll based on skill levels.
+
+        Salary is 100 Cr per skill level required for position.
+        Example: Pilot-2 earns 200 Cr, Engineer-3 earns 300 Cr.
 
         Side Effects:
             - Debits ship owner account for crew salaries
             - Sets self.broke = True if insufficient funds
             - Reports payroll in verbose mode
         """
-        # Count crew members
-        crew_count = 0
-        for position_list in self.ship.crew_position.values():
-            for crew_position in position_list:
-                if crew_position.is_filled():
-                    crew_count += 1
+        # Calculate total payroll
+        total_payroll, crew_count = self.calculate_total_payroll()
 
         if crew_count == 0:
             return
-
-        # Calculate total payroll
-        salary_per_crew = 100
-        total_payroll = crew_count * salary_per_crew
 
         # Calculate current month for reporting
         total_days = self.simulation.starting_day + self.env.now
@@ -1069,14 +1122,14 @@ class StarshipAgent:
         self.ship.debit(
             self.env.now,
             total_payroll,
-            f"Crew payroll: {crew_count} crew @ Cr{salary_per_crew} "
-            f"(Month {current_month})"
+            f"Crew payroll: {crew_count} crew, "
+            f"Cr{total_payroll:,} total (Month {current_month})"
         )
 
         if self.simulation.verbose:
             self._report_status(
-                f"paid crew payroll: {crew_count} crew × Cr{salary_per_crew} "
-                f"= Cr{total_payroll:,} (Month {current_month})"
+                f"paid crew payroll: {crew_count} crew, "
+                f"Cr{total_payroll:,} total (Month {current_month})"
             )
 
     def _mark_ship_broke(self, reason: str):

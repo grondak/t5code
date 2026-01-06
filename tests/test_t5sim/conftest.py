@@ -35,9 +35,11 @@ def test_ship_data():
 
 
 @pytest.fixture
-def setup_test_gamestate():
-    """Setup GameState for tests that need world data."""
+def setup_test_gamestate(test_ship_data):
+    """Setup GameState instance for tests that need world and ship data."""
     MAP_FILE = "tests/test_t5code/t5_test_map.txt"
-    GameState.world_data = T5World.load_all_worlds(
+    game_state = GameState()
+    game_state.world_data = T5World.load_all_worlds(
         load_and_parse_t5_map(MAP_FILE))
-    return GameState
+    game_state.ship_classes = test_ship_data
+    return game_state

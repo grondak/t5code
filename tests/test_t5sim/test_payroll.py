@@ -90,7 +90,7 @@ def test_calculate_days_until_next_month_year_wrap(
 
 def test_payroll_deducts_correct_amount(simple_game_state,
                                         test_ship_with_crew):
-    """Test that payroll deducts 100 Cr per crew member."""
+    """Test that payroll deducts correct amount based on skill levels."""
     env = simpy.Environment()
     # Start on Day 2 (first day of Month 1) so payroll triggers immediately
     sim = Simulation(simple_game_state, num_ships=1, starting_day=2)
@@ -117,8 +117,9 @@ def test_payroll_deducts_correct_amount(simple_game_state,
     )
 
     # Check the payroll entry
+    # Pilot-2 (200) + Astrogator-1 (100) + Chief Engineer-3 (300) = 600 Cr
     payroll_entry = test_ship_with_crew.owner.cash.ledger[-1]
-    assert payroll_entry.amount == -300  # 3 crew × 100 Cr
+    assert payroll_entry.amount == -600
     assert "Crew payroll" in payroll_entry.memo
 
 
@@ -144,8 +145,9 @@ def test_payroll_creates_ledger_entry(simple_game_state, test_ship_with_crew):
     assert len(payroll_entries) == 1
 
     # Check the entry details
+    # Pilot-2 (200) + Astrogator-1 (100) + Chief Engineer-3 (300) = 600 Cr
     payroll_entry = payroll_entries[0]
-    assert payroll_entry.amount == -300  # Debit
+    assert payroll_entry.amount == -600  # Debit
     assert "Crew payroll" in payroll_entry.memo
     assert "3 crew" in payroll_entry.memo
     assert "Month 1" in payroll_entry.memo
@@ -204,13 +206,13 @@ def test_payroll_insufficient_funds_marks_broke(
     # Set destination to avoid errors
     test_ship_with_crew.set_course_for("Rhylanor")
 
-    # Set balance to less than payroll (3 crew × 100 = 300)
+    # Set balance to less than payroll (600 Cr needed for crew)
     # Use post() to reduce balance
     current_balance = test_ship_with_crew.owner.balance
-    reduction = current_balance - 200
+    reduction = current_balance - 500
     test_ship_with_crew.owner.cash.post(time=0,
                                         amount=-reduction,
-                                        memo="Test: reduce to 200")
+                                        memo="Test: reduce to 500")
 
     agent = StarshipAgent(
         env, test_ship_with_crew, sim, starting_state=StarshipState.DOCKED
@@ -223,7 +225,7 @@ def test_payroll_insufficient_funds_marks_broke(
     assert agent.broke is True
 
     # Balance should not have changed (payroll not processed)
-    assert test_ship_with_crew.owner.balance == 200
+    assert test_ship_with_crew.owner.balance == 500
 
 
 def test_broke_ship_stops_processing_payroll(
@@ -235,12 +237,12 @@ def test_broke_ship_stops_processing_payroll(
     # Set destination to avoid errors
     test_ship_with_crew.set_course_for("Rhylanor")
 
-    # Set balance to exactly one payroll (3 crew × 100 = 300)
+    # Set balance to exactly one payroll (600 Cr needed)
     current_balance = test_ship_with_crew.owner.balance
-    reduction = current_balance - 300
+    reduction = current_balance - 600
     test_ship_with_crew.owner.cash.post(time=0,
                                         amount=-reduction,
-                                        memo="Test: reduce to 300")
+                                        memo="Test: reduce to 600")
 
     agent = StarshipAgent(
         env, test_ship_with_crew, sim, starting_state=StarshipState.DOCKED
@@ -338,3 +340,142 @@ def test_mark_ship_broke_consolidation(simple_game_state, test_ship_with_crew):
     agent._mark_ship_broke("test reason for being broke")
 
     assert agent.broke is True
+
+
+def test_skill_based_salary_calculation(simple_game_state, test_ship_data):
+    """Test that crew salaries are calculated based on skill levels."""
+    env = simpy.Environment()
+    sim = Simulation(simple_game_state, num_ships=1, starting_day=2)
+
+    # Create ship with specific crew configuration
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    company = T5Company("Test Company", starting_capital=100_000)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
+
+    # Add crew with known skill requirements:
+    # Pilot: maneuver-2 → 200 Cr
+    pilot = T5NPC("Pilot")
+    pilot.set_skill("pilot", 2)
+    ship.crew_position["Pilot"][0].assign(pilot)
+
+    # Astrogator: jump-1 → 100 Cr
+    astrogator = T5NPC("Astrogator")
+    astrogator.set_skill("navigator", 1)
+    ship.crew_position["Astrogator"][0].assign(astrogator)
+
+    # Engineer: powerplant-2 → 200 Cr
+    engineer = T5NPC("Engineer")
+    engineer.set_skill("engineer", 2)
+    ship.crew_position["Engineer"][0].assign(engineer)
+
+    ship.set_course_for("Rhylanor")
+
+    agent = StarshipAgent(
+        env, ship, sim, starting_state=StarshipState.DOCKED
+    )
+
+    # Calculate payroll
+    total, count = agent.calculate_total_payroll()
+
+    assert count == 3
+    # Pilot-2 (200) + Astrogator-1 (100) + Chief Engineer-3 (300) = 600 Cr
+    assert total == 600
+
+
+def test_different_ship_sizes_different_salaries(
+        simple_game_state, test_ship_data):
+    """Test that different ship sizes result in different crew salaries."""
+    env = simpy.Environment()
+    sim = Simulation(simple_game_state, num_ships=1, starting_day=2)
+
+    # Large ship: jump-3, maneuver-3, powerplant-3
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    company = T5Company("Test Company", starting_capital=500_000)
+    ship = T5Starship("Large Ship", "Rhylanor", ship_class, owner=company)
+
+    # Add some crew:
+    # Pilot: maneuver-3 → 300 Cr
+    pilot = T5NPC("Pilot")
+    pilot.set_skill("pilot", 3)
+    ship.crew_position["Pilot"][0].assign(pilot)
+
+    # Astrogator: jump-3 → 300 Cr
+    astrogator = T5NPC("Astrogator")
+    astrogator.set_skill("navigator", 3)
+    ship.crew_position["Astrogator"][0].assign(astrogator)
+
+    # Chief Engineer: powerplant-3 + 1 → 400 Cr
+    engineer1 = T5NPC("Chief Engineer")
+    engineer1.set_skill("engineer", 4)
+    ship.crew_position["Engineer"][0].assign(engineer1)
+
+    # Second Engineer: powerplant-3 → 300 Cr
+    engineer2 = T5NPC("Engineer 2")
+    engineer2.set_skill("engineer", 3)
+    ship.crew_position["Engineer"][1].assign(engineer2)
+
+    # Third Engineer: powerplant-3 → 300 Cr
+    engineer3 = T5NPC("Engineer 3")
+    engineer3.set_skill("engineer", 3)
+    ship.crew_position["Engineer"][2].assign(engineer3)
+
+    ship.set_course_for("Rhylanor")
+
+    agent = StarshipAgent(
+        env, ship, sim, starting_state=StarshipState.DOCKED
+    )
+
+    # Calculate payroll
+    total, count = agent.calculate_total_payroll()
+
+    assert count == 5
+    # 300 (pilot) + 300 (astrogator) + 400 (chief eng) + 300 + 300 = 1600 Cr
+    assert total == 1600
+
+
+def test_steward_and_medic_salaries(simple_game_state, test_ship_data):
+    """Test fixed-skill positions (Medic) have correct salaries."""
+    env = simpy.Environment()
+    sim = Simulation(simple_game_state, num_ships=1, starting_day=2)
+
+    # Use large ship which has Medic position
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    company = T5Company("Test Company", starting_capital=500_000)
+    ship = T5Starship("Test Ship", "Rhylanor", ship_class, owner=company)
+
+    # Add Medic: skill-2 → 200 Cr
+    medic = T5NPC("Medic")
+    medic.set_skill("medic", 2)
+    ship.crew_position["Medic"][0].assign(medic)
+
+    ship.set_course_for("Rhylanor")
+
+    agent = StarshipAgent(
+        env, ship, sim, starting_state=StarshipState.DOCKED
+    )
+
+    # Calculate payroll
+    total, count = agent.calculate_total_payroll()
+
+    assert count == 1
+    assert total == 200  # Medic-2 earns 200 Cr
+
+
+def test_get_crew_salary_method(simple_game_state, test_ship_data):
+    """Test the Simulation.get_crew_salary method directly."""
+    sim = Simulation(simple_game_state, num_ships=1, starting_day=2)
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+
+    # Test different positions
+    pilot_salary = sim.get_crew_salary("Pilot", 0, ship_class)
+    assert pilot_salary == 200  # maneuver-2
+
+    astrogator_salary = sim.get_crew_salary("Astrogator", 0, ship_class)
+    assert astrogator_salary == 100  # jump-1
+
+    engineer_salary = sim.get_crew_salary("Engineer", 0, ship_class)
+    assert engineer_salary == 300  # powerplant-2 + 1 (chief engineer)
+
+    # Second engineer doesn't get +1 bonus
+    engineer2_salary = sim.get_crew_salary("Engineer", 1, ship_class)
+    assert engineer2_salary == 200  # powerplant-2

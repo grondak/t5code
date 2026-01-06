@@ -1109,6 +1109,8 @@ def test_starship_agent_no_profitable_destination_verbose(game_state, capsys):
         "staterooms": 5,
         "low_berths": 10,
     }
+    # Register ship class in game_state for payroll calculations
+    game_state.ship_classes["Test Trader"] = ship_class_data
     ship_class = T5ShipClass("Test Trader", ship_class_data)
     company = T5Company("Test Company", starting_capital=1_000_000)
     ship = T5Starship("No Profit Ship", "Rhylanor", ship_class, owner=company)
@@ -1149,6 +1151,8 @@ def test_starship_agent_no_worlds_in_range_verbose(game_state, capsys):
         "staterooms": 5,
         "low_berths": 10,
     }
+    # Register ship class in game_state for payroll calculations
+    game_state.ship_classes["No Jump"] = ship_class_data
     ship_class = T5ShipClass("No Jump", ship_class_data)
     company = T5Company("Test Company", starting_capital=1_000_000)
     ship = T5Starship("No Range Ship", "Rhylanor", ship_class, owner=company)

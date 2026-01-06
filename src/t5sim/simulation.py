@@ -270,6 +270,42 @@ class Simulation:
             return ("Medic", 2)
         return None
 
+    def get_crew_salary(
+        self,
+        position_name: str,
+        position_index: int,
+        ship_class: T5ShipClass
+    ) -> int:
+        """Calculate monthly salary for a crew position.
+
+        Salary is 100 Cr per skill level required for the position.
+        Positions without skill requirements earn 100 Cr (base wage).
+
+        Args:
+            position_name: Name of position (e.g., "Pilot", "Engineer")
+            position_index: Index in position list (0 = first/chief)
+            ship_class: T5ShipClass for ship-attribute-based skills
+
+        Returns:
+            Monthly salary in credits (minimum 100)
+
+        Example:
+            >>> # Pilot on ship with maneuver-2 earns 200 Cr/month
+            >>> sim.get_crew_salary("Pilot", 0, ship_class)
+            200
+            >>> # Chief Engineer on ship with power-3 earns 400 Cr/month
+            >>> sim.get_crew_salary("Engineer", 0, ship_class)
+            400
+        """
+        skill_info = self._get_skill_for_position(
+            position_name, position_index, ship_class
+        )
+        if skill_info:
+            skill_level = skill_info[1]
+            return skill_level * 100
+        # Base wage for positions without skill requirements
+        return 100
+
     def _add_basic_crew(self, ship: T5Starship, ship_class: T5ShipClass):
         """Add crew NPCs to fill all positions defined by the ship class.
 

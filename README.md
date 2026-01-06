@@ -1,6 +1,6 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-393%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-409%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
 [![Statements](https://img.shields.io/badge/statements-1502%20%7C%207%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
@@ -23,6 +23,11 @@ Built for realistic simulation of merchant starship operations, trade economics,
 - **12-state starship FSM** (DOCKED → OFFLOADING → SELLING_CARGO → LOADING_FREIGHT → ...)
 - **Profit-aware routing** - ships evaluate destinations for cargo profitability
 - **Smart cargo purchasing** - skips lots that would result in losses
+- **Skill-based crew payroll** - monthly salaries calculated from position skill requirements
+  - Salary formula: 100 Cr × skill level (Pilot-2 earns 200 Cr, Engineer-3 earns 300 Cr)
+  - Chief Engineer receives +1 skill level bonus
+  - Payroll processed on first day of each month (Days 002, 030, 058, etc.)
+  - Ships with insufficient funds become "broke" and suspend operations
 - **Captain risk profiles** - each ship's captain has unique operational preferences
   - 60% standard captains depart at 80% hold capacity
   - 30% moderate captains vary between 70-90% capacity
@@ -42,6 +47,7 @@ Built for realistic simulation of merchant starship operations, trade economics,
 - **Jump range calculation** based on ship drive capability and hex distance
 - **Profitable destination finding** - evaluate all reachable worlds for trade opportunities
 - **Crew skill system** with position-based skill checks (Pilot, Engineer, Steward, Admin, etc.)
+- **Skill-based crew salaries** - 100 Cr per skill level, with Chief Engineer bonus
 - **Property-based API** for clean, intuitive access to ship state
 - **Company ownership integration** - starships owned by trading companies
   - All financial transactions flow through owner company accounts
@@ -256,6 +262,10 @@ Trader_002 (Scout) starting simulation, destination: Powaza/Rhylanor (3220)
 **Key verbose output features:**
 - **Company balance tracking**: Shows `company=CrX,XXX,XXX` instead of `balance=` for owned ships
 - **Company announcement at startup**: Displays company name and starting capital
+- **Monthly crew payroll**: Ledger entries show skill-based salary calculations
+  - Example: "Crew payroll: 7 crew, Cr1,900 total (Month 1)" for a Frigate
+  - Payroll processed on day 002, 030, 058, etc. (first day of each month)
+  - Ships with insufficient funds display: "insufficient funds for crew payroll (need CrX,XXX, have CrY,YYY), suspending operations"
 - **Crew roster displayed at startup**: Shows all crew members with their skills
   - Format for captain: "Captain: X% Skill-Level" where X is cargo departure threshold
   - Format for crew: "Position: Skill-Level" or "Position N: Skill-Level" for multiple
@@ -287,7 +297,7 @@ Trader_002 (Scout) starting simulation, destination: Powaza/Rhylanor (3220)
   - Different captains have different thresholds (65%-95% range)
 - Full status header: day, location, state, company/balance, hold capacity, fuel levels
 - Single-line format with pipe separator for actions
-- Financial tracking: income from freight/passengers, profit from cargo sales
+- Financial tracking: income from freight/passengers, profit from cargo sales, monthly payroll
 - Hold and fuel percentages help assess ship readiness at a glance
 - State names match the action just completed
 
@@ -331,9 +341,11 @@ Date                     Amount         Balance Memo
 360.00-1104              10,000     1,028,000.0 High passage fare at Tarsus
 360.00-1104               8,000     1,036,000.0 Mid passage fare at Tarsus
 360.00-1104               1,000     1,037,000.0 Low passage fare at Tarsus
-006.00-1105               7,000     1,044,000.0 Freight income: 7t from Avastan
-017.00-1105              -3,600     1,040,400.0 Cargo purchase: 6-Ag Ni 3600 at Traltha
-018.00-1105               6,120     1,046,520.0 Cargo sale: 6-Ag Ni 3600 at Traltha
+002.00-1105                -800     1,036,200.0 Crew payroll: 4 crew, Cr800 total (Month 1)
+006.00-1105               7,000     1,043,200.0 Freight income: 7t from Avastan
+017.00-1105              -3,600     1,039,600.0 Cargo purchase: 6-Ag Ni 3600 at Traltha
+018.00-1105               6,120     1,045,720.0 Cargo sale: 6-Ag Ni 3600 at Traltha
+030.00-1105                -800     1,044,920.0 Crew payroll: 4 crew, Cr800 total (Month 2)
 ...
 ================================================================================
 ```
@@ -342,8 +354,9 @@ Date                     Amount         Balance Memo
 - **Ship context**: Ledger header shows company, ship name, ship class, and final location with hex
 - **Traveller date format**: Shows exact simulation time (DDD.FF-YYYY) for each transaction
 - **Complete audit trail**: Every credit, debit, and transfer with descriptive memo
+- **Monthly payroll entries**: Shows crew count and total salary with month number
 - **Running balance**: Balance after each transaction for easy verification
-- **Transaction types**: Initial capital, freight income, passenger fares, cargo purchases/sales
+- **Transaction types**: Initial capital, freight income, passenger fares, cargo purchases/sales, crew payroll
 - **Location tracking**: Memos include world names where transactions occurred
 
 ---
