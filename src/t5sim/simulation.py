@@ -426,6 +426,81 @@ class Simulation:
             }
         )
 
+    def print_ledger(self, ship_name: str):
+        """Print complete transaction ledger for a specific ship.
+
+        Displays all ledger entries from the ship's owning company
+        cash account, showing timestamp, amount, running balance,
+        and transaction memo.
+
+        Args:
+            ship_name: Name of ship (e.g., "Trader_001")
+
+        Side Effects:
+            Prints formatted ledger to stdout
+
+        Raises:
+            ValueError: If ship_name not found in agents list
+
+        Example:
+            >>> sim.print_ledger("Trader_001")
+        """
+        # Find the agent with matching ship name
+        agent = None
+        for a in self.agents:
+            if a.ship.ship_name == ship_name:
+                agent = a
+                break
+
+        if not agent:
+            raise ValueError(
+                f"Ship '{ship_name}' not found. "
+                f"Available ships: {[a.ship.ship_name for a in self.agents]}"
+            )
+
+        company = agent.ship.owner
+        print(f"\n{'='*80}")
+        print(f"LEDGER FOR {company.name} ({ship_name})")
+        print(f"Final Balance: Cr{company.balance:,.0f}")
+        print(f"{'='*80}")
+        print(f"{'Date':<15} {'Amount':>15} {'Balance':>15} {'Memo':<35}")
+        print(f"{'-'*80}")
+
+        for entry in company.cash.ledger:
+            date_str = self.format_traveller_date(entry.time)
+            print(
+                f"{date_str:<15} "
+                f"{entry.amount:>15,} "
+                f"{entry.balance_after:>15,} "
+                f"{entry.memo:<35}"
+            )
+
+        print(f"{'='*80}\n")
+
+    def print_all_ledgers(self):
+        """Print complete transaction ledgers for all ships.
+
+        Iterates through all agents and prints each ship's complete
+        ledger with all transactions from their owning company.
+
+        Side Effects:
+            Prints formatted ledgers to stdout for all ships
+
+        Note:
+            This can be very verbose for large simulations or long
+            durations. Consider using print_ledger() for specific
+            ships instead.
+
+        Example:
+            >>> sim.print_all_ledgers()
+        """
+        print(f"\n{'#'*80}")
+        print("COMPLETE LEDGER DUMP - ALL SHIPS")
+        print(f"{'#'*80}")
+
+        for agent in self.agents:
+            self.print_ledger(agent.ship.ship_name)
+
 
 def run_simulation(
     map_file: str = "resources/t5_map.txt",

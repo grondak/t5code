@@ -82,7 +82,7 @@ def test_ship_journey_sequence(game_state, ship_class):
     ship.status = "docked"
 
     # Offload and sell
-    ship.credit(lot1.determine_sale_value_on(destination, game_state))
+    ship.credit(0, lot1.determine_sale_value_on(destination, game_state))
     ship.offload_lot(lot1.serial, "cargo")
 
     cycle1_balance = ship.balance
@@ -101,10 +101,10 @@ def test_ship_journey_sequence(game_state, ship_class):
 
     # Offload and sell
     try:
-        ship.credit(lot2.determine_sale_value_on(origin, game_state))
+        ship.credit(0, lot2.determine_sale_value_on(origin, game_state))
     except KeyError:
         # Some world classifications may not have trade effects defined
-        ship.credit(5000)  # Use estimated value
+        ship.credit(0, 5000)  # Use estimated value
     ship.offload_lot(lot2.serial, "cargo")
 
     # Should have made more money
@@ -223,12 +223,12 @@ def test_ship_balance_persistence(game_state, ship_class):
     balance1 = ship.balance
 
     # Credit some money
-    ship.credit(1000)
+    ship.credit(0, 1000)
     balance2 = ship.balance
     assert balance2 == balance1 + 1000
 
     # Debit some money
-    ship.debit(500)
+    ship.debit(0, 500)
     balance3 = ship.balance
     assert balance3 == balance2 - 500
 

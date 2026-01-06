@@ -49,9 +49,10 @@ Built for realistic simulation of merchant starship operations, trade economics,
   - Balance property automatically returns company balance when owner exists
   - Maintains legacy behavior for ships without owners
 - **Double-entry accounting system** with Account, Ledger, and LedgerEntry classes
-  - Transaction history with timestamps and counterparty tracking
+  - Transaction history with Traveller date timestamps and counterparty tracking
   - Immutable audit trail for all financial operations
   - Support for credits, debits, and inter-account transfers
+  - Time parameter required for all transactions (enforces temporal ordering)
   - Keyword-only parameters ensure correct usage
 - **Company management** with T5Company for multi-ship trading operations
   - Owner capital tracking and corporate accounting
@@ -136,10 +137,11 @@ ship = T5Starship("Free Trader Beowulf", "A2", game_state, owner=company)
 # Check company balance (ship transactions flow through company)
 print(f"Company: {company.name}, Balance: Cr{company.balance:,.0f}")
 
-# Load cargo (automatically debits company account)
+# Load cargo (automatically debits company account with timestamp)
 world = game_state.world_data["Regina"]
 lot = T5Lot("Regina", game_state)
-ship.buy_cargo_lot(lot)
+time = 0  # Simulation time (or use actual time in simulation)
+ship.buy_cargo_lot(time, lot)
 
 # Navigate to destination
 ship.set_course_for("Efate")
@@ -147,13 +149,13 @@ print(f"Cargo manifest: {len(ship.cargo_manifest['cargo'])} lots")
 print(f"Destination: {ship.destination}")
 print(f"Company balance after purchase: Cr{company.balance:,.0f}")
 
-# Sell cargo at destination (automatically credits company account)
-ship.sell_cargo_lot(lot, game_state)
+# Sell cargo at destination (automatically credits company account with timestamp)
+ship.sell_cargo_lot(time, lot, game_state)
 print(f"Company balance after sale: Cr{company.balance:,.0f}")
 
-# View complete transaction history
+# View complete transaction history with Traveller dates
 for entry in company.cash.ledger:
-    print(f"[{entry.time}] {entry.memo}: Cr{entry.amount:,.0f}")
+    print(f"[{entry.time}] {entry.memo}: Cr{entry.amount:,.0f} (Balance: Cr{entry.balance_after:,.0f})")
 ```
 
 ### Running the Example Simulation
@@ -186,6 +188,12 @@ python -m t5sim.run --ships 3 --days 30 --verbose
 
 # Custom starting date (Traveller calendar format)
 python -m t5sim.run --ships 5 --days 30 --year 1105 --day 1 --verbose
+
+# Print complete ledger for specific ship after simulation
+python -m t5sim.run --ships 5 --days 45 --ledger Trader_001
+
+# Print ledgers for all ships (verbose financial audit trail)
+python -m t5sim.run --ships 3 --days 45 --ledger-all
 ```
 
 **Verbose output example (Traveller date format DDD.FF-YYYY with fractional days):**
@@ -297,6 +305,35 @@ Bottom 5 ships by balance:
   2. Trader_002: Cr3,192,100.00 (9 voyages)
   ...
 ```
+
+**Complete ledger output (with --ledger or --ledger-all):**
+```
+================================================================================
+LEDGER FOR Trader_001 Inc (Trader_001)
+Final Balance: Cr1,365,000
+================================================================================
+Date                     Amount         Balance Memo
+--------------------------------------------------------------------------------
+360.00-1104         1,000,000.0     1,000,000.0 Initial capitalization
+360.00-1104               5,000     1,005,000.0 Freight income: 5t from Tarsus
+360.00-1104               3,000     1,008,000.0 Freight income: 3t from Tarsus
+360.00-1104              10,000     1,018,000.0 High passage fare at Tarsus
+360.00-1104              10,000     1,028,000.0 High passage fare at Tarsus
+360.00-1104               8,000     1,036,000.0 Mid passage fare at Tarsus
+360.00-1104               1,000     1,037,000.0 Low passage fare at Tarsus
+006.00-1105               7,000     1,044,000.0 Freight income: 7t from Avastan
+017.00-1105              -3,600     1,040,400.0 Cargo purchase: 6-Ag Ni 3600 at Traltha
+018.00-1105               6,120     1,046,520.0 Cargo sale: 6-Ag Ni 3600 at Traltha
+...
+================================================================================
+```
+
+**Key features:**
+- **Traveller date format**: Shows exact simulation time (DDD.FF-YYYY) for each transaction
+- **Complete audit trail**: Every credit, debit, and transfer with descriptive memo
+- **Running balance**: Balance after each transaction for easy verification
+- **Transaction types**: Initial capital, freight income, passenger fares, cargo purchases/sales
+- **Location tracking**: Memos include world names where transactions occurred
 
 ---
 
@@ -448,9 +485,34 @@ except CapacityExceededError as e:
 ```python
 # Clean, intuitive property-based API
 print(ship.destination)           # Current destination world
-print(ship.balance)               # Credit balance
+print(ship.balance)               # Credit balance (from owner company if owned)
 print(ship.cargo_manifest)        # All cargo lots
 print(ship.mail_bundles)          # Mail containers
+```
+
+### Financial Operations with Time Tracking
+
+```python
+from t5code import T5Company
+
+# All financial transactions require time parameter for ledger
+time = 360.0  # Simulation time (e.g., day 360 of year 1104)
+
+# Direct credit/debit (ships with owner automatically use company ledger)
+ship.credit(time, 50000, "Freight income: 50t from Regina")
+ship.debit(time, 10000, "Port fees at Efate")
+
+# Cargo operations (time parameter required)
+ship.buy_cargo_lot(time, lot)  # Debits company account
+result = ship.sell_cargo_lot(time, lot, game_state)  # Credits company account
+
+# Freight and passengers (time parameter required)
+ship.load_freight_lot(time, freight_lot)  # Credits freight income
+ship.load_passengers(time, world)  # Credits passenger fares
+
+# View transaction history with timestamps
+for entry in ship.owner.cash.ledger:
+    print(f"[{entry.time}] {entry.memo}: Cr{entry.amount:,.0f}")
 ```
 
 ### Skill-Based Operations
@@ -460,9 +522,10 @@ print(ship.mail_bundles)          # Mail containers
 ship.hire_crew("steward", T5NPC("Jane", skills={"Steward": 2}))
 ship.hire_crew("trader", T5NPC("Bob", skills={"Trader": 3}))
 
-# Skills improve passenger bookings and cargo prices
-passengers = ship.load_passengers(world)
-result = ship.sell_cargo_lot(lot, game_state, use_trader_skill=True)
+# Skills improve passenger bookings and cargo prices (time required)
+time = 360.0
+passengers = ship.load_passengers(time, world)
+result = ship.sell_cargo_lot(time, lot, game_state, use_trader_skill=True)
 ```
 
 ---

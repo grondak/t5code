@@ -58,7 +58,7 @@ def test_starship_agent_state_transitions(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Test Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     agent = StarshipAgent(env, ship, mock_simulation)
@@ -82,7 +82,7 @@ def test_starship_agent_verbose_reporting(game_state, mock_simulation, capsys):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Verbose Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     _agent = StarshipAgent(env, ship, mock_simulation)  # noqa: F841
@@ -103,7 +103,7 @@ def test_starship_agent_offloading(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Cargo Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add crew for passenger handling
@@ -114,7 +114,7 @@ def test_starship_agent_offloading(game_state, mock_simulation):
     # Load some passengers
     world = game_state.world_data.get("Rhylanor")
     if world:
-        ship.load_passengers(world)
+        ship.load_passengers(0, world)
 
     # Load mail
     try:
@@ -126,7 +126,7 @@ def test_starship_agent_offloading(game_state, mock_simulation):
     try:
         freight_lot = T5Lot("Rhylanor", game_state)
         freight_lot.mass = 10
-        ship.load_freight_lot(freight_lot)
+        ship.load_freight_lot(0, freight_lot)
     except Exception:
         pass  # Capacity issues are ok for test
 
@@ -152,7 +152,7 @@ def test_starship_agent_selling_cargo(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Trader Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add trader crew
@@ -168,7 +168,7 @@ def test_starship_agent_selling_cargo(game_state, mock_simulation):
         )
         for lot in lots[:1]:  # Just buy one lot
             try:
-                ship.buy_cargo_lot(lot)
+                ship.buy_cargo_lot(0, lot)
             except Exception:
                 pass
 
@@ -192,7 +192,7 @@ def test_starship_agent_loading_freight(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Freight Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add liaison crew
@@ -226,7 +226,7 @@ def test_starship_agent_loading_cargo(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Spec Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     agent = StarshipAgent(
@@ -249,7 +249,7 @@ def test_starship_agent_loading_mail(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Mail Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add admin crew for mail
@@ -277,7 +277,7 @@ def test_starship_agent_loading_passengers(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Passenger Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add steward crew for passengers
@@ -306,7 +306,7 @@ def test_starship_agent_jumping(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Jump Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     agent = StarshipAgent(
@@ -337,7 +337,7 @@ def test_starship_agent_verbose_transitions(game_state,
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Verbose Jump Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     _agent = StarshipAgent(  # noqa: F841
@@ -364,7 +364,7 @@ def test_starship_agent_offloading_verbose(game_state,
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Verbose Offload Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     _agent = StarshipAgent(  # noqa: F841
@@ -391,7 +391,7 @@ def test_starship_agent_selling_cargo_verbose(game_state,
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Verbose Sales Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add trader for sales
@@ -422,7 +422,7 @@ def test_starship_agent_error_handling_offload(game_state,
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Error Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Mock offload to raise exception
@@ -450,7 +450,7 @@ def test_starship_agent_error_handling_cargo_sale(game_state,
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Sale Error Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add trader
@@ -466,7 +466,7 @@ def test_starship_agent_error_handling_cargo_sale(game_state,
                 game_state, max_total_tons=10, max_lot_size=10
             )
             for lot in lots[:1]:
-                ship.buy_cargo_lot(lot)
+                ship.buy_cargo_lot(0, lot)
     except Exception:
         pass
 
@@ -499,7 +499,7 @@ def test_starship_agent_error_handling_cargo_purchase(game_state,
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Purchase Error Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Mock world's generate_speculative_cargo to raise exception
@@ -537,7 +537,7 @@ def test_starship_agent_error_handling_passengers(game_state,
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Passenger Error Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add steward
@@ -572,7 +572,7 @@ def test_starship_agent_error_handling_jump(game_state,
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Jump Error Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Mock execute_jump to raise exception
@@ -598,7 +598,7 @@ def test_starship_agent_full_cycle(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Full Cycle Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add full crew
@@ -638,7 +638,7 @@ def test_starship_agent_insufficient_funds_cargo(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Poor Ship", "Rhylanor", ship_class)
-    ship.credit(100)  # Very low funds
+    ship.credit(0, 100)  # Very low funds
     ship.set_course_for("Jae Tellona")
 
     agent = StarshipAgent(
@@ -661,7 +661,7 @@ def test_starship_agent_full_hold_freight(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Full Hold Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add liaison
@@ -680,7 +680,7 @@ def test_starship_agent_full_hold_freight(game_state, mock_simulation):
             )
             for lot in lots:
                 try:
-                    ship.buy_cargo_lot(lot)
+                    ship.buy_cargo_lot(0, lot)
                 except Exception:
                     break
         except Exception:
@@ -709,7 +709,7 @@ def test_starship_agent_no_cargo_available(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("No Space Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Fill the hold completely
@@ -756,7 +756,7 @@ def test_starship_agent_stuck_in_invalid_state(game_state,
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Stuck Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Create agent
@@ -788,7 +788,7 @@ def test_starship_agent_mail_locker_full(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Full Mail Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add admin crew
@@ -825,7 +825,7 @@ def test_starship_agent_no_world_at_location(game_state, mock_simulation):
 
     # Create ship at non-existent location
     ship = T5Starship("Nowhere Ship", "NonExistentWorld", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     agent = StarshipAgent(
@@ -857,7 +857,7 @@ def test_starship_agent_capacity_exceeded_freight(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Capacity Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add liaison crew
@@ -901,7 +901,7 @@ def test_starship_agent_mail_value_error(game_state, mock_simulation):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Mail Error Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     # Add admin crew
@@ -939,7 +939,7 @@ def test_starship_agent_jumping_unknown_world(game_state, capsys):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Unknown Destination Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
 
     # Set course to a world that doesn't exist in world_data
     ship.set_course_for("UnknownWorld")
@@ -970,7 +970,7 @@ def test_starship_agent_skipping_unprofitable_cargo(game_state, capsys):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Profit Test Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")
 
     _agent = StarshipAgent(  # noqa: F841
@@ -1015,7 +1015,7 @@ def test_starship_agent_profitable_destination_verbose(game_state, capsys):
     class_name = ship_class_dict["class_name"]
     ship_class = T5ShipClass(class_name, ship_class_dict)
     ship = T5Starship("Route Test Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")  # Set initial destination
 
     _agent = StarshipAgent(  # noqa: F841
@@ -1054,7 +1054,7 @@ def test_starship_agent_no_profitable_destination_verbose(game_state, capsys):
     }
     ship_class = T5ShipClass("Test Trader", ship_class_data)
     ship = T5Starship("No Profit Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")  # Set initial destination
 
     _agent = StarshipAgent(  # noqa: F841
@@ -1093,7 +1093,7 @@ def test_starship_agent_no_worlds_in_range_verbose(game_state, capsys):
     }
     ship_class = T5ShipClass("No Jump", ship_class_data)
     ship = T5Starship("No Range Ship", "Rhylanor", ship_class)
-    ship.credit(1_000_000)
+    ship.credit(0, 1_000_000)
     ship.set_course_for("Jae Tellona")  # Set initial destination
 
     _agent = StarshipAgent(  # noqa: F841

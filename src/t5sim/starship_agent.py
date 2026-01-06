@@ -559,7 +559,10 @@ class StarshipAgent:
         for lot in cargo_lots:
             try:
                 result = self.ship.sell_cargo_lot(
-                    lot, self.simulation.game_state, use_trader_skill=True
+                    self.env.now,
+                    lot,
+                    self.simulation.game_state,
+                    use_trader_skill=True
                 )
                 # Record transaction in simulation statistics
                 self.simulation.record_cargo_sale(
@@ -606,7 +609,7 @@ class StarshipAgent:
 
                     lot = T5Lot(self.ship.location, self.simulation.game_state)
                     lot.mass = freight_mass
-                    payment = self.ship.load_freight_lot(lot)
+                    payment = self.ship.load_freight_lot(self.env.now, lot)
                     self.freight_loaded_this_cycle = True  # Got freight!
                     if self.simulation.verbose:
                         self._report_status(
@@ -668,7 +671,7 @@ class StarshipAgent:
         if not is_profitable:
             return False, 0
 
-        self.ship.buy_cargo_lot(lot)
+        self.ship.buy_cargo_lot(self.env.now, lot)
         return True, lot.mass
 
     def _format_cargo_loading_message(
@@ -824,7 +827,7 @@ class StarshipAgent:
                 before_high = len(self.ship.passengers['high'])
                 before_mid = len(self.ship.passengers['mid'])
                 before_low = len(self.ship.passengers['low'])
-                self.ship.load_passengers(world)
+                self.ship.load_passengers(self.env.now, world)
                 after_high = len(self.ship.passengers['high'])
                 after_mid = len(self.ship.passengers['mid'])
                 after_low = len(self.ship.passengers['low'])

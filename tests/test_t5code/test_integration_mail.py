@@ -94,7 +94,7 @@ def test_mail_payment(game_state, ship):
 
     # Credit payment for mail (typically happens at destination)
     mail_payment = 25000  # Standard mail payment in Traveller
-    ship.credit(mail_payment)
+    ship.credit(0, mail_payment)
 
     # Deliver mail
     ship.location = destination

@@ -63,7 +63,7 @@ def test_complete_trade_journey(game_state, ship):
     fee = actual * broker.get("rate", 0.0)
     final = actual - fee
 
-    ship.credit(final)
+    ship.credit(0, final)
     ship.offload_lot(lot.serial, "cargo")
 
     # Phase 4: Verify results
@@ -86,7 +86,7 @@ def test_freight_workflow(game_state, ship):
 
     # Get payment for taking freight
     freight_payment = 1000 * lot.mass
-    ship.credit(freight_payment)
+    ship.credit(0, freight_payment)
     initial_balance = ship.balance
 
     # Travel and offload

@@ -521,13 +521,14 @@ class T5Starship:
             return self.owner.balance
         return self._balance
 
-    def credit(self, amount, memo: str = "Ship income"):
+    def credit(self, time: float, amount, memo: str = "Ship income"):
         """Add credits to the ship's balance or owner's cash account.
 
         If ship has an owner company, posts credit to company's cash account.
         Otherwise, updates ship's internal balance.
 
         Args:
+            time: Simulation time for ledger entry
             amount: Credits to add (int or float)
             memo: Description for accounting ledger (default: "Ship income")
 
@@ -542,18 +543,19 @@ class T5Starship:
 
         if self.owner:
             # Use company's cash account for owner-operated ships
-            self.owner.cash.post(time=0, amount=int(amount), memo=memo)
+            self.owner.cash.post(time=int(time), amount=int(amount), memo=memo)
         else:
             # Legacy: direct ship balance for ships without owners
             self._balance += amount
 
-    def debit(self, amount, memo: str = "Ship expense"):
+    def debit(self, time: float, amount, memo: str = "Ship expense"):
         """Subtract money from the ship's balance or owner's cash account.
 
         If ship has an owner company, posts debit to company's cash account.
         Otherwise, updates ship's internal balance.
 
         Args:
+            time: Simulation time for ledger entry
             amount: Amount of credits to debit
             memo: Description for accounting ledger (default: "Ship expense")
 
@@ -574,7 +576,9 @@ class T5Starship:
                 raise InsufficientFundsError(
                     required=amount,
                     available=available)
-            self.owner.cash.post(time=0, amount=-int(amount), memo=memo)
+            self.owner.cash.post(time=int(time),
+                                 amount=-int(amount),
+                                 memo=memo)
         else:
             # Legacy: direct ship balance for ships without owners
             if amount > self._balance:
@@ -583,7 +587,7 @@ class T5Starship:
                     available=self._balance)
             self._balance -= amount
 
-    def load_passengers(self, world) -> Dict[str, int]:
+    def load_passengers(self, time: float, world) -> Dict[str, int]:
         """Search for and load passengers based on crew skills and capacity.
 
         Rolls for passenger availability using:
@@ -595,6 +599,7 @@ class T5Starship:
         Ship is credited with passenger fares.
 
         Args:
+            time: Simulation time for ledger entries
             world: T5World instance for the current location
 
         Returns:
@@ -627,7 +632,7 @@ class T5Starship:
             try:
                 npc = T5NPC(f"High Passenger {i+1}")
                 self.onload_passenger(npc, "high")
-                self.credit(PASSENGER_FARES["high"],
+                self.credit(time, PASSENGER_FARES["high"],
                             f"High passage fare at {self.location}")
                 loaded["high"] += 1
             except ValueError:
@@ -643,7 +648,7 @@ class T5Starship:
             try:
                 npc = T5NPC(f"Mid Passenger {i+1}")
                 self.onload_passenger(npc, "mid")
-                self.credit(PASSENGER_FARES["mid"],
+                self.credit(time, PASSENGER_FARES["mid"],
                             f"Mid passage fare at {self.location}")
                 loaded["mid"] += 1
             except ValueError:
@@ -655,7 +660,7 @@ class T5Starship:
             try:
                 npc = T5NPC(f"Low Passenger {i+1}")
                 self.onload_passenger(npc, "low")
-                self.credit(PASSENGER_FARES["low"],
+                self.credit(time, PASSENGER_FARES["low"],
                             f"Low passage fare at {self.location}")
                 loaded["low"] += 1
             except ValueError:
@@ -663,7 +668,7 @@ class T5Starship:
 
         return loaded
 
-    def sell_cargo_lot(self, lot: "T5Lot", game_state,
+    def sell_cargo_lot(self, time: float, lot: "T5Lot", game_state,
                        use_trader_skill: bool = True) -> dict:
         """Sell a cargo lot at the current
         world using broker and trader skills.
@@ -749,7 +754,7 @@ class T5Starship:
         profit = final_amount - purchase_cost
 
         # Execute transaction
-        self.credit(final_amount,
+        self.credit(time, final_amount,
                     f"Cargo sale: {lot.lot_id} at {self.location}")
         self.offload_lot(lot.serial, "cargo")
 
@@ -763,13 +768,14 @@ class T5Starship:
             'flux_info': flux_info
         }
 
-    def buy_cargo_lot(self, lot: "T5Lot") -> None:
+    def buy_cargo_lot(self, time: float, lot: "T5Lot") -> None:
         """Purchase and load a speculative cargo lot.
 
         Debits the ship's balance and loads the lot into cargo hold.
         If loading fails (e.g., capacity exceeded), the debit is rolled back.
 
         Args:
+            time: Simulation time for ledger entries
             lot: The cargo lot to purchase
 
         Raises:
@@ -778,18 +784,20 @@ class T5Starship:
             DuplicateItemError: If lot is already loaded
         """
         cost = lot.origin_value * lot.mass
-        self.debit(cost, f"Cargo purchase: {lot.lot_id} at {self.location}")
+        self.debit(time, cost, f"Cargo purchase: {lot.lot_id} "
+                   "at {self.location}")
         try:
             self.onload_lot(lot, "cargo")
         except (CapacityExceededError, DuplicateItemError):
             # Roll back debit if loading fails
-            self.credit(cost, f"Cargo purchase rollback: {lot.lot_id}")
+            self.credit(time, cost, f"Cargo purchase rollback: {lot.lot_id}")
             raise
 
-    def load_freight_lot(self, lot: "T5Lot") -> float:
+    def load_freight_lot(self, time: float, lot: "T5Lot") -> float:
         """Load a freight lot and receive payment.
 
         Args:
+            time: Simulation time for ledger entry
             lot: The freight lot to load
 
         Returns:
@@ -803,7 +811,8 @@ class T5Starship:
         self.onload_lot(lot, "freight")
         payment = FREIGHT_RATE_PER_TON * lot.mass
         self.credit(
-            payment, f"Freight income: {lot.mass}t from {lot.origin_name}")
+            time, payment, f"Freight income: {lot.mass}t "
+            f"from {lot.origin_name}")
         return payment
 
     def load_mail(self, game_state, destination: str) -> "T5Mail":

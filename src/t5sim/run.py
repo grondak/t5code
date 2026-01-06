@@ -7,6 +7,8 @@ reporting, and formatted results output.
 Usage:
     python -m t5sim.run --ships 50 --days 365 --verbose
     python -m t5sim.run --ships 10 --days 100 --year 1105
+    python -m t5sim.run --ships 2 --days 45 --ledger Trader_001
+    python -m t5sim.run --ships 2 --days 45 --ledger-all
 
 Arguments:
     --ships: Number of merchant starships to simulate
@@ -16,6 +18,8 @@ Arguments:
     --verbose: Print detailed status updates during simulation
     --year: Starting year in Traveller calendar
     --day: Starting day of year (1-365)
+    --ledger: Print ledger for specific ship (e.g., Trader_001)
+    --ledger-all: Print ledgers for all ships (verbose)
 
 Output:
     Prints summary with total voyages, cargo sales, profit,
@@ -25,7 +29,10 @@ Output:
 
 import argparse
 import time
-from t5sim.simulation import run_simulation
+from t5sim.simulation import run_simulation, Simulation
+from t5code.GameState import GameState
+from t5code import T5World
+from t5code import GameState as gs_module
 
 
 def main():
@@ -93,6 +100,17 @@ def main():
         default=360,
         help="Starting day of year, 1-365 (default: 360)",
     )
+    parser.add_argument(
+        "--ledger",
+        type=str,
+        default=None,
+        help="Print ledger for specific ship (e.g., Trader_001)",
+    )
+    parser.add_argument(
+        "--ledger-all",
+        action="store_true",
+        help="Print ledgers for all ships (verbose)",
+    )
 
     args = parser.parse_args()
 
@@ -103,17 +121,45 @@ def main():
     print(f"Duration: {args.days} days")
     print()
 
-    start_time = time.time()
-    results = run_simulation(
-        map_file=args.map,
-        ship_classes_file=args.ships_file,
-        num_ships=args.ships,
-        duration_days=args.days,
-        verbose=args.verbose,
-        starting_year=args.year,
-        starting_day=args.day,
-    )
-    elapsed_time = time.time() - start_time
+    # If ledger printing requested, need full Simulation object
+    if args.ledger or args.ledger_all:
+        # Initialize game state
+        game_state = GameState()
+        raw_worlds = gs_module.load_and_parse_t5_map(args.map)
+        raw_ships = gs_module.load_and_parse_t5_ship_classes(
+            args.ships_file
+        )
+
+        # Convert worlds to T5World objects
+        game_state.world_data = T5World.load_all_worlds(raw_worlds)
+        game_state.ship_classes = raw_ships
+
+        # Create and run simulation
+        start_time = time.time()
+        sim = Simulation(
+            game_state,
+            num_ships=args.ships,
+            duration_days=args.days,
+            verbose=args.verbose,
+            starting_year=args.year,
+            starting_day=args.day,
+        )
+        results = sim.run()
+        elapsed_time = time.time() - start_time
+    else:
+        # Use convenience function
+        start_time = time.time()
+        results = run_simulation(
+            map_file=args.map,
+            ship_classes_file=args.ships_file,
+            num_ships=args.ships,
+            duration_days=args.days,
+            verbose=args.verbose,
+            starting_year=args.year,
+            starting_day=args.day,
+        )
+        elapsed_time = time.time() - start_time
+        sim = None
 
     print("\n" + "=" * 70)
     print("SIMULATION RESULTS")
@@ -149,6 +195,16 @@ def main():
             f"  {i}. {ship['name']}: Cr{ship['balance']:,.2f} "
             f"({ship['voyages']} voyages)"
         )
+
+    # Print ledgers if requested
+    if sim:
+        if args.ledger_all:
+            sim.print_all_ledgers()
+        elif args.ledger:
+            try:
+                sim.print_ledger(args.ledger)
+            except ValueError as e:
+                print(f"\nError: {e}")
 
 
 if __name__ == "__main__":

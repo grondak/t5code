@@ -290,46 +290,46 @@ def test_initial_balance(crewed_ship):
 
 def test_credit_valid_amount(crewed_ship):
     """Verify crediting funds increases balance."""
-    crewed_ship.credit(100)
+    crewed_ship.credit(0, 100)
     assert crewed_ship.balance == pytest.approx(100.0)
 
 
 def test_debit_valid_amount(crewed_ship):
     """Verify debiting funds decreases balance."""
-    crewed_ship.credit(200)
-    crewed_ship.debit(50)
+    crewed_ship.credit(0, 200)
+    crewed_ship.debit(0, 50)
     assert crewed_ship.balance == pytest.approx(150.0)
 
 
 def test_credit_invalid_type(crewed_ship):
     """Verify crediting non-numeric raises TypeError."""
     with pytest.raises(TypeError):
-        crewed_ship.credit("not money")
+        crewed_ship.credit(0, "not money")
 
 
 def test_debit_invalid_type(crewed_ship):
     """Verify debiting non-numeric raises TypeError."""
     with pytest.raises(TypeError):
-        crewed_ship.debit(None)
+        crewed_ship.debit(0, None)
 
 
 def test_credit_negative_amount(crewed_ship):
     """Verify crediting negative amount raises ValueError."""
     with pytest.raises(ValueError):
-        crewed_ship.credit(-10)
+        crewed_ship.credit(0, -10)
 
 
 def test_debit_negative_amount(crewed_ship):
     """Verify debiting negative amount raises ValueError."""
     with pytest.raises(ValueError):
-        crewed_ship.debit(-5)
+        crewed_ship.debit(0, -5)
 
 
 def test_debit_insufficient_funds(crewed_ship):
     """Verify debiting more than balance raises InsufficientFundsError."""
-    crewed_ship.credit(50)
+    crewed_ship.credit(0, 50)
     with pytest.raises(InsufficientFundsError):
-        crewed_ship.debit(100)
+        crewed_ship.debit(0, 100)
 
 
 def test_best_crew_skill_known(crewed_ship):
@@ -561,7 +561,7 @@ def test_load_passengers(test_ship_data):
     # Load passengers at a world
     world = T5World("Rhylanor", test_world_data)
     initial_balance = ship.balance
-    loaded = ship.load_passengers(world)
+    loaded = ship.load_passengers(0, world)
 
     # Verify passengers were loaded
     assert isinstance(loaded, dict)
@@ -629,7 +629,7 @@ def test_load_passengers_exception_handling_high(test_ship_data):
             patch.object(ship,
                          'onload_passenger',
                          side_effect=mock_onload):
-        loaded = ship.load_passengers(world)
+        loaded = ship.load_passengers(0, world)
 
     # Should have loaded 2 high passengers before ValueError was raised
     assert loaded["high"] == 2
@@ -680,7 +680,7 @@ def test_load_passengers_exception_handling_mid(test_ship_data):
                          'low_passenger_availability', return_value=0), \
             patch.object(ship,
                          'onload_passenger', side_effect=mock_onload):
-        loaded = ship.load_passengers(world)
+        loaded = ship.load_passengers(0, world)
 
     # Should have loaded 1 mid passenger before ValueError was raised
     assert loaded["high"] == 0
@@ -731,7 +731,7 @@ def test_load_passengers_exception_handling_low(test_ship_data):
                          'low_passenger_availability', return_value=20), \
             patch.object(ship,
                          'onload_passenger', side_effect=mock_onload):
-        loaded = ship.load_passengers(world)
+        loaded = ship.load_passengers(0, world)
 
     # Should have loaded 3 low passengers before ValueError was raised
     assert loaded["high"] == 0
@@ -751,14 +751,17 @@ def test_sell_cargo_lot_without_trader(test_ship_data, setup_test_gamestate):
     # Create and load a cargo lot
     lot = T5Lot("Rhylanor", game_state)
     lot.mass = 5
-    ship.credit(lot.origin_value * lot.mass)  # Get funds to buy
-    ship.buy_cargo_lot(lot)
+    ship.credit(0, lot.origin_value * lot.mass)  # Get funds to buy
+    ship.buy_cargo_lot(0, lot)
 
     initial_balance = ship.balance
 
     # Mock the actual value roll to be predictable
     with patch.object(lot, 'consult_actual_value_table', return_value=1.2):
-        result = ship.sell_cargo_lot(lot, game_state, use_trader_skill=False)
+        result = ship.sell_cargo_lot(0,
+                                     lot,
+                                     game_state,
+                                     use_trader_skill=False)
 
     # Verify result structure
     assert 'final_amount' in result
@@ -796,10 +799,10 @@ def test_sell_cargo_lot_with_trader(test_ship_data, setup_test_gamestate):
     # Create and load a cargo lot
     lot = T5Lot("Rhylanor", game_state)
     lot.mass = 5
-    ship.credit(lot.origin_value * lot.mass)
-    ship.buy_cargo_lot(lot)
+    ship.credit(0, lot.origin_value * lot.mass)
+    ship.buy_cargo_lot(0, lot)
 
-    result = ship.sell_cargo_lot(lot, game_state, use_trader_skill=True)
+    result = ship.sell_cargo_lot(0, lot, game_state, use_trader_skill=True)
 
     # Verify flux_info is present when trader skill used
     assert result['flux_info'] is not None
@@ -827,7 +830,7 @@ def test_sell_cargo_lot_not_in_hold(test_ship_data, setup_test_gamestate):
     lot.mass = 5
 
     with pytest.raises(ValueError, match="not in cargo hold"):
-        ship.sell_cargo_lot(lot, game_state)
+        ship.sell_cargo_lot(0, lot, game_state)
 
 
 def test_buy_cargo_lot(test_ship_data, setup_test_gamestate):
@@ -843,9 +846,9 @@ def test_buy_cargo_lot(test_ship_data, setup_test_gamestate):
     cost = lot.origin_value * lot.mass
 
     # Give ship enough funds
-    ship.credit(cost)
+    ship.credit(0, cost)
     initial_balance = ship.balance
-    ship.buy_cargo_lot(lot)
+    ship.buy_cargo_lot(0, lot)
 
     # Verify balance decreased by cost
     assert ship.balance == initial_balance - cost
@@ -871,7 +874,7 @@ def test_buy_cargo_lot_insufficient_funds(
     lot.mass = 500  # Very expensive
 
     with pytest.raises(InsufficientFundsError):
-        ship.buy_cargo_lot(lot)
+        ship.buy_cargo_lot(0, lot)
 
     # Verify lot is NOT in cargo
     assert lot not in ship.cargo_manifest["cargo"]
@@ -891,11 +894,11 @@ def test_buy_cargo_lot_rollback_on_capacity_error(
     lot.mass = 1000  # Too big for small ship
 
     # Give ship enough money to buy
-    ship.credit(lot.origin_value * lot.mass + 1000000)
+    ship.credit(0, lot.origin_value * lot.mass + 1000000)
     initial_balance = ship.balance
 
     with pytest.raises(CapacityExceededError):
-        ship.buy_cargo_lot(lot)
+        ship.buy_cargo_lot(0, lot)
 
     # Balance should be unchanged (rolled back)
     assert ship.balance == initial_balance
@@ -914,7 +917,7 @@ def test_load_freight_lot(test_ship_data, setup_test_gamestate):
     lot.mass = 10
 
     initial_balance = ship.balance
-    payment = ship.load_freight_lot(lot)
+    payment = ship.load_freight_lot(0, lot)
 
     # Verify payment amount
     assert payment == FREIGHT_RATE_PER_TON * lot.mass
@@ -940,7 +943,7 @@ def test_load_freight_lot_no_capacity(test_ship_data, setup_test_gamestate):
     initial_balance = ship.balance
 
     with pytest.raises(CapacityExceededError):
-        ship.load_freight_lot(lot)
+        ship.load_freight_lot(0, lot)
 
     # Balance should be unchanged
     assert ship.balance == initial_balance
@@ -984,7 +987,7 @@ def test_sell_cargo_lot_world_not_found(test_ship_data, setup_test_gamestate):
 
     # Attempt to sell cargo at non-existent world should raise ValueError
     with pytest.raises(WorldNotFoundError):
-        ship.sell_cargo_lot(lot, empty_game_state, use_trader_skill=False)
+        ship.sell_cargo_lot(0, lot, empty_game_state, use_trader_skill=False)
 
 
 def test_buy_cargo_lot_rollback_preserves_balance(
@@ -996,7 +999,7 @@ def test_buy_cargo_lot_rollback_preserves_balance(
     ship_class = T5ShipClass("large", test_ship_data["large"])
     ship = T5Starship("Merchant", "Rhylanor", ship_class)
     initial_balance = 500000  # Large balance to avoid insufficient funds
-    ship.credit(initial_balance)
+    ship.credit(0, initial_balance)
 
     # Create a lot
     lot = T5Lot("Rhylanor", game_state)
@@ -1016,7 +1019,7 @@ def test_buy_cargo_lot_rollback_preserves_balance(
     # Attempt to buy cargo that will fail to load
     # should raise CapacityExceededError
     with pytest.raises(CapacityExceededError):
-        ship.buy_cargo_lot(lot)
+        ship.buy_cargo_lot(0, lot)
 
     # Restore original method
     ship.onload_lot = original_onload

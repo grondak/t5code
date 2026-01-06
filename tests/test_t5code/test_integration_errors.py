@@ -178,7 +178,7 @@ def test_debit_more_than_balance(game_state):
 
     # Try to debit more than we have (should raise ValueError)
     with pytest.raises(InsufficientFundsError):
-        ship.debit(initial_balance + 1000)
+        ship.debit(0, initial_balance + 1000)
 
 
 def test_json_with_missing_classifications():
