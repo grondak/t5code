@@ -26,6 +26,7 @@ from .T5Finance import (
     Ledger,
     InvalidTransferError,
 )
+from .T5Company import T5Company, CompanyError
 from .T5Lot import T5Lot
 from .T5Mail import T5Mail
 from .T5NPC import T5NPC
@@ -61,6 +62,7 @@ __all__ = [
     "LedgerEntry",
     "Account",
     "Ledger",
+    "T5Company",
     # Exceptions
     "T5Error",
     "InsufficientFundsError",
@@ -71,6 +73,7 @@ __all__ = [
     "InvalidLotTypeError",
     "InvalidThresholdError",
     "InvalidTransferError",
+    "CompanyError",
     # Functions
     "letter_to_tech_level",
     "tech_level_to_letter",
