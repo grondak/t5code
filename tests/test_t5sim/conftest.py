@@ -11,6 +11,7 @@ def test_ship_data():
     return {
         "small": {
             "class_name": "small",
+            "ship_cost": 25.0,
             "jump_rating": 1,
             "maneuver_rating": 2,
             "cargo_capacity": 10,
@@ -22,6 +23,7 @@ def test_ship_data():
         },
         "large": {
             "class_name": "large",
+            "ship_cost": 150.0,
             "jump_rating": 3,
             "maneuver_rating": 3,
             "cargo_capacity": 200,

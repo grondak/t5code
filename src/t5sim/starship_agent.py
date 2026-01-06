@@ -196,6 +196,14 @@ class StarshipAgent:
         dest_display = self._get_world_display_name(self.ship.destination)
         crew_info = self._format_crew_info()
 
+        # Get ship cost from ship class data
+        ship_cost_mcr = 0.0
+        ship_class_data = self.simulation.game_state.ship_classes.get(
+            self.ship.ship_class
+        )
+        if ship_class_data:
+            ship_cost_mcr = ship_class_data.get("ship_cost", 0.0)
+
         # Build company info if ship has an owner
         company_info = ""
         if self.ship.owner:
@@ -204,6 +212,7 @@ class StarshipAgent:
 
         self._report_status(context=f"{self.ship.ship_name} "
                             f"({self.ship.ship_class}) starting simulation, "
+                            f"cost: MCr{ship_cost_mcr}, "
                             f"destination: {dest_display}\n"
                             f"{company_info}"
                             f"  Crew: {crew_info}")

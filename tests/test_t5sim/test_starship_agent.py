@@ -1103,6 +1103,7 @@ def test_starship_agent_no_profitable_destination_verbose(game_state, capsys):
     # Use a ship with Jump-3 to ensure worlds in range
     ship_class_data = {
         "class_name": "Test Trader",
+        "ship_cost": 45.0,
         "jump_rating": 3,
         "maneuver_rating": 2,
         "cargo_capacity": 50,
@@ -1145,6 +1146,7 @@ def test_starship_agent_no_worlds_in_range_verbose(game_state, capsys):
     # Use a ship with Jump-0 (no range)
     ship_class_data = {
         "class_name": "No Jump",
+        "ship_cost": 20.0,
         "jump_rating": 0,
         "maneuver_rating": 2,
         "cargo_capacity": 50,

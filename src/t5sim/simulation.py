@@ -511,9 +511,16 @@ class Simulation:
         world = self.game_state.world_data.get(location)
         location_display = world.full_name() if world else location
 
+        # Get ship cost from ship class data
+        ship_cost_mcr = 0.0
+        ship_class_data = self.game_state.ship_classes.get(ship_class)
+        if ship_class_data:
+            ship_cost_mcr = ship_class_data.get("ship_cost", 0.0)
+
         print(f"\n{'='*80}")
         print(f"LEDGER FOR {company.name} ({ship_name}, "
               f"a {ship_class} @ {location_display})")
+        print(f"Ship Cost: MCr{ship_cost_mcr}")
         print(f"Final Balance: Cr{company.balance:,.0f}")
         print(f"{'='*80}")
         print(f"{'Date':<15} {'Amount':>15} {'Balance':>15} {'Memo':<35}")

@@ -1,5 +1,5 @@
-class_name,jump_rating,maneuver_rating,powerplant_rating,cargo_capacity,staterooms,low_berths,crew_positions,crew_ranks,jump_fuel_capacity,ops_fuel_capacity
-Scout,2,2,2,10,0,0,0BCG,0123,20,2
-Freighter,1,1,1,82,9,20,0BCDF,01234,20,2
-Frigate,3,3,3,0,0,0,0BCCCDG,0122234,108,10
-Liner,1,2,2,120,20,20,0ABBBCCCCDEFNNN,012221222333444,180,18
+class_name,ship_cost,jump_rating,maneuver_rating,powerplant_rating,cargo_capacity,staterooms,low_berths,crew_positions,crew_ranks,jump_fuel_capacity,ops_fuel_capacity
+Scout,70.3,2,2,2,10,0,0,0BCG,0123,20,2
+Freighter,61.1,1,1,1,82,9,20,0BCDF,01234,20,2
+Frigate,228.7,3,3,3,0,0,0,0BCCCDG,0122234,108,10
+Liner,104.1,1,2,2,120,20,20,0ABBBCCCCDEFNNN,012221222333444,180,18
