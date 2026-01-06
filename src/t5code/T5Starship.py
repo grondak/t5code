@@ -511,16 +511,25 @@ class T5Starship:
     def balance(self):
         """Ship's current credit balance.
 
+        Returns owner's company balance if ship has an owner,
+        otherwise returns ship's internal balance.
+
         Returns:
             Current balance in credits (float)
         """
+        if self.owner:
+            return self.owner.balance
         return self._balance
 
-    def credit(self, amount):
-        """Add credits to the ship's balance.
+    def credit(self, amount, memo: str = "Ship income"):
+        """Add credits to the ship's balance or owner's cash account.
+
+        If ship has an owner company, posts credit to company's cash account.
+        Otherwise, updates ship's internal balance.
 
         Args:
             amount: Credits to add (int or float)
+            memo: Description for accounting ledger (default: "Ship income")
 
         Raises:
             TypeError: If amount is not a number
@@ -530,13 +539,23 @@ class T5Starship:
             raise TypeError("Amount must be a number")
         if amount < 0:
             raise ValueError("Cannot credit a negative amount")
-        self._balance += amount
 
-    def debit(self, amount):
-        """Subtract money from the ship's balance.
+        if self.owner:
+            # Use company's cash account for owner-operated ships
+            self.owner.cash.post(time=0, amount=int(amount), memo=memo)
+        else:
+            # Legacy: direct ship balance for ships without owners
+            self._balance += amount
+
+    def debit(self, amount, memo: str = "Ship expense"):
+        """Subtract money from the ship's balance or owner's cash account.
+
+        If ship has an owner company, posts debit to company's cash account.
+        Otherwise, updates ship's internal balance.
 
         Args:
             amount: Amount of credits to debit
+            memo: Description for accounting ledger (default: "Ship expense")
 
         Raises:
             TypeError: If amount is not a number
@@ -547,11 +566,22 @@ class T5Starship:
             raise TypeError("Amount must be a number")
         if amount < 0:
             raise ValueError("Cannot debit a negative amount")
-        if amount > self._balance:
-            raise InsufficientFundsError(
-                required=amount,
-                available=self._balance)
-        self._balance -= amount
+
+        if self.owner:
+            # Use company's cash account for owner-operated ships
+            available = self.owner.balance
+            if amount > available:
+                raise InsufficientFundsError(
+                    required=amount,
+                    available=available)
+            self.owner.cash.post(time=0, amount=-int(amount), memo=memo)
+        else:
+            # Legacy: direct ship balance for ships without owners
+            if amount > self._balance:
+                raise InsufficientFundsError(
+                    required=amount,
+                    available=self._balance)
+            self._balance -= amount
 
     def load_passengers(self, world) -> Dict[str, int]:
         """Search for and load passengers based on crew skills and capacity.
@@ -597,7 +627,8 @@ class T5Starship:
             try:
                 npc = T5NPC(f"High Passenger {i+1}")
                 self.onload_passenger(npc, "high")
-                self.credit(PASSENGER_FARES["high"])
+                self.credit(PASSENGER_FARES["high"],
+                            f"High passage fare at {self.location}")
                 loaded["high"] += 1
             except ValueError:
                 break
@@ -612,7 +643,8 @@ class T5Starship:
             try:
                 npc = T5NPC(f"Mid Passenger {i+1}")
                 self.onload_passenger(npc, "mid")
-                self.credit(PASSENGER_FARES["mid"])
+                self.credit(PASSENGER_FARES["mid"],
+                            f"Mid passage fare at {self.location}")
                 loaded["mid"] += 1
             except ValueError:
                 break
@@ -623,7 +655,8 @@ class T5Starship:
             try:
                 npc = T5NPC(f"Low Passenger {i+1}")
                 self.onload_passenger(npc, "low")
-                self.credit(PASSENGER_FARES["low"])
+                self.credit(PASSENGER_FARES["low"],
+                            f"Low passage fare at {self.location}")
                 loaded["low"] += 1
             except ValueError:
                 break
@@ -716,7 +749,8 @@ class T5Starship:
         profit = final_amount - purchase_cost
 
         # Execute transaction
-        self.credit(final_amount)
+        self.credit(final_amount,
+                    f"Cargo sale: {lot.lot_id} at {self.location}")
         self.offload_lot(lot.serial, "cargo")
 
         return {
@@ -744,12 +778,12 @@ class T5Starship:
             DuplicateItemError: If lot is already loaded
         """
         cost = lot.origin_value * lot.mass
-        self.debit(cost)
+        self.debit(cost, f"Cargo purchase: {lot.lot_id} at {self.location}")
         try:
             self.onload_lot(lot, "cargo")
         except (CapacityExceededError, DuplicateItemError):
-            # Rollback debit if loading fails
-            self.credit(cost)
+            # Roll back debit if loading fails
+            self.credit(cost, f"Cargo purchase rollback: {lot.lot_id}")
             raise
 
     def load_freight_lot(self, lot: "T5Lot") -> float:
@@ -768,7 +802,8 @@ class T5Starship:
 
         self.onload_lot(lot, "freight")
         payment = FREIGHT_RATE_PER_TON * lot.mass
-        self.credit(payment)
+        self.credit(
+            payment, f"Freight income: {lot.mass}t from {lot.origin_name}")
         return payment
 
     def load_mail(self, game_state, destination: str) -> "T5Mail":

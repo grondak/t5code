@@ -43,13 +43,21 @@ Built for realistic simulation of merchant starship operations, trade economics,
 - **Profitable destination finding** - evaluate all reachable worlds for trade opportunities
 - **Crew skill system** with position-based skill checks (Pilot, Engineer, Steward, Admin, etc.)
 - **Property-based API** for clean, intuitive access to ship state
+- **Company ownership integration** - starships owned by trading companies
+  - All financial transactions flow through owner company accounts
+  - Ships reference owner via optional `owner` attribute (backward compatible)
+  - Balance property automatically returns company balance when owner exists
+  - Maintains legacy behavior for ships without owners
 - **Double-entry accounting system** with Account, Ledger, and LedgerEntry classes
   - Transaction history with timestamps and counterparty tracking
   - Immutable audit trail for all financial operations
   - Support for credits, debits, and inter-account transfers
+  - Keyword-only parameters ensure correct usage
 - **Company management** with T5Company for multi-ship trading operations
   - Owner capital tracking and corporate accounting
-  - Centralized cash management for fleets
+  - Centralized cash management with ledger integration
+  - Every ship transaction creates ledger entries with descriptive memos
+  - Complete financial audit trail from ship operations
 
 ### 🌍 World System
 - **T5 world generation** with UWP (Universal World Profile) support
@@ -112,18 +120,23 @@ pip install -e ".[all]"
 ### Basic Example
 
 ```python
-from t5code import GameState, T5Starship, T5World, T5Lot
+from t5code import GameState, T5Starship, T5Company, T5World, T5Lot
 
 # Initialize game data
 game_state = GameState()
 game_state.world_data = GameState.load_and_parse_t5_map("resources/t5_map.txt")
 game_state.ship_classes = GameState.load_and_parse_t5_ship_classes("resources/t5_ship_classes.csv")
 
-# Create a starship
-ship = T5Starship("Free Trader Beowulf", "A2", game_state)
-ship.credit(1_000_000)  # Starting capital
+# Create a trading company
+company = T5Company("Beowulf Trading Inc", starting_capital=1_000_000)
 
-# Load cargo
+# Create a starship owned by the company
+ship = T5Starship("Free Trader Beowulf", "A2", game_state, owner=company)
+
+# Check company balance (ship transactions flow through company)
+print(f"Company: {company.name}, Balance: Cr{company.balance:,.0f}")
+
+# Load cargo (automatically debits company account)
 world = game_state.world_data["Regina"]
 lot = T5Lot("Regina", game_state)
 ship.buy_cargo_lot(lot)
@@ -132,7 +145,15 @@ ship.buy_cargo_lot(lot)
 ship.set_course_for("Efate")
 print(f"Cargo manifest: {len(ship.cargo_manifest['cargo'])} lots")
 print(f"Destination: {ship.destination}")
-print(f"Balance: Cr{ship.balance:,.0f}")
+print(f"Company balance after purchase: Cr{company.balance:,.0f}")
+
+# Sell cargo at destination (automatically credits company account)
+ship.sell_cargo_lot(lot, game_state)
+print(f"Company balance after sale: Cr{company.balance:,.0f}")
+
+# View complete transaction history
+for entry in company.cash.ledger:
+    print(f"[{entry.time}] {entry.memo}: Cr{entry.amount:,.0f}")
 ```
 
 ### Running the Example Simulation
@@ -170,53 +191,58 @@ python -m t5sim.run --ships 5 --days 30 --year 1105 --day 1 --verbose
 **Verbose output example (Traveller date format DDD.FF-YYYY with fractional days):**
 ```
 Trader_001 (Liner) starting simulation, destination: Derchon/Lunion (2024)
+  Company: Trader_001 Inc, balance: Cr1,000,000
   Crew: Captain: 80%, Pilot: Pilot-2, Astrogator 1: Astrogator-1, Astrogator 2: Astrogator-1, Astrogator 3: Astrogator-1, 
   Engineer 1: Engineer-3, Engineer 2: Engineer-2, Engineer 3: Engineer-2, Engineer 4: Engineer-2, Medic: Medic-2, 
   Steward: Steward-3, Freightmaster, Cook 1, Cook 2, Cook 3
 
 Trader_002 (Scout) starting simulation, destination: Powaza/Rhylanor (3220)
+  Company: Trader_002 Inc, balance: Cr1,000,000
   Crew: Captain: 76% Pilot-2, Astrogator: Astrogator-2, Engineer: Engineer-3, Sensop
-[360.00-1104] Trader_001 at Shirene/Lunion (2125) (DOCKED): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
+  
+[360.00-1104] Trader_001 at Shirene/Lunion (2125) (DOCKED): company=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
 
-[360.00-1104] Trader_002 at Cipatwe/Rhylanor (3118) (DOCKED): balance=Cr1,000,000, hold (0t/10.0t, 0%), 
+[360.00-1104] Trader_002 at Cipatwe/Rhylanor (3118) (DOCKED): company=Cr1,000,000, hold (0t/10.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
 
-[360.25-1104] Trader_001 at Shirene/Lunion (2125) (OFFLOADING): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
+[360.25-1104] Trader_001 at Shirene/Lunion (2125) (OFFLOADING): company=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
 
-[360.75-1104] Trader_001 at Shirene/Lunion (2125) (SELLING_CARGO): balance=Cr1,000,000, hold (0t/120.0t, 0%), 
+[360.75-1104] Trader_001 at Shirene/Lunion (2125) (SELLING_CARGO): company=Cr1,000,000, hold (0t/120.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | cargo sales complete
 
-[360.75-1104] Trader_002 at Cipatwe/Rhylanor (3118) (LOADING_FREIGHT): balance=Cr1,009,000, hold (9t/10.0t, 90%), 
+[360.75-1104] Trader_002 at Cipatwe/Rhylanor (3118) (LOADING_FREIGHT): company=Cr1,009,000, hold (9t/10.0t, 90%), 
   cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 9t freight lot, income Cr9,000
 
-[361.75-1104] Trader_001 at Shirene/Lunion (2125) (LOADING_FREIGHT): balance=Cr1,005,000, hold (5t/120.0t, 4%), 
+[361.75-1104] Trader_001 at Shirene/Lunion (2125) (LOADING_FREIGHT): company=Cr1,005,000, hold (5t/120.0t, 4%), 
   cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 5t freight lot, income Cr5,000
 
-[361.75-1104] Trader_002 at Cipatwe/Rhylanor (3118) (LOADING_CARGO): balance=Cr1,006,400, hold (10.0t/10.0t, 100%), 
+[361.75-1104] Trader_002 at Cipatwe/Rhylanor (3118) (LOADING_CARGO): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
   cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 1 cargo lot(s), 1.0t total
 
-[362.75-1104] Trader_001 at Shirene/Lunion (2125) (LOADING_FREIGHT): balance=Cr1,005,000, hold (5t/120.0t, 4%), 
+[362.75-1104] Trader_001 at Shirene/Lunion (2125) (LOADING_FREIGHT): company=Cr1,005,000, hold (5t/120.0t, 4%), 
   cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 4% full, need 80% (continuing freight loading, attempt 0.0)
 
-[363.20-1104] Trader_002 at Cipatwe/Rhylanor (3118) (MANEUVERING_TO_JUMP): balance=Cr1,006,400, hold (10.0t/10.0t, 100%), 
+[363.20-1104] Trader_002 at Cipatwe/Rhylanor (3118) (MANEUVERING_TO_JUMP): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
   cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | entering jump space to Powaza/Rhylanor (3220)
 
-[363.20-1104] Trader_002 at jump space (JUMPING): balance=Cr1,006,400, hold (10.0t/10.0t, 100%), 
+[363.20-1104] Trader_002 at jump space (JUMPING): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
   cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | picked destination 'Cipatwe' because it showed cargo profit of +Cr1900/ton
 
-[005.20-1105] Trader_002 at jump space (JUMPING): balance=Cr1,006,400, hold (10.0t/10.0t, 100%), 
+[005.20-1105] Trader_002 at jump space (JUMPING): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
   cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | arrived at Powaza/Rhylanor (3220)
 
-[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (OFFLOADING): balance=Cr1,006,400, hold (1.0t/10.0t, 10%), 
+[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (OFFLOADING): company=Cr1,006,400, hold (1.0t/10.0t, 10%), 
   cargo=1 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
 
-[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (SELLING_CARGO): balance=Cr1,016,498, hold (0.0t/10.0t, 0%), 
+[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (SELLING_CARGO): company=Cr1,016,498, hold (0.0t/10.0t, 0%), 
   cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | sold cargo lot for Cr7,498 profit
 ```
 
 **Key verbose output features:**
+- **Company balance tracking**: Shows `company=CrX,XXX,XXX` instead of `balance=` for owned ships
+- **Company announcement at startup**: Displays company name and starting capital
 - **Crew roster displayed at startup**: Shows all crew members with their skills
   - Format for captain: "Captain: X% Skill-Level" where X is cargo departure threshold
   - Format for crew: "Position: Skill-Level" or "Position N: Skill-Level" for multiple
@@ -241,7 +267,7 @@ Trader_002 (Scout) starting simulation, destination: Powaza/Rhylanor (3220)
   - `attempt 0.0` when freight obtained (hope mechanism active)
   - Counter increments only on failed attempts, captain gives up at 1.0 (4 cycles)
   - Different captains have different thresholds (65%-95% range)
-- Full status header: day, location, state, balance, hold capacity with percentage
+- Full status header: day, location, state, company/balance, hold capacity with percentage
 - Single-line format with pipe separator for actions
 - Financial tracking: income from freight/passengers, profit from cargo sales
 - Hold percentage helps assess cargo capacity at a glance
@@ -494,6 +520,8 @@ Contributions welcome! This project follows:
 - [x] Intelligent freight loading with hope mechanism
 - [x] Captain/Pilot flexible architecture with correct display formatting
 - [x] Zero cargo capacity ship handling (Frigates operate without freight/cargo)
+- [x] Company ownership integration with double-entry accounting
+- [x] Complete financial audit trail through ledger system
 - [ ] Enhanced statistics and visualization
 - [ ] Advanced pathfinding with multi-jump routes
 - [ ] Ship maintenance and repair mechanics
