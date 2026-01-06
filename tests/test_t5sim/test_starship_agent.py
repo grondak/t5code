@@ -1161,8 +1161,10 @@ def test_starship_agent_no_worlds_in_range_verbose(game_state, capsys):
     # get_worlds_in_jump_range to return empty
     with patch.object(ship, 'find_profitable_destinations', return_value=[]):
         with patch.object(ship, 'get_worlds_in_jump_range', return_value=[]):
-            # Run through loading passengers to departing
-            env.run(until=1.0)
+            # Run through loading passengers,
+            # loading fuel, departing to jumping
+            # Need more time to complete full cycle
+            env.run(until=10.0)
 
     captured = capsys.readouterr()
     # Should report no worlds in jump range

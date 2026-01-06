@@ -1,6 +1,6 @@
 """Starship state machine for discrete-event simulation.
 
-Defines the 12-state finite state machine that merchant starships
+Defines the 13-state finite state machine that merchant starships
 follow during trading operations between worlds. Each state has a
 duration and specific game actions, creating a realistic trading
 cycle.
@@ -11,13 +11,14 @@ enabling parallel execution of multiple independent ships.
 
 State Categories:
     - Arrival (3 states): MANEUVERING_TO_PORT -> ARRIVING -> DOCKED
-    - Business (5 states): OFFLOADING -> SELLING_CARGO ->
+    - Business (6 states): OFFLOADING -> SELLING_CARGO ->
                           LOADING_FREIGHT -> LOADING_CARGO ->
-                          LOADING_MAIL -> LOADING_PASSENGERS
+                          LOADING_MAIL -> LOADING_PASSENGERS ->
+                          LOADING_FUEL
     - Departure (2 states): DEPARTING -> MANEUVERING_TO_JUMP
     - Transit (1 state): JUMPING (7 days)
 
-Total cycle duration: ~10.35 days minimum (varies with loading)
+Total cycle duration: ~10.70 days minimum (varies with loading)
 """
 
 from enum import Enum, auto
@@ -28,7 +29,7 @@ from dataclasses import dataclass, field
 class StarshipState(Enum):
     """States a merchant starship goes through during trading.
 
-    12-state finite state machine representing the complete cycle
+    13-state finite state machine representing the complete cycle
     of merchant trading operations. Each state represents a
     distinct phase with specific duration and actions.
 
@@ -45,6 +46,7 @@ class StarshipState(Enum):
     LOADING_CARGO = auto()  # Buying speculative cargo
     LOADING_MAIL = auto()  # Loading mail bundles
     LOADING_PASSENGERS = auto()  # Boarding passengers
+    LOADING_FUEL = auto()  # Refueling jump and ops tanks
 
     # Departure sequence
     DEPARTING = auto()  # Ready to leave, final checks
@@ -92,7 +94,8 @@ STATE_TRANSITIONS = {
     StarshipState.LOADING_FREIGHT: [StarshipState.LOADING_CARGO],
     StarshipState.LOADING_CARGO: [StarshipState.LOADING_MAIL],
     StarshipState.LOADING_MAIL: [StarshipState.LOADING_PASSENGERS],
-    StarshipState.LOADING_PASSENGERS: [StarshipState.DEPARTING],
+    StarshipState.LOADING_PASSENGERS: [StarshipState.LOADING_FUEL],
+    StarshipState.LOADING_FUEL: [StarshipState.DEPARTING],
     StarshipState.DEPARTING: [StarshipState.MANEUVERING_TO_JUMP],
     StarshipState.MANEUVERING_TO_JUMP: [StarshipState.JUMPING],
     StarshipState.JUMPING: [StarshipState.MANEUVERING_TO_PORT],
@@ -110,6 +113,7 @@ STATE_DURATIONS = {
     StarshipState.LOADING_CARGO: 0.5,  # 12 hours (market shopping)
     StarshipState.LOADING_MAIL: 0.1,  # 2-3 hours (paperwork)
     StarshipState.LOADING_PASSENGERS: 0.25,  # 6 hours (boarding)
+    StarshipState.LOADING_FUEL: 0.35,  # 8-9 hours (refueling operations)
     StarshipState.DEPARTING: 0.1,  # 2-3 hours (final checks)
     StarshipState.MANEUVERING_TO_JUMP: 0.5,  # 12 hours (travel to 100D)
     StarshipState.JUMPING: 7.0,  # 7 days in jump space (168 hours)
@@ -193,6 +197,7 @@ def describe_state(state: StarshipState) -> str:
         StarshipState.LOADING_CARGO: "Purchasing speculative cargo",
         StarshipState.LOADING_MAIL: "Loading mail bundles for delivery",
         StarshipState.LOADING_PASSENGERS: "Boarding high/mid/low passengers",
+        StarshipState.LOADING_FUEL: "Refueling jump and operations tanks",
         StarshipState.DEPARTING: "Final departure checks and clearance",
         StarshipState.MANEUVERING_TO_JUMP:
             "Traveling to jump point (100D limit)",
@@ -218,6 +223,7 @@ TRADING_VOYAGE_CYCLE = [
     StarshipState.LOADING_CARGO,
     StarshipState.LOADING_MAIL,
     StarshipState.LOADING_PASSENGERS,
+    StarshipState.LOADING_FUEL,
     # Departure
     StarshipState.DEPARTING,
     StarshipState.MANEUVERING_TO_JUMP,

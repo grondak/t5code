@@ -1,6 +1,6 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-364%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-381%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
 [![Statements](https://img.shields.io/badge/statements-1319%20%7C%203%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
@@ -209,43 +209,43 @@ Trader_002 (Scout) starting simulation, destination: Powaza/Rhylanor (3220)
   Crew: Captain: 76% Pilot-2, Astrogator: Astrogator-2, Engineer: Engineer-3, Sensop
   
 [360.00-1104] Trader_001 at Shirene/Lunion (2125) (DOCKED): company=Cr1,000,000, hold (0t/120.0t, 0%), 
-  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+  fuel (jump 180/180t, ops 18/18t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
 
 [360.00-1104] Trader_002 at Cipatwe/Rhylanor (3118) (DOCKED): company=Cr1,000,000, hold (0t/10.0t, 0%), 
-  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+  fuel (jump 20/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
 
 [360.25-1104] Trader_001 at Shirene/Lunion (2125) (OFFLOADING): company=Cr1,000,000, hold (0t/120.0t, 0%), 
-  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
+  fuel (jump 180/180t, ops 18/18t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
 
 [360.75-1104] Trader_001 at Shirene/Lunion (2125) (SELLING_CARGO): company=Cr1,000,000, hold (0t/120.0t, 0%), 
-  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | cargo sales complete
+  fuel (jump 180/180t, ops 18/18t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | cargo sales complete
 
 [360.75-1104] Trader_002 at Cipatwe/Rhylanor (3118) (LOADING_FREIGHT): company=Cr1,009,000, hold (9t/10.0t, 90%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 9t freight lot, income Cr9,000
+  fuel (jump 20/20t, ops 2/2t), cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 9t freight lot, income Cr9,000
 
 [361.75-1104] Trader_001 at Shirene/Lunion (2125) (LOADING_FREIGHT): company=Cr1,005,000, hold (5t/120.0t, 4%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 5t freight lot, income Cr5,000
+  fuel (jump 180/180t, ops 18/18t), cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 5t freight lot, income Cr5,000
 
 [361.75-1104] Trader_002 at Cipatwe/Rhylanor (3118) (LOADING_CARGO): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
-  cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 1 cargo lot(s), 1.0t total
+  fuel (jump 20/20t, ops 2/2t), cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 1 cargo lot(s), 1.0t total
 
 [362.75-1104] Trader_001 at Shirene/Lunion (2125) (LOADING_FREIGHT): company=Cr1,005,000, hold (5t/120.0t, 4%), 
-  cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 4% full, need 80% (continuing freight loading, attempt 0.0)
+  fuel (jump 180/180t, ops 18/18t), cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 4% full, need 80% (continuing freight loading, attempt 0.0)
 
 [363.20-1104] Trader_002 at Cipatwe/Rhylanor (3118) (MANEUVERING_TO_JUMP): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
-  cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | entering jump space to Powaza/Rhylanor (3220)
+  fuel (jump 20/20t, ops 2/2t), cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | entering jump space to Powaza/Rhylanor (3220)
 
 [363.20-1104] Trader_002 at jump space (JUMPING): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
-  cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | picked destination 'Cipatwe' because it showed cargo profit of +Cr1900/ton
+  fuel (jump 20/20t, ops 2/2t), cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | picked destination 'Cipatwe' because it showed cargo profit of +Cr1900/ton
 
 [005.20-1105] Trader_002 at jump space (JUMPING): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
-  cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | arrived at Powaza/Rhylanor (3220)
+  fuel (jump 0/20t, ops 2/2t), cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | arrived at Powaza/Rhylanor (3220)
 
 [006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (OFFLOADING): company=Cr1,006,400, hold (1.0t/10.0t, 10%), 
-  cargo=1 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
+  fuel (jump 0/20t, ops 2/2t), cargo=1 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
 
 [006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (SELLING_CARGO): company=Cr1,016,498, hold (0.0t/10.0t, 0%), 
-  cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | sold cargo lot for Cr7,498 profit
+  fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | sold cargo lot for Cr7,498 profit
 ```
 
 **Key verbose output features:**
@@ -260,6 +260,11 @@ Trader_002 (Scout) starting simulation, destination: Powaza/Rhylanor (3220)
   - Ships with Captain+Pilot display both separately with specialized roles
   - Ships with zero cargo capacity (Frigates): Display correctly, skip freight loading
 - Ship class shown at startup (Scout, Freighter, Frigate, Liner)
+- **Fuel status tracking**: Shows `fuel (jump X/Yt, ops A/Bt)` for both jump and operational fuel
+  - Jump fuel depletes to 0/capacity after each jump, refills at port
+  - Ops fuel typically stays full unless ship has extended operations
+  - Example: `fuel (jump 180/180t, ops 18/18t)` for full Liner tanks
+  - Example: `fuel (jump 0/20t, ops 2/2t)` for Scout after jump-2 transit
 - **Traveller date format**: `[DDD.FF-YYYY]` format with fractional days for hour-by-hour tracking
   - Examples: `[360.00-1104]` (day start), `[360.25-1104]` (6 hours), `[360.75-1104]` (18 hours)
 - **Year rollover**: Automatically transitions from day 365 to day 001 of next year
@@ -275,10 +280,10 @@ Trader_002 (Scout) starting simulation, destination: Powaza/Rhylanor (3220)
   - `attempt 0.0` when freight obtained (hope mechanism active)
   - Counter increments only on failed attempts, captain gives up at 1.0 (4 cycles)
   - Different captains have different thresholds (65%-95% range)
-- Full status header: day, location, state, company/balance, hold capacity with percentage
+- Full status header: day, location, state, company/balance, hold capacity, fuel levels
 - Single-line format with pipe separator for actions
 - Financial tracking: income from freight/passengers, profit from cargo sales
-- Hold percentage helps assess cargo capacity at a glance
+- Hold and fuel percentages help assess ship readiness at a glance
 - State names match the action just completed
 
 **Aggregate statistics output:**

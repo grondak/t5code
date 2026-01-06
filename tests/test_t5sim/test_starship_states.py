@@ -59,17 +59,18 @@ def test_describe_state():
 
 def test_trading_voyage_cycle():
     """Test that voyage cycle contains all expected states."""
-    assert len(TRADING_VOYAGE_CYCLE) == 12
+    assert len(TRADING_VOYAGE_CYCLE) == 13
     assert StarshipState.DOCKED in TRADING_VOYAGE_CYCLE
     assert StarshipState.JUMPING in TRADING_VOYAGE_CYCLE
+    assert StarshipState.LOADING_FUEL in TRADING_VOYAGE_CYCLE
     assert TRADING_VOYAGE_CYCLE[0] == StarshipState.MANEUVERING_TO_PORT
 
 
 def test_voyage_cycle_total_time():
     """Test that voyage cycle time adds up correctly."""
     total = sum(get_state_duration(state) for state in TRADING_VOYAGE_CYCLE)
-    # Should be around 10.8 days (reduced from 12.8)
-    assert 10.0 < total < 11.0
+    # Should be around 11.15 days (10.8 + 0.35 for LOADING_FUEL)
+    assert 11.0 < total < 11.5
 
 
 def test_print_voyage_summary(capsys):

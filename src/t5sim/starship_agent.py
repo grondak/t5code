@@ -2,13 +2,14 @@
 
 Implements a SimPy process that uses t5code mechanics and the
 starship state machine to simulate intelligent trading operations.
-The agent implements a 12-state finite state machine representing
+The agent implements a 13-state finite state machine representing
 the complete cycle of merchant trading between worlds.
 
 State Machine:
     - Arrival: MANEUVERING_TO_PORT -> ARRIVING -> DOCKED
     - Business: OFFLOADING -> SELLING_CARGO -> LOADING_FREIGHT ->
-                LOADING_CARGO -> LOADING_MAIL -> LOADING_PASSENGERS
+                LOADING_CARGO -> LOADING_MAIL -> LOADING_PASSENGERS ->
+                LOADING_FUEL
     - Departure: DEPARTING -> MANEUVERING_TO_JUMP -> JUMPING
 
 Trading Strategy:
@@ -16,6 +17,7 @@ Trading Strategy:
     - Only purchases cargo profitable at destination
     - Waits for minimum hold capacity before departing
     - Uses crew skills for broker negotiations and liaison work
+    - Refuels before departure (Cr500/ton)
 """
 
 from typing import TYPE_CHECKING
@@ -112,12 +114,20 @@ class StarshipAgent:
             else f"balance=Cr{self.ship.balance:,.0f}"
         )
 
+        # Extract fuel status
+        jump_fuel_current = self.ship.jump_fuel
+        jump_fuel_max = self.ship.jump_fuel_capacity
+        ops_fuel_current = self.ship.ops_fuel
+        ops_fuel_max = self.ship.ops_fuel_capacity
+
         status = (
             f"[{date_str}] {self.ship.ship_name} "
             f"at {location_display} ({display_state.name}): "
             f"{balance_str}, "
             f"hold ({self.ship.cargo_size}t/{self.ship.hold_size}t, "
             f"{cargo_pct:.0f}%), "
+            f"fuel (jump {jump_fuel_current}/{jump_fuel_max}t, "
+            f"ops {ops_fuel_current}/{ops_fuel_max}t), "
             f"cargo={cargo_lots} lots, "
             f"freight={freight_lots} lots, "
             f"passengers=({high_pax}H/{mid_pax}M/{low_pax}L), "
@@ -178,6 +188,7 @@ class StarshipAgent:
         self.freight_loading_attempts = 0
         self.max_freight_attempts = 4  # Give up after 4 cycles (12 days)
         self.freight_loaded_this_cycle = False  # Track if freight obtained
+        self.broke = False  # Ship has insufficient funds for operations
 
         # Report initial status with destination and crew
         dest_display = self._get_world_display_name(self.ship.destination)
@@ -475,8 +486,12 @@ class StarshipAgent:
         Most states have no action (pure delays), but key states
         execute trading operations.
 
+        Broke ships (insufficient funds) sleep indefinitely instead
+        of executing normal operations.
+
         Yields:
-            SimPy timeout for state duration from STATE_DURATIONS
+            SimPy timeout for state duration from STATE_DURATIONS,
+            or very long timeout (1000 days) for broke ships
 
         States With Actions:
             - OFFLOADING: Offload passengers, mail, freight
@@ -485,8 +500,14 @@ class StarshipAgent:
             - LOADING_CARGO: Purchase profitable speculative cargo
             - LOADING_MAIL: Load mail bundles
             - LOADING_PASSENGERS: Board high/mid/low passengers
+            - LOADING_FUEL: Refuel jump and ops tanks
             - JUMPING: Execute jump and choose next destination
         """
+        # Broke ships sleep for remainder of simulation
+        if self.broke:
+            yield self.env.timeout(1000)  # Sleep for 1000 days
+            return
+
         duration = get_state_duration(self.state)
 
         # State-specific logic
@@ -502,6 +523,8 @@ class StarshipAgent:
             self._load_mail()
         elif self.state == StarshipState.LOADING_PASSENGERS:
             self._load_passengers()
+        elif self.state == StarshipState.LOADING_FUEL:
+            self._load_fuel()
         elif self.state == StarshipState.JUMPING:
             self._execute_jump()
 
@@ -719,6 +742,9 @@ class StarshipAgent:
         Only purchases lots that show positive profit potential.
         Stops purchasing when funds exhausted or hold full.
 
+        Important: Reserves funds for refueling before buying cargo.
+        Won't purchase cargo if ship can't afford upcoming fuel costs.
+
         Uses world.generate_speculative_cargo() to get available
         lots, limited by hold space. Iterates through lots and
         calls _try_purchase_lot() for profitability checks.
@@ -739,6 +765,16 @@ class StarshipAgent:
 
             available_space = self.ship.hold_size - self.ship.cargo_size
             if available_space <= 0:
+                return
+
+            # Reserve funds for refueling -
+            # don't buy cargo we can't afford to haul
+            fuel_cost = self._calculate_fuel_cost()
+            if self.ship.owner.balance < fuel_cost:
+                if self.simulation.verbose:
+                    self._report_status(
+                        f"skipping cargo purchase,"
+                        f"need Cr{fuel_cost:,.0f} for fuel")
                 return
 
             lots = world.generate_speculative_cargo(
@@ -847,6 +883,138 @@ class StarshipAgent:
                             f"income Cr{income:,.0f}")
         except Exception as e:
             print(f"{self.ship.ship_name}: Passenger loading error: {e}")
+
+    def _calculate_fuel_needed(self) -> tuple[int, int, int]:
+        """Calculate fuel needed for both tanks.
+
+        Returns:
+            Tuple of (needed_jump, needed_ops, needed_total)
+        """
+        needed_jump = self.ship.jump_fuel_capacity - self.ship.jump_fuel
+        needed_ops = self.ship.ops_fuel_capacity - self.ship.ops_fuel
+        needed_total = needed_jump + needed_ops
+        return needed_jump, needed_ops, needed_total
+
+    def _calculate_fuel_cost(self) -> int:
+        """Calculate cost to fully refuel both tanks at Cr500/ton.
+
+        Returns:
+            Total cost in credits to fill both tanks
+        """
+        _, _, needed_total = self._calculate_fuel_needed()
+        return needed_total * 500
+
+    def _distribute_fuel_to_tanks(self, amount: int, needed_jump: int,
+                                  needed_ops: int) -> tuple[int, int]:
+        """Distribute purchased fuel to jump and ops tanks.
+
+        Prioritizes jump fuel, then ops fuel.
+
+        Args:
+            amount: Total fuel purchased (tons)
+            needed_jump: Amount of jump fuel needed
+            needed_ops: Amount of ops fuel needed
+
+        Returns:
+            Tuple of (jump_added, ops_added) amounts
+        """
+        jump_added = min(amount, needed_jump) if needed_jump > 0 else 0
+        remaining = amount - jump_added
+        ops_added = min(remaining, needed_ops) if needed_ops > 0 else 0
+
+        self.ship.jump_fuel += jump_added
+        self.ship.ops_fuel += ops_added
+
+        return jump_added, ops_added
+
+    def _report_refuel_success(self, jump_added: int, ops_added: int,
+                               cost: int) -> None:
+        """Report successful refueling in verbose mode.
+
+        Args:
+            jump_added: Tons of jump fuel added
+            ops_added: Tons of ops fuel added
+            cost: Total cost in credits
+        """
+        if not self.simulation.verbose:
+            return
+
+        self._report_status(
+            f"refueled {jump_added}t jump + {ops_added}t ops, "
+            f"cost Cr{cost:,.0f}, fuel now {self.ship.jump_fuel}/"
+            f"{self.ship.jump_fuel_capacity}t jump, {self.ship.ops_fuel}/"
+            f"{self.ship.ops_fuel_capacity}t ops")
+
+    def _report_insufficient_funds(self, needed_total: int) -> None:
+        """Report insufficient funds for refueling and mark ship as broke.
+
+        Args:
+            needed_total: Total fuel needed in tons
+
+        Side Effects:
+            - Sets self.broke = True to suspend operations
+            - Reports status in verbose mode
+        """
+        self.broke = True
+
+        if self.simulation.verbose:
+            self._report_status(
+                "insufficient funds for fuel (need "
+                f"Cr{needed_total * 500:,.0f}, "
+                f"have Cr{self.ship.owner.balance:,.0f}), "
+                "suspending operations")
+
+    def _load_fuel(self):
+        """Refuel jump and operations tanks at Cr500 per ton.
+
+        Calculates needed fuel to fill both tanks, determines affordable
+        amount based on ship's account balance (Cr500/ton), and purchases
+        the minimum of needed and affordable. Fuel is distributed
+        proportionally between jump and ops tanks based on their needs.
+
+        Side Effects:
+            - Debits ship account for fuel purchase (Cr500 per ton)
+            - Updates ship.jump_fuel and ship.ops_fuel levels
+            - Prints refueling summary in verbose mode
+
+        Exceptions:
+            Catches and logs exceptions to prevent agent failure.
+
+        Notes:
+            - If ship has zero balance, no fuel is purchased
+            - If tanks are full, no fuel is purchased
+            - Fuel is split between jump/ops tanks proportionally
+        """
+        try:
+            (needed_jump,
+             needed_ops,
+             needed_total) = self._calculate_fuel_needed()
+
+            # Skip if tanks are already full
+            if needed_total == 0:
+                if self.simulation.verbose:
+                    self._report_status("tanks already full, no refuel needed")
+                return
+
+            # Calculate how much we can afford (Cr500/ton)
+            affordable = self.ship.owner.balance // 500
+            to_purchase = min(needed_total, affordable)
+
+            if to_purchase == 0:
+                self._report_insufficient_funds(needed_total)
+                return
+
+            # Purchase and distribute fuel
+            cost = to_purchase * 500
+            self.ship.debit(self.env.now, cost, "Fuel purchase")
+
+            jump_added, ops_added = self._distribute_fuel_to_tanks(
+                to_purchase, needed_jump, needed_ops)
+
+            self._report_refuel_success(jump_added, ops_added, cost)
+
+        except Exception as e:
+            print(f"{self.ship.ship_name}: Fuel loading error: {e}")
 
     def _execute_jump(self):
         """Execute the jump to destination and pick next target.
