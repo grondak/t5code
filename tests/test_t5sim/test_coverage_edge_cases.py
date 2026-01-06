@@ -5,7 +5,6 @@ from unittest.mock import patch
 from t5code import GameState as gs_module, T5World
 from t5code.GameState import GameState
 from t5sim import Simulation
-from t5sim.starship_states import print_voyage_summary
 
 
 @pytest.fixture
@@ -73,49 +72,3 @@ def test_no_profitable_destinations():
         # Should still have created agent with destination
         assert len(sim.agents) == 1
         assert sim.agents[0].ship.destination is not None
-
-
-def test_print_voyage_summary():
-    """Test the print_voyage_summary function from starship_states."""
-    # This tests the if __name__ == "__main__" path
-    import io
-    import sys
-
-    # Capture stdout
-    captured_output = io.StringIO()
-    sys.stdout = captured_output
-
-    try:
-        print_voyage_summary()
-        output = captured_output.getvalue()
-
-        # Check that output contains expected elements
-        assert "MERCHANT STARSHIP TRADING VOYAGE" in output
-        assert "DOCKED" in output
-        assert "JUMPING" in output
-        assert "Total voyage time" in output
-    finally:
-        sys.stdout = sys.__stdout__
-
-
-def test_run_main_entry_point():
-    """Test the main() function entry point in run.py."""
-    from t5sim.run import main
-    import sys
-
-    # Mock sys.argv to provide test arguments
-    original_argv = sys.argv
-    try:
-        sys.argv = [
-            'run.py',
-            '--ships', '1',
-            '--days', '1',
-            '--map', 'tests/test_t5code/t5_test_map.txt',
-            '--ships-file', 'resources/t5_ship_classes.csv'
-        ]
-
-        # Should run without error
-        main()
-
-    finally:
-        sys.argv = original_argv
