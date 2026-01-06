@@ -230,6 +230,14 @@ class T5Starship:
         # Destination world assigned when a flight plan is set
         self._destination: str = "Unassigned"
 
+        # Fuel tracking
+        self.jump_fuel_capacity: int = ship_class.jump_fuel_capacity
+        self.ops_fuel_capacity: int = ship_class.ops_fuel_capacity
+        # Current fuel (starts full)
+        self.jump_fuel: int = ship_class.jump_fuel_capacity
+        # Current fuel (starts full)
+        self.ops_fuel: int = ship_class.ops_fuel_capacity
+
     def set_course_for(self, destination: str) -> None:
         """Set the ship's destination world.
 

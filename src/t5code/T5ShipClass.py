@@ -51,6 +51,8 @@ class T5ShipClass:
         self.staterooms: int = ship_data["staterooms"]
         self.low_berths: int = ship_data["low_berths"]
         self.crew_positions: List[str] = ship_data.get("crew_positions", [])
+        self.jump_fuel_capacity: int = ship_data.get("jump_fuel_capacity", 0)
+        self.ops_fuel_capacity: int = ship_data.get("ops_fuel_capacity", 0)
 
     def usp(self) -> str:
         """Generate Universal Ship Profile string.
