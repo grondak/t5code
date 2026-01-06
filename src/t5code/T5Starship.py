@@ -11,6 +11,9 @@ from t5code.T5Lot import T5Lot
 from t5code.T5NPC import T5NPC
 from t5code.T5ShipClass import T5ShipClass
 from t5code.T5Tables import POSITIONS
+
+if TYPE_CHECKING:
+    from t5code.T5Company import T5Company
 from t5code.T5Exceptions import (
     InsufficientFundsError,
     CapacityExceededError,
@@ -121,6 +124,7 @@ class T5Starship:
     - Mail transport with locker capacity
     - Financial tracking (credits in/out)
     - Navigation (location and destination)
+    - Optional company ownership tracking
 
     Capacity is managed realistically:
     - High/mid passengers share staterooms
@@ -131,6 +135,7 @@ class T5Starship:
     Attributes:
         ship_name: Ship's name
         location: Current world name
+        owner: Optional T5Company that owns this starship
         hold_size: Cargo capacity in tons
         staterooms: Number of staterooms (for high/mid passengers)
         low_berths: Number of low berth slots
@@ -149,8 +154,9 @@ class T5Starship:
         best_crew_skill: Query interface for max crew skill levels
 
     Example:
-        >>> ship = T5Starship("Beowulf", "Rhylanor", ship_class)
-        >>> ship.credit(100000)  # Starting funds
+        >>> from t5code import T5Company
+        >>> company = T5Company("Beowulf Trading", starting_capital=100000)
+        >>> ship = T5Starship("Beowulf", "Rhylanor", ship_class, owner=company)
         >>> ship.hire_crew("pilot", pilot_npc)
         >>> ship.set_course_for("Jae Tellona")
     """
@@ -166,18 +172,21 @@ class T5Starship:
     def __init__(self,
                  ship_name: str,
                  ship_location: str,
-                 ship_class: T5ShipClass) -> None:
+                 ship_class: T5ShipClass,
+                 owner: Optional["T5Company"] = None) -> None:
         """Create a new starship.
 
         Args:
             ship_name: Name of the ship
             ship_location: Starting world/location
             ship_class: T5ShipClass instance defining ship specifications
+            owner: Optional T5Company that owns this starship
         """
         # Core identity
         self.ship_name: str = ship_name
         self.location: str = ship_location
         self.ship_class: str = ship_class.class_name
+        self.owner: Optional["T5Company"] = owner
         self.hold_size: int = ship_class.cargo_capacity
         self.jump_rating: int = ship_class.jump_rating
 

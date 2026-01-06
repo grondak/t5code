@@ -16,7 +16,7 @@ days) to complete in seconds while maintaining game-accurate mechanics.
 
 from typing import List, Dict, Any
 import simpy
-from t5code import T5NPC, T5ShipClass
+from t5code import T5NPC, T5ShipClass, T5Company
 from t5code.T5NPC import generate_captain_risk_profile
 from t5code.GameState import GameState
 from t5code.T5Starship import T5Starship
@@ -186,11 +186,17 @@ class Simulation:
                 # _choose_next_destination()
                 reachable_worlds = []
 
-            # Create actual ship
-            ship = T5Starship(
-                f"Trader_{i + 1:03d}", starting_world, ship_class
+            # Create company for this ship
+            company = T5Company(
+                f"Trader_{i + 1:03d} Inc",
+                starting_capital=self.starting_capital
             )
-            ship.credit(self.starting_capital)
+
+            # Create actual ship with company ownership
+            ship = T5Starship(
+                f"Trader_{i + 1:03d}", starting_world, ship_class,
+                owner=company
+            )
 
             # Add basic crew (pass ship_class since
             # ship stores class_name string)

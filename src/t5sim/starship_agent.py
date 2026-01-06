@@ -104,10 +104,17 @@ class StarshipAgent:
         # Format Traveller date (DDD-YYYY)
         date_str = self.simulation.format_traveller_date(self.env.now)
 
+        # Show company balance if ship has an owner
+        balance_str = (
+            f"company=Cr{self.ship.owner.balance:,.0f}"
+            if self.ship.owner
+            else f"balance=Cr{self.ship.balance:,.0f}"
+        )
+
         status = (
             f"[{date_str}] {self.ship.ship_name} "
             f"at {location_display} ({display_state.name}): "
-            f"balance=Cr{self.ship.balance:,.0f}, "
+            f"{balance_str}, "
             f"hold ({self.ship.cargo_size}t/{self.ship.hold_size}t, "
             f"{cargo_pct:.0f}%), "
             f"cargo={cargo_lots} lots, "
@@ -174,10 +181,18 @@ class StarshipAgent:
         # Report initial status with destination and crew
         dest_display = self._get_world_display_name(self.ship.destination)
         crew_info = self._format_crew_info()
+
+        # Build company info if ship has an owner
+        company_info = ""
+        if self.ship.owner:
+            company_info = (f"  Company: {self.ship.owner.name}, "
+                            f"balance: Cr{self.ship.owner.balance:,.0f}\n")
+
         self._report_status(context=f"{self.ship.ship_name} "
                             f"({self.ship.ship_class}) starting simulation, "
-                            f"destination: {dest_display}\n  "
-                            f"Crew: {crew_info}")
+                            f"destination: {dest_display}\n"
+                            f"{company_info}"
+                            f"  Crew: {crew_info}")
 
         # Start the agent's process
         self.process = env.process(self.run())
