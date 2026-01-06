@@ -206,12 +206,12 @@ def test_awaken_passenger(test_ship_data):
         npc2,
         npc1,
         roll_override_in=20) is True
-    assert npc2.get_state() == "Alive"
+    assert npc2.state == "Alive"
     assert starship.awaken_low_passenger(
         npc2,
         npc1,
         roll_override_in=-20) is False
-    assert npc2.get_state() == "Dead"
+    assert npc2.state == "Dead"
 
 
 def test_onload_lot(test_ship_data, setup_gamestate):
@@ -434,6 +434,32 @@ def test_mid_passenger_capacity_limit(test_ship_data, setup_gamestate):
     passenger3 = T5NPC("Mid Traveler 3")
     with pytest.raises(CapacityExceededError):
         ship.onload_passenger(passenger3, "mid")
+
+
+def test_get_stateroom_passenger_count(test_ship_data, setup_gamestate):
+    """Verify _get_stateroom_passenger_count returns correct count."""
+    # Use large ship which has low berths
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    ship = T5Starship("TestShip", "Rhylanor", ship_class)
+
+    # Initially should be 0
+    assert ship._get_stateroom_passenger_count() == 0
+
+    # Add high passenger
+    high_pass = T5NPC("VIP")
+    ship.onload_passenger(high_pass, "high")
+    assert ship._get_stateroom_passenger_count() == 1
+
+    # Add mid passenger
+    mid_pass = T5NPC("Traveler")
+    ship.onload_passenger(mid_pass, "mid")
+    assert ship._get_stateroom_passenger_count() == 2
+
+    # Low passengers don't count (they use berths, not staterooms)
+    low_pass = T5NPC("Budget")
+    ship.onload_passenger(low_pass, "low")
+    # Still 2, low not counted
+    assert ship._get_stateroom_passenger_count() == 2
 
 
 def test_high_and_mid_passengers_share_staterooms(

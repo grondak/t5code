@@ -75,11 +75,11 @@ def test_skill_group_unknown_skill(npc):
 def test_get_state():
     """Verify NPC state is 'Alive' on creation."""
     npc = T5NPC("Doug")
-    assert npc.get_state() == "Alive"
+    assert npc.state == "Alive"
 
 
 def test_kill():
     """Verify NPC state changes to 'DEAD' when killed."""
     npc = T5NPC("Doug")
     npc.kill()
-    assert npc.get_state() == "Dead"
+    assert npc.state == "Dead"

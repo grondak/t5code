@@ -75,8 +75,8 @@ class T5Lot:
         self.origin_name: str = origin_name
 
         # Verify GameState is initialized
-        if game_state.world_data is None:
-            raise ValueError("GameState.world_data has not been initialized!")
+        from t5code.GameState import GameState
+        GameState.validate_world_data(game_state)
 
         # Lookup world data
         world = game_state.world_data[origin_name]

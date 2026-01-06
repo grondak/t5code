@@ -155,6 +155,14 @@ class T5Starship:
         >>> ship.set_course_for("Jae Tellona")
     """
 
+    def _get_stateroom_passenger_count(self) -> int:
+        """Get current number of passengers using staterooms.
+
+        Returns:
+            Total count of high and mid passengers
+        """
+        return len(self.passengers["high"]) + len(self.passengers["mid"])
+
     def __init__(self,
                  ship_name: str,
                  ship_location: str,

@@ -46,8 +46,8 @@ class T5Mail:
             ValueError: If GameState.world_data not initialized
             ValueError: If origin importance <= destination importance + 2
         """
-        if game_state.world_data is None:
-            raise ValueError("GameState.world_data has not been initialized!")
+        from t5code.GameState import GameState
+        GameState.validate_world_data(game_state)
         self.origin_name: str = origin_name
         self.destination_name: str = destination_name
         # Shortcuts to world data

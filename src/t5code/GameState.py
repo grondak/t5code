@@ -25,6 +25,19 @@ class GameState:
     world_data: Optional[Dict[str, Any]] = None
     ship_data: Optional[Dict[str, Any]] = None
 
+    @staticmethod
+    def validate_world_data(game_state: "GameState") -> None:
+        """Validate that world_data is initialized.
+
+        Args:
+            game_state: GameState instance to validate
+
+        Raises:
+            ValueError: If world_data has not been initialized
+        """
+        if game_state.world_data is None:
+            raise ValueError("GameState.world_data has not been initialized!")
+
 
 def load_and_parse_t5_map(file_path: str) -> Dict[str, Dict[str, Any]]:
     """Load and parse Traveller 5 world data from TSV file.

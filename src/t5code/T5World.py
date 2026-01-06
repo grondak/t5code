@@ -244,6 +244,30 @@ class T5World:
         mass = (flux + population) * multiplier + liaison_bonus
         return max(mass, 0)
 
+    def passenger_availability(self, skill_modifier: int) -> int:
+        """Calculate passenger availability using flux + population + skill.
+
+        Generic method for determining available passengers of any class.
+        Uses standard T5 formula: flux + population + skill modifier.
+
+        Args:
+            skill_modifier: Skill bonus (Steward for high, Admin for mid,
+                          Streetwise for low passage)
+
+        Returns:
+            Number of available passengers (minimum 0)
+
+        Example:
+            >>> world = T5World("Rhylanor", world_data)
+            >>> high_avail = world.passenger_availability(steward_skill)
+            >>> mid_avail = world.passenger_availability(admin_skill)
+            >>> low_avail = world.passenger_availability(streetwise_skill)
+        """
+        flux = roll_flux()
+        population = self.get_population()
+        available = flux + population + skill_modifier
+        return max(available, 0)
+
     def high_passenger_availability(self, steward_skill: int) -> int:
         """Determine number of available high passengers.
 
@@ -253,10 +277,7 @@ class T5World:
         Returns:
             Number of high passengers available (Cr10,000 each)
         """
-        flux = roll_flux()
-        population = self.get_population()
-        available = flux + population + steward_skill
-        return max(available, 0)
+        return self.passenger_availability(steward_skill)
 
     def mid_passenger_availability(self, admin_skill: int) -> int:
         """Determine number of available mid passengers.
@@ -267,10 +288,7 @@ class T5World:
         Returns:
             Number of mid passengers available (Cr8,000 each)
         """
-        flux = roll_flux()
-        population = self.get_population()
-        available = flux + population + admin_skill
-        return max(available, 0)
+        return self.passenger_availability(admin_skill)
 
     def low_passenger_availability(self, streetwise_skill: int) -> int:
         """Determine number of available low passengers.
@@ -281,10 +299,7 @@ class T5World:
         Returns:
             Number of low passengers available (Cr1,000 each)
         """
-        flux = roll_flux()
-        population = self.get_population()
-        available = flux + population + streetwise_skill
-        return max(available, 0)
+        return self.passenger_availability(streetwise_skill)
 
     def generate_speculative_cargo(
         self,

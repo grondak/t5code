@@ -110,6 +110,3 @@ class T5NPC:
         like low passage revival failures.
         """
         self.state = "Dead"
-
-    def get_state(self) -> str:
-        return self.state
