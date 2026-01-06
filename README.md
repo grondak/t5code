@@ -24,11 +24,13 @@ Built for realistic simulation of merchant starship operations, trade economics,
 - **Annual maintenance scheduling** - 2-week maintenance period triggered after selling cargo when maintenance day is reached
   - Each ship assigned random annual maintenance day (days 2-365, excluding holiday day 1)
   - Maintenance checked after SELLING_CARGO (after commercial transactions complete)
+  - Annual profit calculated: current balance - last year's balance
+  - **Crew profit share**: 10% of annual profit paid to crew before maintenance
   - 14-day maintenance period suspends all activities except crew payroll
   - Once-per-year enforcement (tracks last_maintenance_year)
   - **Maintenance costs**: 1/1000th of ship cost (e.g., MCr 100 ship costs Cr 100,000)
-  - Ships with insufficient funds become "broke" and suspend operations
-  - Maintenance cost displayed at startup and when performed
+  - Ships with insufficient funds for crew share or maintenance become "broke" and suspend operations
+  - Profit, crew share, and maintenance cost displayed during maintenance
 - **Profit-aware routing** - ships evaluate destinations for cargo profitability
 - **Smart cargo purchasing** - skips lots that would result in losses
 - **Skill-based crew payroll** - monthly salaries calculated from position skill requirements
@@ -268,10 +270,16 @@ Trader_002 (Scout) starting simulation, cost: MCr28.57, destination: Powaza/Rhyl
 [006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (SELLING_CARGO): company=Cr1,016,498, hold (0.0t/10.0t, 0%), 
   fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | sold cargo lot for Cr7,498 profit
 
-[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (MAINTENANCE): company=Cr987,928, hold (0.0t/10.0t, 0%), 
+[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (MAINTENANCE): company=Cr1,016,498, hold (0.0t/10.0t, 0%), 
+  fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | annual profit: Cr16,498 (Cr1,000,000 to Cr1,016,498)
+
+[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (MAINTENANCE): company=Cr1,014,848, hold (0.0t/10.0t, 0%), 
+  fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | crew profit share: Cr1,650 (10% of annual profit)
+
+[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (MAINTENANCE): company=Cr986,278, hold (0.0t/10.0t, 0%), 
   fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | undergoing annual maintenance (14 days), cost Cr28,570
 
-[020.05-1105] Trader_002 at Powaza/Rhylanor (3220) (LOADING_FREIGHT): company=Cr987,928, hold (0.0t/10.0t, 0%), 
+[020.05-1105] Trader_002 at Powaza/Rhylanor (3220) (LOADING_FREIGHT): company=Cr986,278, hold (0.0t/10.0t, 0%), 
   fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | no freight available
 ```
 
@@ -280,8 +288,13 @@ Trader_002 (Scout) starting simulation, cost: MCr28.57, destination: Powaza/Rhyl
 - **Company announcement at startup**: Displays company name and starting capital
 - **Annual maintenance day**: Displayed at startup for each ship (e.g., "Annual maintenance day: 199")
 - **Annual maintenance operations**: Triggered after SELLING_CARGO when maintenance day reached
-  - Example: "[207.10-1105] MAINTENANCE: undergoing annual maintenance (14 days), cost Cr228,700"
-  - Ships with insufficient funds display: "insufficient funds for annual maintenance (need CrX,XXX, have CrY,YYY), suspending operations"
+  - Shows annual profit calculation: current balance - last year's balance
+  - Example: "annual profit: Cr16,498 (Cr1,000,000 to Cr1,016,498)"
+  - Crew receives 10% profit share before maintenance
+  - Example: "crew profit share: Cr1,650 (10% of annual profit)"
+  - Maintenance charged after crew profit share
+  - Example: "undergoing annual maintenance (14 days), cost Cr28,570"
+  - Ships with insufficient funds display: "insufficient funds for crew profit share" or "insufficient funds for annual maintenance"
   - Maintenance happens at most once per year, automatically tracks last_maintenance_year
 - **Monthly crew payroll**: Ledger entries show skill-based salary calculations
   - Example: "Crew payroll: 7 crew, Cr1,900 total (Month 1)" for a Frigate
@@ -367,7 +380,8 @@ Date                     Amount         Balance Memo
 017.00-1105              -3,600     1,039,600.0 Cargo purchase: 6-Ag Ni 3600 at Traltha
 018.00-1105               6,120     1,045,720.0 Cargo sale: 6-Ag Ni 3600 at Traltha
 030.00-1105                -800     1,044,920.0 Crew payroll: 4 crew, Cr800 total (Month 2)
-199.00-1105             -28,570     1,016,350.0 Annual maintenance (year 1105)
+199.00-1105              -4,572     1,040,348.0 Crew profit share (10% of Cr45,720)
+199.00-1105             -28,570     1,011,778.0 Annual maintenance (year 1105)
 ...
 ================================================================================
 ```
@@ -377,9 +391,10 @@ Date                     Amount         Balance Memo
 - **Traveller date format**: Shows exact simulation time (DDD.FF-YYYY) for each transaction
 - **Complete audit trail**: Every credit, debit, and transfer with descriptive memo
 - **Monthly payroll entries**: Shows crew count and total salary with month number
+- **Annual profit share entries**: Shows 10% crew profit share with profit amount
 - **Annual maintenance entries**: Shows maintenance cost (1/1000th of ship cost) with year
 - **Running balance**: Balance after each transaction for easy verification
-- **Transaction types**: Initial capital, freight income, passenger fares, cargo purchases/sales, crew payroll, maintenance costs
+- **Transaction types**: Initial capital, freight income, passenger fares, cargo purchases/sales, crew payroll, crew profit share, maintenance costs
 - **Location tracking**: Memos include world names where transactions occurred
 
 ---

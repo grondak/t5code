@@ -191,6 +191,8 @@ class StarshipAgent:
         self.freight_loaded_this_cycle = False  # Track if freight obtained
         self.broke = False  # Ship has insufficient funds for operations
         self.calendar = TravellerCalendar()
+        # Track balance for annual profit calculation
+        self.last_year_balance = 1_000_000
 
         # Report initial status with destination and crew
         dest_display = self._get_world_display_name(self.ship.destination)
@@ -519,6 +521,40 @@ class StarshipAgent:
 
         maintenance_cost = int(ship_cost_mcr * 1000)
 
+        # Calculate annual profit before maintenance
+        current_balance = self.ship.owner.balance
+        annual_profit = current_balance - self.last_year_balance
+
+        # Report profit if positive
+        if annual_profit > 0:
+            self._report_status(
+                message=f"annual profit: Cr{annual_profit:,} "
+                f"(Cr{self.last_year_balance:,} to Cr{current_balance:,})"
+            )
+
+            # Calculate crew profit share (10% of profit)
+            crew_share = int(annual_profit * 0.10)
+
+            # Check if we can afford crew profit share
+            if self.ship.owner.balance < crew_share:
+                self._mark_ship_broke(
+                    f"insufficient funds for crew profit share (need "
+                    f"Cr{crew_share:,}, have Cr{self.ship.owner.balance:,})"
+                )
+                return
+
+            # Pay crew profit share
+            if crew_share > 0:
+                self.ship.debit(
+                    self.env.now,
+                    crew_share,
+                    f"Crew profit share (10% of Cr{annual_profit:,})"
+                )
+                self._report_status(
+                    message=f"crew profit share: Cr{crew_share:,} "
+                    f"(10% of annual profit)"
+                )
+
         # Check if we can afford maintenance
         if self.ship.owner.balance < maintenance_cost:
             self._mark_ship_broke(
@@ -537,6 +573,9 @@ class StarshipAgent:
 
         self.ship.needs_maintenance = False
         self.ship.last_maintenance_year = current_year
+
+        # Update last year's balance for next year's profit calculation
+        self.last_year_balance = self.ship.owner.balance
 
         if maintenance_cost > 0:
             self._report_status(
