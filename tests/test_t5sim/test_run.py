@@ -17,16 +17,36 @@ def mock_run_simulation():
             'total_profit': 500000.0,
             'num_ships': 10,
             'ships': [
-                {'name': 'Ship1', 'balance': 1200000.0, 'voyages': 5},
-                {'name': 'Ship2', 'balance': 1150000.0, 'voyages': 4},
-                {'name': 'Ship3', 'balance': 1100000.0, 'voyages': 4},
-                {'name': 'Ship4', 'balance': 1050000.0, 'voyages': 4},
-                {'name': 'Ship5', 'balance': 1000000.0, 'voyages': 4},
-                {'name': 'Ship6', 'balance': 950000.0, 'voyages': 3},
-                {'name': 'Ship7', 'balance': 900000.0, 'voyages': 3},
-                {'name': 'Ship8', 'balance': 850000.0, 'voyages': 3},
-                {'name': 'Ship9', 'balance': 800000.0, 'voyages': 2},
-                {'name': 'Ship10', 'balance': 750000.0, 'voyages': 2},
+                {'name': 'Ship1', 'balance': 1200000.0, 'voyages': 5,
+                 'location': 'Unknown', 'ship_class': 'Unknown',
+                 'role': 'civilian', 'broke': False},
+                {'name': 'Ship2', 'balance': 1150000.0, 'voyages': 4,
+                 'location': 'Unknown', 'ship_class': 'Unknown',
+                 'role': 'civilian', 'broke': False},
+                {'name': 'Ship3', 'balance': 1100000.0, 'voyages': 4,
+                 'location': 'Unknown', 'ship_class': 'Unknown',
+                 'role': 'civilian', 'broke': False},
+                {'name': 'Ship4', 'balance': 1050000.0, 'voyages': 4,
+                 'location': 'Unknown', 'ship_class': 'Unknown',
+                 'role': 'civilian', 'broke': False},
+                {'name': 'Ship5', 'balance': 1000000.0, 'voyages': 4,
+                 'location': 'Unknown', 'ship_class': 'Unknown',
+                 'role': 'civilian', 'broke': False},
+                {'name': 'Ship6', 'balance': 950000.0, 'voyages': 3,
+                 'location': 'Unknown', 'ship_class': 'Unknown',
+                 'role': 'civilian', 'broke': False},
+                {'name': 'Ship7', 'balance': 900000.0, 'voyages': 3,
+                 'location': 'Unknown', 'ship_class': 'Unknown',
+                 'role': 'civilian', 'broke': False},
+                {'name': 'Ship8', 'balance': 850000.0, 'voyages': 3,
+                 'location': 'Unknown', 'ship_class': 'Unknown',
+                 'role': 'civilian', 'broke': False},
+                {'name': 'Ship9', 'balance': 800000.0, 'voyages': 2,
+                 'location': 'Unknown', 'ship_class': 'Unknown',
+                 'role': 'civilian', 'broke': False},
+                {'name': 'Ship10', 'balance': 750000.0, 'voyages': 2,
+                 'location': 'Unknown', 'ship_class': 'Unknown',
+                 'role': 'civilian', 'broke': False},
             ]
         }
         mock_sim_class.return_value = mock_sim_instance
@@ -194,7 +214,9 @@ def test_main_results_output_single_ship(mock_run_simulation, capsys):
                 'balance': 1025000.0,
                 'voyages': 5,
                 'location': 'Unknown',
-                'ship_class': 'Scout'
+                'ship_class': 'Scout',
+                'role': 'civilian',
+                'broke': False,
             }
         ]
     }
@@ -263,7 +285,9 @@ def test_main_ledger_flag(capsys):
                 'total_profit': 500000.0,
                 'num_ships': 10,
                 'ships': [
-                    {'name': 'Ship1', 'balance': 1200000.0, 'voyages': 5},
+                    {'name': 'Ship1', 'balance': 1200000.0, 'voyages': 5,
+                     'location': 'Unknown', 'ship_class': 'Scout',
+                     'role': 'civilian', 'broke': False},
                 ]
             }
 
@@ -285,7 +309,9 @@ def test_main_ledger_all_flag(capsys):
                 'total_profit': 500000.0,
                 'num_ships': 10,
                 'ships': [
-                    {'name': 'Ship1', 'balance': 1200000.0, 'voyages': 5},
+                    {'name': 'Ship1', 'balance': 1200000.0, 'voyages': 5,
+                     'location': 'Unknown', 'ship_class': 'Scout',
+                     'role': 'civilian', 'broke': False},
                 ]
             }
 
@@ -307,7 +333,9 @@ def test_main_ledger_invalid_ship(capsys):
                 'total_profit': 500000.0,
                 'num_ships': 10,
                 'ships': [
-                    {'name': 'Ship1', 'balance': 1200000.0, 'voyages': 5},
+                    {'name': 'Ship1', 'balance': 1200000.0, 'voyages': 5,
+                     'location': 'Unknown', 'ship_class': 'Scout',
+                     'role': 'civilian', 'broke': False},
                 ]
             }
             mock_sim_instance.print_ledger.side_effect = ValueError(
@@ -546,6 +574,7 @@ def test_print_ship_leaderboards_broke_singular(capsys):
                 'ship_class': 'Scout',
                 'location': 'Rhylanor',
                 'broke': True,
+                'role': 'civilian',
             }
         ]
     }
@@ -568,6 +597,7 @@ def test_print_ship_leaderboards_top_bottom_singular(capsys):
                 'ship_class': 'Free Trader',
                 'location': 'Rhylanor',
                 'broke': False,
+                'role': 'civilian',
             }
         ]
     }
@@ -587,11 +617,13 @@ def test_print_ship_leaderboards_broke_plural(capsys):
             {
                 'name': 'Broke1', 'balance': -100.0, 'voyages': 1,
                 'ship_class': 'Scout', 'location': 'Rhylanor', 'broke': True,
+                'role': 'civilian',
             },
             {
                 'name': 'Broke2', 'balance': -200.0, 'voyages': 2,
                 'ship_class': 'Free Trader',
                 'location': 'Rhylanor', 'broke': True,
+                'role': 'civilian',
             },
         ]
     }

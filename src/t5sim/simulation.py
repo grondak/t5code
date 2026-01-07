@@ -604,6 +604,9 @@ class Simulation:
                     "location": agent.ship.location,
                     "ship_class": agent.ship.ship_class,
                     "broke": agent.broke,
+                    "role": self.game_state.ship_classes[
+                        agent.ship.ship_class
+                    ].get("role", "civilian"),
                 }
                 for agent in self.agents
             ],

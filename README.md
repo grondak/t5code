@@ -1,7 +1,7 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-462%20passing-brightgreen)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
+[![Tests](https://img.shields.io/badge/tests-465%20passing-brightgreen)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](htmlcov/)
 [![Statements](https://img.shields.io/badge/statements-880%20%7C%200%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -18,6 +18,12 @@ Built for realistic simulation of merchant starship operations, trade economics,
 
 ## What's New
 
+- **Leaderboard filtering by ship role** - fair ranking system for mixed-role simulations
+  - Only **civilian ships** appear in Top/Bottom rankings (military and specialized excluded)
+  - **Military and specialized ships** excluded from leaderboards to prevent unfair comparison
+  - Bailout advantage makes military/specialized ships non-competitive with civilians
+  - If **no civilian ships** exist in simulation, leaderboard not printed at all
+  - Broke ships still displayed for visibility regardless of role
 - **Weighted ship selection by role** with predefined proportions:
   - All 3 roles: 70% civilian, 20% specialized, 10% military
   - Two roles: 80/20 (civ+spec or civ+mil) or 70/30 (spec+mil)
@@ -29,7 +35,7 @@ Built for realistic simulation of merchant starship operations, trade economics,
   - Simulation stops with message like: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
 - **Enhanced startup announcements**: Now display ship class, starting location, and annual maintenance day
 - **Refactored setup() method**: Reduced cognitive complexity by extracting helper methods
-- Coverage update: 462 tests, 880 statements (0 missed), 100% overall coverage
+- Coverage update: 465 tests, 880 statements (0 missed), 100% overall coverage
 
 ## Features
 
@@ -78,6 +84,12 @@ Built for realistic simulation of merchant starship operations, trade economics,
   - Role frequency validation: per-role `frequency` totals must sum to 1.0
     - Validation runs at startup; the simulation stops with an error if invalid.
     - Example: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
+- **Fair leaderboard ranking system**
+  - Only **civilian ships** appear in Top/Bottom balance rankings (military/specialized excluded)
+  - Ensures fair comparison when running mixed-role simulations
+  - Rationale: Military and specialized ships receive Cr1,000,000 patron bailouts, giving them unfair advantage
+  - If no civilian ships exist in simulation, leaderboard not printed
+  - Broke ships still displayed separately for visibility (regardless of role)
 
 ### 🚀 Starship Operations (t5code)
 - **Complete starship management** with cargo holds, passenger berths, and mail lockers

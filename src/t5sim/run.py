@@ -327,6 +327,11 @@ def _run_with_convenience_function(args):
 def _print_ship_leaderboards(results, sim):
     """Print top/bottom/broke ship leaderboards.
 
+    Only includes civilian ships in the top/bottom rankings.
+    Military and specialized ships are excluded from leaderboards.
+    If no civilian ships exist, the top/bottom leaderboards are not printed
+    but broke ships are still displayed.
+
     Args:
         results: Simulation results dictionary with ship data
         sim: Simulation object (or None) for world name lookup
@@ -336,33 +341,39 @@ def _print_ship_leaderboards(results, sim):
     broke_ships = [s for s in all_ships if s.get("broke", False)]
     active_ships = [s for s in all_ships if not s.get("broke", False)]
 
-    # Sort active ships by balance
-    sorted_active = sorted(active_ships, key=lambda s: s["balance"],
-                           reverse=True)
+    # Filter active ships to only civilian ships for leaderboard
+    civilian_active_ships = [s for s in active_ships
+                             if s.get("role", "civilian") == "civilian"]
 
-    # Determine how many ships to show (max 5, or fewer if less than 5 total)
-    num_active = len(sorted_active)
-    top_count = min(5, num_active)
-    bottom_count = min(5, num_active)
+    # Sort civilian ships by balance if any exist
+    if civilian_active_ships:
+        sorted_active = sorted(civilian_active_ships,
+                               key=lambda s: s["balance"],
+                               reverse=True)
 
-    # Handle singular vs plural
-    if top_count == 1:
-        top_label = "Top ship by balance:"
-    else:
-        top_label = f"Top {top_count} ships by balance:"
+        # Determine how many ships to show
+        # (max 5, or fewer if less than 5 total)
+        num_active = len(sorted_active)
+        top_count = min(5, num_active)
+        bottom_count = min(5, num_active)
 
-    if bottom_count == 1:
-        bottom_label = "Bottom ship by balance:"
-    else:
-        bottom_label = f"Bottom {bottom_count} ships by balance:"
+        # Handle singular vs plural
+        if top_count == 1:
+            top_label = "Top ship by balance:"
+        else:
+            top_label = f"Top {top_count} ships by balance:"
 
-    # Print top ships
-    if num_active > 0:
+        if bottom_count == 1:
+            bottom_label = "Bottom ship by balance:"
+        else:
+            bottom_label = f"Bottom {bottom_count} ships by balance:"
+
+        # Print top ships
         _print_ship_list(sorted_active, top_count, top_label, sim)
         _print_ship_list(sorted_active[-bottom_count:], bottom_count,
                          bottom_label, sim)
 
-    # Print broke ships if any
+    # Print broke ships if any (include military/specialized broke ships)
     if broke_ships:
         sorted_broke = sorted(broke_ships, key=lambda s: s["balance"],
                               reverse=True)
