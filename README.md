@@ -196,6 +196,24 @@ Loaded 2 high, 1 mid passengers (Cr19,000)
 Balance: Cr1,045,230
 ```
 
+**View all Adventure Class Ships:**
+```bash
+python examples/read_ship_classes.py
+```
+
+Displays all 15 Adventure Class Ships from T5 Core Rules with complete specifications:
+- Scout, Free Trader, Far Trader, Fat Trader
+- Close Escort, Gunned Escort, Liner, Safari Ship
+- SDB, Packet, Mercenary Cruiser, Lab Ship
+- Corsair, Corvette, Frigate
+
+For each ship, shows:
+- Ship cost (MCr), jump/maneuver/powerplant ratings
+- Cargo capacity, staterooms, low berths
+- **Decoded crew positions** (Captain, Pilot, Astrogator, Engineer, Medic, Steward, Freightmaster, Sensop, Cook, Gunner, Able Spacer, Spacer)
+- Crew skill ranks
+- Jump and ops fuel capacity
+
 **Multi-ship discrete-event simulation:**
 ```bash
 # Quick test (5 ships, 30 days)
@@ -428,10 +446,11 @@ t5code/
 │   └── test_t5sim/          # Simulation engine tests
 ├── examples/
 │   ├── GameDriver.py        # Single-ship example
-│   └── sim.py              # Simulation example
+│   ├── sim.py              # Simulation example
+│   └── read_ship_classes.py # Display all Adventure Class Ships
 ├── resources/               # Game data files
 │   ├── t5_map.txt          # World data
-│   └── t5_ship_classes.csv # Ship specifications (Scout, Freighter, Frigate, Liner)
+│   └── t5_ship_classes.csv # Complete Adventure Class Ships from T5 Core Rules (15 ship types)
 └── README.md
 ```
 
