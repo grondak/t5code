@@ -1,30 +1,4 @@
 1107-001 00:00: Simulation starting.
 1107-001 00:00: Ship Ship1 (Scout traveling at Rhylanor bound for Porozlo. Fuel:  50 Cargo: 5) .
-1107-001 00:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel:  20 Cargo: 50) .
 1107-001 00:00: Ship Ship3 (Corvette idle at Porozlo. Fuel:  80 Cargo: 10) .
 1107-001 00:00: Ship Ship3 (Corvette idle at Porozlo. Fuel:  80 Cargo: 10) is idle.
-1107-001 01:00: Ship Ship3 (Corvette idle at Porozlo. Fuel:  80 Cargo: 10) .
-1107-001 01:00: Ship Ship3 (Corvette idle at Porozlo. Fuel:  80 Cargo: 10) is idle.
-1107-001 01:00: Ship Ship3 (Corvette docked at Porozlo. Fuel:  80 Cargo: 10) has new orders.
-1107-001 02:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel:  20 Cargo: 50) has completed ship's business before cargo handling.
-1107-001 02:00: Ship Ship3 (Corvette docked at Porozlo. Fuel:  80 Cargo: 10) .
-1107-001 04:00: Ship Ship3 (Corvette docked at Porozlo. Fuel:  80 Cargo: 10) has completed ship's business before cargo handling.
-1107-001 08:00: Ship Ship3 (Corvette docked at Porozlo. Fuel:  80 Cargo: 0) has unloaded its cargo.
-1107-001 12:00: Ship Ship1 (Scout docked at Porozlo. Fuel:  50 Cargo: 5) has arrived at Porozlo and is now docked.
-1107-001 12:00: Ship Ship1 (Scout docked at Porozlo. Fuel:  50 Cargo: 5) .
-1107-001 14:00: Ship Ship3 (Corvette docked at Porozlo. Fuel:  80 Cargo: 20) has loaded new cargo to full capacity.
-1107-001 14:00: Ship Ship1 (Scout docked at Porozlo. Fuel:  50 Cargo: 5) has completed ship's business before cargo handling.
-1107-001 16:00: Ship Ship1 (Scout docked at Porozlo. Fuel:  50 Cargo: 0) has unloaded its cargo.
-1107-001 17:00: Ship Ship3 (Corvette docked at Porozlo. Fuel:  80 Cargo: 20) has completed ship's business after cargo handling.
-1107-001 17:00: Ship Ship3 (Corvette traveling at Porozlo bound for Tureded. Fuel:  80 Cargo: 20) has departed for Tureded.
-1107-001 17:00: Ship Ship3 (Corvette traveling at Porozlo bound for Tureded. Fuel:  80 Cargo: 20) .
-1107-001 19:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel:  20 Cargo: 0) has unloaded its cargo.
-1107-001 19:00: Ship Ship1 (Scout docked at Porozlo. Fuel:  50 Cargo: 10) has loaded new cargo to full capacity.
-1107-001 22:00: Ship Ship1 (Scout docked at Porozlo. Fuel:  50 Cargo: 10) has completed ship's business after cargo handling.
-1107-001 22:00: Ship Ship1 (Scout traveling at Porozlo bound for Gileden. Fuel:  50 Cargo: 10) has departed for Gileden.
-1107-001 22:00: Ship Ship1 (Scout traveling at Porozlo bound for Gileden. Fuel:  50 Cargo: 10) .
-1107-002 21:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel:  20 Cargo: 100) has loaded new cargo to full capacity.
-1107-003 00:00: Ship Ship2 (Freighter docked at Rhylanor. Fuel:  20 Cargo: 100) has completed ship's business after cargo handling.
-1107-003 00:00: Ship Ship2 (Freighter traveling at Rhylanor bound for Porozlo. Fuel:  20 Cargo: 100) has departed for Porozlo.
-1107-003 00:00: Ship Ship2 (Freighter traveling at Rhylanor bound for Porozlo. Fuel:  20 Cargo: 100) .
-1107-003 02:00: Simulation complete.

@@ -223,11 +223,15 @@ class Simulation:
             )
             self.agents.append(agent)
 
-            # Print ship details
-            print(f"  {ship.ship_name}: Jump-{ship.jump_rating}, "
-                  f"Cargo: {ship.hold_size}t, "
-                  f"Jump Fuel: {ship.jump_fuel}/{ship.jump_fuel_capacity}t, "
-                  f"Ops Fuel: {ship.ops_fuel}/{ship.ops_fuel_capacity}t")
+            # Print ship details including class, location, and maintenance day
+            print(
+                f"  {ship.ship_name} ({ship.ship_class}) at {ship.location}: "
+                f"Jump-{ship.jump_rating}, "
+                f"Cargo: {ship.hold_size}t, "
+                f"Jump Fuel: {ship.jump_fuel}/{ship.jump_fuel_capacity}t, "
+                f"Ops Fuel: {ship.ops_fuel}/{ship.ops_fuel_capacity}t, "
+                f"Maint-Day: {ship.annual_maintenance_day}"
+            )
 
     def _get_skill_for_position(
         self,
