@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-429%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-432%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1624%20%7C%2024%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1670%20%7C%2016%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -350,13 +350,13 @@ Average per ship:
   Profit: Cr4,523,192.00
 
 Top 5 ships by balance:
-  1. Trader_003: Cr5,892,340.00 (15 voyages)
-  2. Trader_007: Cr5,441,220.00 (14 voyages)
+  1. Trader_003, a Frigate @ Nexine/Mora (3030): Cr5,892,340.00 (15 voyages)
+  2. Trader_007, a Scout @ Tarsus/Trin's Veil (2826): Cr5,441,220.00 (14 voyages)
   ...
 
 Bottom 5 ships by balance:
-  1. Trader_008: Cr3,441,220.00 (10 voyages)
-  2. Trader_002: Cr3,192,100.00 (9 voyages)
+  1. Trader_008, a Liner @ Bronze/Lunion (1808): Cr3,441,220.00 (10 voyages)
+  2. Trader_002, a Frigate @ Aster/Lanth (1807): Cr3,192,100.00 (9 voyages)
   ...
 ```
 

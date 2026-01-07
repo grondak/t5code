@@ -466,8 +466,6 @@ class StarshipAgent:
         years_elapsed = int(absolute_day // 365)
         current_year = starting_year + years_elapsed
         current_day_of_year = int((absolute_day % 365)) + 1
-        if current_day_of_year > 365:
-            current_day_of_year = 365
 
         # Check if we've passed maintenance day and haven't done it this year
         if (current_day_of_year >= self.ship.annual_maintenance_day and

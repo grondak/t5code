@@ -35,25 +35,11 @@ from t5code import T5World
 from t5code import GameState as gs_module
 
 
-def main():
-    """Parse arguments and run simulation.
+def _create_argument_parser():
+    """Create and configure the argument parser.
 
-    Entry point for CLI execution. Parses command-line arguments,
-    prints configuration summary, executes simulation via
-    run_simulation(), measures execution time, and displays
-    formatted results.
-
-    Outputs:
-        - Configuration summary (ships, duration)
-        - Progress messages during execution
-        - Results summary (voyages, sales, profit)
-        - Performance timing
-        - Per-ship averages
-        - Top 5 and bottom 5 ships by balance
-
-    Exit Behavior:
-        Completes normally on success. Exceptions from simulation
-        propagate to caller (not caught here).
+    Returns:
+        Configured ArgumentParser instance
     """
     parser = argparse.ArgumentParser(
         description="Run Traveller 5 trade simulation"
@@ -111,7 +97,113 @@ def main():
         action="store_true",
         help="Print ledgers for all ships (verbose)",
     )
+    return parser
 
+
+def _print_ship_list(ships, count, label, sim):
+    """Print formatted list of ships with their details.
+
+    Args:
+        ships: List of ships to display
+        count: Number of ships to show
+        label: Label for the list (e.g., "Top 3 ships")
+        sim: Simulation object (or None) for world name lookup
+    """
+    print(f"\n{label}")
+    for i, ship in enumerate(ships[:count], 1):
+        # Get location display with world name if available
+        location = ship.get('location', 'Unknown')
+        if sim:
+            world = sim.game_state.world_data.get(location)
+            location_display = world.full_name() if world else location
+        else:
+            location_display = location
+
+        ship_class = ship.get('ship_class', 'Unknown')
+        print(
+            f"  {i}. {ship['name']}, a {ship_class} @ {location_display}: "
+            f"Cr{ship['balance']:,.2f} ({ship['voyages']} voyages)"
+        )
+
+
+def _run_with_full_simulation(args):
+    """Run simulation with full Simulation object for ledger printing.
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Tuple of (results dict, simulation object, elapsed time)
+    """
+    # Initialize game state
+    game_state = GameState()
+    raw_worlds = gs_module.load_and_parse_t5_map(args.map)
+    raw_ships = gs_module.load_and_parse_t5_ship_classes(args.ships_file)
+
+    # Convert worlds to T5World objects
+    game_state.world_data = T5World.load_all_worlds(raw_worlds)
+    game_state.ship_classes = raw_ships
+
+    # Create and run simulation
+    start_time = time.time()
+    sim = Simulation(
+        game_state,
+        num_ships=args.ships,
+        duration_days=args.days,
+        verbose=args.verbose,
+        starting_year=args.year,
+        starting_day=args.day,
+    )
+    results = sim.run()
+    elapsed_time = time.time() - start_time
+
+    return results, sim, elapsed_time
+
+
+def _run_with_convenience_function(args):
+    """Run simulation using convenience function.
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Tuple of (results dict, None, elapsed time)
+    """
+    start_time = time.time()
+    results = run_simulation(
+        map_file=args.map,
+        ship_classes_file=args.ships_file,
+        num_ships=args.ships,
+        duration_days=args.days,
+        verbose=args.verbose,
+        starting_year=args.year,
+        starting_day=args.day,
+    )
+    elapsed_time = time.time() - start_time
+    return results, None, elapsed_time
+
+
+def main():
+    """Parse arguments and run simulation.
+
+    Entry point for CLI execution. Parses command-line arguments,
+    prints configuration summary, executes simulation via
+    run_simulation(), measures execution time, and displays
+    formatted results.
+
+    Outputs:
+        - Configuration summary (ships, duration)
+        - Progress messages during execution
+        - Results summary (voyages, sales, profit)
+        - Performance timing
+        - Per-ship averages
+        - Top 5 and bottom 5 ships by balance
+
+    Exit Behavior:
+        Completes normally on success. Exceptions from simulation
+        propagate to caller (not caught here).
+    """
+    parser = _create_argument_parser()
     args = parser.parse_args()
 
     print("=" * 70)
@@ -121,45 +213,11 @@ def main():
     print(f"Duration: {args.days} days")
     print()
 
-    # If ledger printing requested, need full Simulation object
+    # Choose execution path based on ledger requirements
     if args.ledger or args.ledger_all:
-        # Initialize game state
-        game_state = GameState()
-        raw_worlds = gs_module.load_and_parse_t5_map(args.map)
-        raw_ships = gs_module.load_and_parse_t5_ship_classes(
-            args.ships_file
-        )
-
-        # Convert worlds to T5World objects
-        game_state.world_data = T5World.load_all_worlds(raw_worlds)
-        game_state.ship_classes = raw_ships
-
-        # Create and run simulation
-        start_time = time.time()
-        sim = Simulation(
-            game_state,
-            num_ships=args.ships,
-            duration_days=args.days,
-            verbose=args.verbose,
-            starting_year=args.year,
-            starting_day=args.day,
-        )
-        results = sim.run()
-        elapsed_time = time.time() - start_time
+        results, sim, elapsed_time = _run_with_full_simulation(args)
     else:
-        # Use convenience function
-        start_time = time.time()
-        results = run_simulation(
-            map_file=args.map,
-            ship_classes_file=args.ships_file,
-            num_ships=args.ships,
-            duration_days=args.days,
-            verbose=args.verbose,
-            starting_year=args.year,
-            starting_day=args.day,
-        )
-        elapsed_time = time.time() - start_time
-        sim = None
+        results, sim, elapsed_time = _run_with_convenience_function(args)
 
     print("\n" + "=" * 70)
     print("SIMULATION RESULTS")
@@ -179,22 +237,29 @@ def main():
         f"  Profit: Cr{results['total_profit'] / results['num_ships']:,.2f}"
     )
 
-    print("\nTop 5 ships by balance:")
     sorted_ships = sorted(
         results["ships"], key=lambda s: s["balance"], reverse=True
     )
-    for i, ship in enumerate(sorted_ships[:5], 1):
-        print(
-            f"  {i}. {ship['name']}: Cr{ship['balance']:,.2f} "
-            f"({ship['voyages']} voyages)"
-        )
 
-    print("\nBottom 5 ships by balance:")
-    for i, ship in enumerate(sorted_ships[-5:], 1):
-        print(
-            f"  {i}. {ship['name']}: Cr{ship['balance']:,.2f} "
-            f"({ship['voyages']} voyages)"
-        )
+    # Determine how many ships to show (max 5, or fewer if less than 5 total)
+    num_ships = len(sorted_ships)
+    top_count = min(5, num_ships)
+    bottom_count = min(5, num_ships)
+
+    # Handle singular vs plural
+    if top_count == 1:
+        top_label = "Top ship by balance:"
+    else:
+        top_label = f"Top {top_count} ships by balance:"
+
+    if bottom_count == 1:
+        bottom_label = "Bottom ship by balance:"
+    else:
+        bottom_label = f"Bottom {bottom_count} ships by balance:"
+
+    _print_ship_list(sorted_ships, top_count, top_label, sim)
+    _print_ship_list(sorted_ships[-bottom_count:], bottom_count,
+                     bottom_label, sim)
 
     # Print ledgers if requested
     if sim:

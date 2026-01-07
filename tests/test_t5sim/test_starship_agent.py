@@ -249,6 +249,55 @@ def test_starship_agent_loading_cargo(game_state, mock_simulation):
     assert agent.state != StarshipState.LOADING_CARGO
 
 
+def test_starship_agent_loading_cargo_verbose(game_state, capsys):
+    """Test verbose output when loading speculative cargo."""
+    import simpy
+    from t5code import T5ShipClass
+    from t5sim.simulation import Simulation
+    from unittest.mock import patch
+    from t5code import T5Lot
+
+    # Create real simulation with verbose=True
+    simulation = Simulation(
+        game_state,
+        num_ships=1,
+        duration_days=10,
+        verbose=True
+    )
+
+    env = simpy.Environment()
+    ship_class_dict = next(iter(game_state.ship_classes.values()))
+    class_name = ship_class_dict["class_name"]
+    ship_class = T5ShipClass(class_name, ship_class_dict)
+    company = T5Company("Test Company", starting_capital=1_000_000)
+    ship = T5Starship("Verbose Ship", "Rhylanor", ship_class, owner=company)
+    ship.credit(0, 1_000_000)
+    ship.set_course_for("Jae Tellona")
+
+    agent = StarshipAgent(
+        env, ship, simulation, starting_state=StarshipState.LOADING_CARGO
+    )
+
+    # Mock generate_speculative_cargo to return some cargo
+    mock_lot = T5Lot("Rhylanor", game_state)
+    mock_lot.mass = 5
+    mock_lot.origin_value = 1000  # Cheap lot
+
+    with patch.object(
+        game_state.world_data["Rhylanor"],
+        'generate_speculative_cargo',
+        return_value=[mock_lot]
+    ):
+        # Run the cargo loading state
+        agent._load_cargo()
+
+    # Capture output
+    captured = capsys.readouterr()
+
+    # Should have verbose cargo loading message mentioning the loaded lot
+    assert "loaded 1 cargo lot(s)" in captured.out
+
+
 def test_starship_agent_loading_mail(game_state, mock_simulation):
     """Test loading mail bundles."""
     env = simpy.Environment()

@@ -306,3 +306,73 @@ def test_maintenance_charges_correct_amount(
     # Maintenance should be marked as complete
     assert ship.needs_maintenance is False
     assert ship.last_maintenance_year == 1105
+
+
+def test_annual_profit_and_crew_share(setup_test_gamestate, capsys):
+    """Test that annual profit is calculated and crew gets 10% share."""
+    import simpy
+    from t5sim.starship_agent import StarshipAgent
+    from t5sim.simulation import Simulation
+    from t5code import T5Company, T5ShipClass, T5Starship
+
+    # Create simulation starting at beginning of year
+    env = simpy.Environment()
+    simulation = Simulation(
+        setup_test_gamestate,
+        num_ships=1,
+        starting_day=10,
+        starting_year=1105,
+        verbose=True
+    )
+
+    # Create ship
+    ship_class_data = simulation.game_state.ship_classes.get("small")
+    ship_class = T5ShipClass("small", ship_class_data)
+    company = T5Company("Test Company", starting_capital=1000000)
+    ship = T5Starship("Profit Ship", "Rhylanor", ship_class, company)
+
+    # Set maintenance day and tracking
+    ship.annual_maintenance_day = 15
+    ship.last_maintenance_year = 1104  # Last year
+    ship.needs_maintenance = False
+
+    agent = StarshipAgent(
+        env, ship, simulation, starting_state=StarshipState.DOCKED
+    )
+
+    # Simulate profitable trading by crediting the ship
+    ship.credit(0, 50000, "Simulated profit")
+    assert ship.owner.balance == 1050000
+
+    # Jump clock forward past maintenance day (to day 380 of simulation)
+    env._now = 370
+
+    # Trigger maintenance check
+    agent._check_if_maintenance_needed()
+    assert ship.needs_maintenance is True
+
+    # Perform maintenance - this should report profit and pay crew share
+    agent._perform_maintenance()
+
+    # Capture output
+    captured = capsys.readouterr()
+
+    # Verify profit was reported
+    assert "annual profit: Cr50,000" in captured.out
+    assert "1,000,000 to Cr1,050,000" in captured.out
+
+    # Verify crew share was paid (10% of 50,000 = 5,000)
+    assert "crew profit share: Cr5,000" in captured.out
+    assert "10% of annual profit" in captured.out
+
+    # Verify maintenance was paid
+    ship_cost_mcr = ship_class_data.get("ship_cost", 0.0)
+    expected_maintenance = int(ship_cost_mcr * 1000)
+    expected_crew_share = 5000
+
+    # Balance should be: 1,050,000 - 5,000 (crew) - maintenance
+    expected_balance = 1050000 - expected_crew_share - expected_maintenance
+    assert ship.owner.balance == expected_balance
+
+    # Verify last_year_balance was updated
+    assert agent.last_year_balance == expected_balance

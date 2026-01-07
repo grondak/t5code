@@ -161,13 +161,47 @@ def test_main_results_output(mock_run_simulation, capsys):
 
     # Check top ships
     assert "Top 5 ships by balance:" in captured.out
-    assert "1. Ship1: Cr1,200,000.00 (5 voyages)" in captured.out
-    assert "2. Ship2: Cr1,150,000.00 (4 voyages)" in captured.out
+    assert "1. Ship1, a Unknown @ Unknown: "\
+           "Cr1,200,000.00 (5 voyages)" in captured.out
+    assert "2. Ship2, a Unknown @ Unknown: "\
+           "Cr1,150,000.00 (4 voyages)" in captured.out
 
     # Check bottom ships
     assert "Bottom 5 ships by balance:" in captured.out
-    assert "1. Ship6: Cr950,000.00 (3 voyages)" in captured.out
-    assert "5. Ship10: Cr750,000.00 (2 voyages)" in captured.out
+    assert "1. Ship6, a Unknown @ Unknown: "\
+           "Cr950,000.00 (3 voyages)" in captured.out
+    assert "5. Ship10, a Unknown @ Unknown: "\
+           "Cr750,000.00 (2 voyages)" in captured.out
+
+
+def test_main_results_output_single_ship(mock_run_simulation, capsys):
+    """Test that singular grammar is used when there's only 1 ship."""
+    # Mock run_simulation to return results with 1 ship
+    mock_run_simulation.return_value = {
+        'total_voyages': 5,
+        'cargo_sales': 10,
+        'total_profit': 25000.0,
+        'num_ships': 1,
+        'ships': [
+            {
+                'name': 'Solo Ship',
+                'balance': 1025000.0,
+                'voyages': 5,
+                'location': 'Unknown',
+                'ship_class': 'Scout'
+            }
+        ]
+    }
+
+    with patch('sys.argv', ['run.py', '--ships', '1']):
+        main()
+
+    captured = capsys.readouterr()
+
+    # Check singular grammar is used
+    assert "Top ship by balance:" in captured.out
+    assert "Bottom ship by balance:" in captured.out
+    assert "Solo Ship, a Scout @ Unknown" in captured.out
 
 
 def test_main_module_execution():
