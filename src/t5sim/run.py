@@ -183,6 +183,58 @@ def _run_with_convenience_function(args):
     return results, None, elapsed_time
 
 
+def _print_ship_leaderboards(results, sim):
+    """Print top/bottom/broke ship leaderboards.
+
+    Args:
+        results: Simulation results dictionary with ship data
+        sim: Simulation object (or None) for world name lookup
+    """
+    # Separate broke ships from active ships
+    all_ships = results["ships"]
+    broke_ships = [s for s in all_ships if s.get("broke", False)]
+    active_ships = [s for s in all_ships if not s.get("broke", False)]
+
+    # Sort active ships by balance
+    sorted_active = sorted(active_ships, key=lambda s: s["balance"],
+                           reverse=True)
+
+    # Determine how many ships to show (max 5, or fewer if less than 5 total)
+    num_active = len(sorted_active)
+    top_count = min(5, num_active)
+    bottom_count = min(5, num_active)
+
+    # Handle singular vs plural
+    if top_count == 1:
+        top_label = "Top ship by balance:"
+    else:
+        top_label = f"Top {top_count} ships by balance:"
+
+    if bottom_count == 1:
+        bottom_label = "Bottom ship by balance:"
+    else:
+        bottom_label = f"Bottom {bottom_count} ships by balance:"
+
+    # Print top ships
+    if num_active > 0:
+        _print_ship_list(sorted_active, top_count, top_label, sim)
+        _print_ship_list(sorted_active[-bottom_count:], bottom_count,
+                         bottom_label, sim)
+
+    # Print broke ships if any
+    if broke_ships:
+        sorted_broke = sorted(broke_ships, key=lambda s: s["balance"],
+                              reverse=True)
+        broke_count = len(broke_ships)
+
+        if broke_count == 1:
+            broke_label = "Broke ship:"
+        else:
+            broke_label = f"Broke ships ({broke_count}):"
+
+        _print_ship_list(sorted_broke, broke_count, broke_label, sim)
+
+
 def main():
     """Parse arguments and run simulation.
 
@@ -237,29 +289,8 @@ def main():
         f"  Profit: Cr{results['total_profit'] / results['num_ships']:,.2f}"
     )
 
-    sorted_ships = sorted(
-        results["ships"], key=lambda s: s["balance"], reverse=True
-    )
-
-    # Determine how many ships to show (max 5, or fewer if less than 5 total)
-    num_ships = len(sorted_ships)
-    top_count = min(5, num_ships)
-    bottom_count = min(5, num_ships)
-
-    # Handle singular vs plural
-    if top_count == 1:
-        top_label = "Top ship by balance:"
-    else:
-        top_label = f"Top {top_count} ships by balance:"
-
-    if bottom_count == 1:
-        bottom_label = "Bottom ship by balance:"
-    else:
-        bottom_label = f"Bottom {bottom_count} ships by balance:"
-
-    _print_ship_list(sorted_ships, top_count, top_label, sim)
-    _print_ship_list(sorted_ships[-bottom_count:], bottom_count,
-                     bottom_label, sim)
+    # Print ship leaderboards
+    _print_ship_leaderboards(results, sim)
 
     # Print ledgers if requested
     if sim:

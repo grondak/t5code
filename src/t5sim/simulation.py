@@ -432,6 +432,7 @@ class Simulation:
                     "voyages": agent.voyage_count,
                     "location": agent.ship.location,
                     "ship_class": agent.ship.ship_class,
+                    "broke": agent.broke,
                 }
                 for agent in self.agents
             ],

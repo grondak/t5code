@@ -2,7 +2,7 @@
 
 [![Tests](https://img.shields.io/badge/tests-432%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1670%20%7C%2016%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1683%20%7C%2020%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -376,6 +376,23 @@ Bottom 5 ships by balance:
   1. Trader_008, a Liner @ Bronze/Lunion (1808): Cr3,441,220.00 (10 voyages)
   2. Trader_002, a Frigate @ Aster/Lanth (1807): Cr3,192,100.00 (9 voyages)
   ...
+
+Broke ships (3):
+  1. Trader_012, a Corsair @ Spume: Cr226,000.00 (18 voyages)
+  2. Trader_015, a Packet @ Xhosa: Cr0.00 (34 voyages)
+  3. Trader_019, a Mercenary Cruiser @ Vreibefger: Cr0.00 (25 voyages)
+```
+
+**Ship leaderboard features:**
+- **Top 5 ships**: Best performing ships by final balance (excludes broke ships)
+- **Bottom 5 ships**: Poorest performing active ships (excludes broke ships)
+- **Broke ships**: Separate section for ships that ran out of funds during simulation
+  - Shows count in header (e.g., "Broke ships (3)")
+  - Ships that couldn't pay crew payroll or annual maintenance
+  - Sorted by remaining balance (highest to lowest)
+  - Only displayed if ships went broke during the simulation
+- Dynamic grammar: "Top ship" vs "Top 5 ships", "Broke ship" vs "Broke ships (N)"
+- Each entry shows: ship name, ship class, final location with sector/hex, balance, voyage count
 ```
 
 **Complete ledger output (with --ledger or --ledger-all):**
