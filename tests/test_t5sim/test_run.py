@@ -599,3 +599,75 @@ def test_print_ship_leaderboards_broke_plural(capsys):
     _print_ship_leaderboards(results, sim=None)
     out = capsys.readouterr().out
     assert "Broke ships (2):" in out
+
+
+def test_calculate_role_proportions_all_roles():
+    """Test role proportions when all 3 roles are selected."""
+    from t5sim.simulation import calculate_role_proportions
+
+    proportions = calculate_role_proportions(True, True, True)
+    assert proportions == {
+        "civilian": 0.7,
+        "specialized": 0.2,
+        "military": 0.1
+    }
+
+
+def test_calculate_role_proportions_no_roles():
+    """Test role proportions when no roles selected (default to all)."""
+    from t5sim.simulation import calculate_role_proportions
+
+    proportions = calculate_role_proportions(False, False, False)
+    assert proportions == {
+        "civilian": 0.7,
+        "specialized": 0.2,
+        "military": 0.1
+    }
+
+
+def test_calculate_role_proportions_civ_spec():
+    """Test role proportions for civilian + specialized."""
+    from t5sim.simulation import calculate_role_proportions
+
+    proportions = calculate_role_proportions(True, False, True)
+    assert proportions == {"civilian": 0.8, "specialized": 0.2}
+
+
+def test_calculate_role_proportions_civ_mil():
+    """Test role proportions for civilian + military."""
+    from t5sim.simulation import calculate_role_proportions
+
+    proportions = calculate_role_proportions(True, True, False)
+    assert proportions == {"civilian": 0.8, "military": 0.2}
+
+
+def test_calculate_role_proportions_spec_mil():
+    """Test role proportions for specialized + military."""
+    from t5sim.simulation import calculate_role_proportions
+
+    proportions = calculate_role_proportions(False, True, True)
+    assert proportions == {"specialized": 0.7, "military": 0.3}
+
+
+def test_calculate_role_proportions_civ_only():
+    """Test role proportions for civilian only."""
+    from t5sim.simulation import calculate_role_proportions
+
+    proportions = calculate_role_proportions(True, False, False)
+    assert proportions == {"civilian": 1.0}
+
+
+def test_calculate_role_proportions_spec_only():
+    """Test role proportions for specialized only."""
+    from t5sim.simulation import calculate_role_proportions
+
+    proportions = calculate_role_proportions(False, False, True)
+    assert proportions == {"specialized": 1.0}
+
+
+def test_calculate_role_proportions_mil_only():
+    """Test role proportions for military only."""
+    from t5sim.simulation import calculate_role_proportions
+
+    proportions = calculate_role_proportions(False, True, False)
+    assert proportions == {"military": 1.0}

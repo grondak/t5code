@@ -252,3 +252,163 @@ def test_print_all_ledgers(game_state, capsys):
     for agent in sim.agents:
         assert agent.ship.ship_name in captured.out
         assert agent.ship.owner.name in captured.out
+
+
+def test_weighted_ship_selection_all_roles(game_state):
+    """Test ship selection uses correct proportions with all roles."""
+    # Run multiple simulations to test distribution
+    # With 100 ships, expect ~70 civ, ~20 spec, ~10 mil
+    sim = Simulation(
+        game_state,
+        num_ships=100,
+        duration_days=1.0,
+        include_civilian=True,
+        include_military=True,
+        include_specialized=True
+    )
+    sim.setup()
+
+    # Count ships by role
+    role_counts = {"civilian": 0, "specialized": 0, "military": 0}
+    for agent in sim.agents:
+        ship_class_name = agent.ship.ship_class
+        ship_data = game_state.ship_classes.get(ship_class_name)
+        if ship_data:
+            role = ship_data.get("role", "civilian")
+            role_counts[role] += 1
+
+    # With 100 ships: expect ~70/20/10 split (allow some variance)
+    # Allow ±15% variance for random distribution
+    assert 55 <= role_counts["civilian"] <= 85  # 70 ± 15
+    assert 5 <= role_counts["specialized"] <= 35  # 20 ± 15
+    assert 0 <= role_counts["military"] <= 25  # 10 ± 15
+
+
+def test_weighted_ship_selection_civ_spec(game_state):
+    """Test ship selection with civ+spec uses 80/20 split."""
+    sim = Simulation(
+        game_state,
+        num_ships=50,
+        duration_days=1.0,
+        include_civilian=True,
+        include_military=False,
+        include_specialized=True
+    )
+    sim.setup()
+
+    role_counts = {"civilian": 0, "specialized": 0, "military": 0}
+    for agent in sim.agents:
+        ship_class_name = agent.ship.ship_class
+        ship_data = game_state.ship_classes.get(ship_class_name)
+        if ship_data:
+            role = ship_data.get("role", "civilian")
+            role_counts[role] += 1
+
+    # 80/20 split: expect ~40 civ, ~10 spec
+    assert 30 <= role_counts["civilian"] <= 50  # 40 ± 10
+    assert 0 <= role_counts["specialized"] <= 20  # 10 ± 10
+    assert role_counts["military"] == 0  # No military ships
+
+
+def test_weighted_ship_selection_civ_mil(game_state):
+    """Test ship selection with civ+mil uses 80/20 split."""
+    sim = Simulation(
+        game_state,
+        num_ships=50,
+        duration_days=1.0,
+        include_civilian=True,
+        include_military=True,
+        include_specialized=False
+    )
+    sim.setup()
+
+    role_counts = {"civilian": 0, "specialized": 0, "military": 0}
+    for agent in sim.agents:
+        ship_class_name = agent.ship.ship_class
+        ship_data = game_state.ship_classes.get(ship_class_name)
+        if ship_data:
+            role = ship_data.get("role", "civilian")
+            role_counts[role] += 1
+
+    # 80/20 split: expect ~40 civ, ~10 mil
+    assert 30 <= role_counts["civilian"] <= 50  # 40 ± 10
+    assert role_counts["specialized"] == 0  # No specialized ships
+    assert 0 <= role_counts["military"] <= 20  # 10 ± 10
+
+
+def test_weighted_ship_selection_spec_mil(game_state):
+    """Test ship selection with spec+mil uses 70/30 split."""
+    sim = Simulation(
+        game_state,
+        num_ships=50,
+        duration_days=1.0,
+        include_civilian=False,
+        include_military=True,
+        include_specialized=True
+    )
+    sim.setup()
+
+    role_counts = {"civilian": 0, "specialized": 0, "military": 0}
+    for agent in sim.agents:
+        ship_class_name = agent.ship.ship_class
+        ship_data = game_state.ship_classes.get(ship_class_name)
+        if ship_data:
+            role = ship_data.get("role", "civilian")
+            role_counts[role] += 1
+
+    # 70/30 split: expect ~35 spec, ~15 mil
+    assert role_counts["civilian"] == 0  # No civilian ships
+    assert 20 <= role_counts["specialized"] <= 50  # 35 ± 15
+    assert 0 <= role_counts["military"] <= 30  # 15 ± 15
+
+
+def test_weighted_ship_selection_single_role_civ(game_state):
+    """Test ship selection with civilian only uses 100%."""
+    sim = Simulation(
+        game_state,
+        num_ships=20,
+        duration_days=1.0,
+        include_civilian=True,
+        include_military=False,
+        include_specialized=False
+    )
+    sim.setup()
+
+    role_counts = {"civilian": 0, "specialized": 0, "military": 0}
+    for agent in sim.agents:
+        ship_class_name = agent.ship.ship_class
+        ship_data = game_state.ship_classes.get(ship_class_name)
+        if ship_data:
+            role = ship_data.get("role", "civilian")
+            role_counts[role] += 1
+
+    # 100% civilian
+    assert role_counts["civilian"] == 20
+    assert role_counts["specialized"] == 0
+    assert role_counts["military"] == 0
+
+
+def test_weighted_ship_selection_no_roles_default(game_state):
+    """Test ship selection with no roles specified defaults to all roles."""
+    sim = Simulation(
+        game_state,
+        num_ships=100,
+        duration_days=1.0,
+        include_civilian=False,
+        include_military=False,
+        include_specialized=False
+    )
+    sim.setup()
+
+    role_counts = {"civilian": 0, "specialized": 0, "military": 0}
+    for agent in sim.agents:
+        ship_class_name = agent.ship.ship_class
+        ship_data = game_state.ship_classes.get(ship_class_name)
+        if ship_data:
+            role = ship_data.get("role", "civilian")
+            role_counts[role] += 1
+
+    # Default is 70/20/10 like all roles
+    assert 55 <= role_counts["civilian"] <= 85  # 70 ± 15
+    assert 5 <= role_counts["specialized"] <= 35  # 20 ± 15
+    assert 0 <= role_counts["military"] <= 25  # 10 ± 15

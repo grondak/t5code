@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-444%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-462%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1711%20%7C%2014%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-880%20%7C%200%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -18,12 +18,18 @@ Built for realistic simulation of merchant starship operations, trade economics,
 
 ## What's New
 
-- New CLI role filters: `--include-civilian`, `--include-military`, `--include-specialized`
-  - No flags → includes all roles by default
+- **Weighted ship selection by role** with predefined proportions:
+  - All 3 roles: 70% civilian, 20% specialized, 10% military
+  - Two roles: 80/20 (civ+spec or civ+mil) or 70/30 (spec+mil)
+  - Within each role, ships selected using `frequency` weights from CSV
+- **Role filtering CLI flags**: `--include-civilian`, `--include-military`, `--include-specialized`
+  - No flags → includes all roles with 70/20/10 proportions
   - Missing role in data → clear error during startup
-- Startup validation for ship classes: per-role `frequency` totals must equal 1.0
+- **Startup validation** for ship classes: per-role `frequency` totals must equal 1.0
   - Simulation stops with message like: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
-- Coverage update: 448 tests, 99% overall; `t5sim/run.py` at 100%
+- **Enhanced startup announcements**: Now display ship class, starting location, and annual maintenance day
+- **Refactored setup() method**: Reduced cognitive complexity by extracting helper methods
+- Coverage update: 462 tests, 880 statements (0 missed), 100% overall coverage
 
 ## Features
 
@@ -257,36 +263,55 @@ python -m t5sim.run --ships 3 --days 45 --ledger-all
 # Only military ships
 python -m t5sim.run --ships 10 --days 60 --include-military
 
-# Civilian + specialized ships
+# Civilian + specialized ships (uses 80% civilian, 20% specialized proportions)
 python -m t5sim.run --ships 8 --days 45 --include-civilian --include-specialized
+
+# All roles (uses 70% civilian, 20% specialized, 10% military proportions)
+python -m t5sim.run --ships 20 --days 90 --include-civilian --include-military --include-specialized
+
+# No role flags specified = all roles with default proportions (same as above)
+python -m t5sim.run --ships 20 --days 90
 ```
+
+Ship Selection & Role Proportions:
+- When role flags are specified, ships are allocated using predefined proportions:
+  - **All 3 roles** (or no flags): 70% civilian, 20% specialized, 10% military
+  - **Civilian + Specialized**: 80% civilian, 20% specialized
+  - **Civilian + Military**: 80% civilian, 20% military
+  - **Specialized + Military**: 70% specialized, 30% military
+  - **Single role**: 100% of that role
+- Within each role, ships are selected using the `frequency` weights from `resources/t5_ship_classes.csv`
+- Example: With `--ships 20` and all roles, expect ~14 civilian, ~4 specialized, ~2 military ships
 
 Data validation:
 - On startup, the CLI validates that per-role `frequency` values from `resources/t5_ship_classes.csv` sum to 1.0.
 - If any role’s total differs from 1.0, the simulation stops with a clear error message.
 - Example: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
 
-**Verbose output example (Traveller date format DDD.FF-YYYY with fractional days):**
+**Verbose output example** (use `--verbose` flag to see detailed state transitions with Traveller date format DDD.FF-YYYY):
 ```
-Trader_001 (Liner) starting simulation, cost: MCr228.7, destination: Derchon/Lunion (2024)
+Trader_001 (Far Trader) starting simulation, cost: MCr44.1, destination: Ilium/Darrian (0426)
   Company: Trader_001 Inc, balance: Cr1,000,000
-  Annual maintenance day: 199
-  Crew: Captain: 80%, Pilot: Pilot-2, Astrogator 1: Astrogator-1, Astrogator 2: Astrogator-1, Astrogator 3: Astrogator-1, 
-  Engineer 1: Engineer-3, Engineer 2: Engineer-2, Engineer 3: Engineer-2, Engineer 4: Engineer-2, Medic: Medic-2, 
-  Steward: Steward-3, Freightmaster, Cook 1, Cook 2, Cook 3
+  Annual maintenance day: 292
+  Crew: Captain: 80% Pilot-2, Astrogator: Astrogator-1, Engineer: Engineer-3, Medic: Medic-2, Steward: Steward-3
+[360.00-1104] Trader_001 at Rorre/Darrian (0526) (DOCKED): company=Cr1,000,000, hold (0t/50.0t, 0%), 
+  fuel (jump 40/40t, ops 4/4t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+  Trader_001 (Far Trader) at Rorre: Jump-1, Cargo: 50.0t, Jump Fuel: 40/40t, Ops Fuel: 4/4t, Maint-Day: 292
 
-Trader_002 (Scout) starting simulation, cost: MCr28.57, destination: Powaza/Rhylanor (3220)
-  Company: Trader_002 Inc, balance: Cr1,000,000
-  Annual maintenance day: 6
-  Crew: Captain: 76% Pilot-2, Astrogator: Astrogator-2, Engineer: Engineer-3, Sensop
-  
-[360.00-1104] Trader_001 at Shirene/Lunion (2125) (DOCKED): company=Cr1,000,000, hold (0t/120.0t, 0%), 
-  fuel (jump 180/180t, ops 18/18t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+[360.75-1104] Trader_001 at Rorre/Darrian (0526) (LOADING_FREIGHT): company=Cr1,003,000, hold (3t/50.0t, 6%), 
+  fuel (jump 40/40t, ops 4/4t), cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles 
+  | loaded 3t freight lot, income Cr3,000
 
-[360.00-1104] Trader_002 at Cipatwe/Rhylanor (3118) (DOCKED): company=Cr1,000,000, hold (0t/10.0t, 0%), 
-  fuel (jump 20/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
+[361.75-1104] Trader_001 at Rorre/Darrian (0526) (LOADING_FREIGHT): company=Cr1,008,000, hold (8t/50.0t, 16%), 
+  fuel (jump 40/40t, ops 4/4t), cargo=0 lots, freight=2 lots, passengers=(0H/0M/0L), mail=0 bundles 
+  | loaded 5t freight lot, income Cr5,000
 
-[360.25-1104] Trader_001 at Shirene/Lunion (2125) (OFFLOADING): company=Cr1,000,000, hold (0t/120.0t, 0%), 
+[363.55-1104] Trader_002 at Prilissa/Trin's Veil (3035) (MANEUVERING_TO_JUMP): company=Cr1,000,000, 
+  hold (0t/0.0t, 0%), fuel (jump 100/100t, ops 24/24t), cargo=0 lots, freight=0 lots, 
+  passengers=(0H/0M/0L), mail=0 bundles | entering jump space to Murchison/Trin's Veil (2935)
+Trader_002: Jumped 1 hexes, fuel remaining: 50/100t
+[363.55-1104] Trader_002 at jump space (JUMPING): company=Cr1,000,000, hold (0t/0.0t, 0%), 
+  fuel (jump 50/100t, ops 24/24t) | picked destination 'Pepernium' because it showed cargo profit of +Cr1900/ton 
   fuel (jump 180/180t, ops 18/18t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
 
 [360.75-1104] Trader_001 at Shirene/Lunion (2125) (SELLING_CARGO): company=Cr1,000,000, hold (0t/120.0t, 0%), 
@@ -534,12 +559,12 @@ pytest --cov=src --cov-report=html
   - GameState.py, T5Basics.py, T5Company.py, T5Exceptions.py, T5Finance.py
   - T5Lot.py, T5Mail.py, T5NPC.py, T5RandomTradeGoods.py
   - T5ShipClass.py, T5Starship.py, T5Tables.py, T5World.py
-- **t5sim**: High coverage across all modules
-  - simulation.py: 99% coverage
-  - starship_agent.py: 98% coverage (edge cases and verbose branches)
-  - starship_states.py: 98% coverage (describe_state method)
+- **t5sim**: All modules at 100% coverage
+  - simulation.py: 100% coverage
+  - starship_agent.py: 100% coverage
+  - starship_states.py: 100% coverage
   - run.py: 100% coverage
-- **Total**: 448 tests, 99% overall coverage (1729 statements, 11 missed)
+- **Total**: 462 tests, 100% overall coverage (880 statements, 0 missed)
 
 ### Code Quality
 

@@ -267,6 +267,9 @@ def _run_with_full_simulation(args):
         verbose=args.verbose,
         starting_year=args.year,
         starting_day=args.day,
+        include_civilian=args.include_civilian,
+        include_military=args.include_military,
+        include_specialized=args.include_specialized,
     )
     results = sim.run()
     elapsed_time = time.time() - start_time
@@ -311,6 +314,9 @@ def _run_with_convenience_function(args):
         verbose=args.verbose,
         starting_year=args.year,
         starting_day=args.day,
+        include_civilian=args.include_civilian,
+        include_military=args.include_military,
+        include_specialized=args.include_specialized,
     )
     results = sim.run()
     elapsed_time = time.time() - start_time

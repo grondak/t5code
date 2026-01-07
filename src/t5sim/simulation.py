@@ -24,6 +24,66 @@ from t5sim.starship_agent import StarshipAgent
 from t5sim.starship_states import StarshipState
 
 
+def calculate_role_proportions(
+    include_civilian: bool,
+    include_military: bool,
+    include_specialized: bool
+) -> Dict[str, float]:
+    """Calculate ship allocation proportions by role.
+
+    Determines what percentage of ships should be allocated to each role
+    based on which roles are included. Uses predefined proportions:
+    - All 3: 70% civilian, 20% specialty, 10% military
+    - Civ+Spec: 80% civilian, 20% specialty
+    - Civ+Mil: 80% civilian, 20% military
+    - Spec+Mil: 70% specialty, 30% military
+    - Single role: 100% that role
+    - No roles (default): 70% civilian, 20% specialty, 10% military
+
+    Args:
+        include_civilian: Whether civilian ships are included
+        include_military: Whether military ships are included
+        include_specialized: Whether specialized ships are included
+
+    Returns:
+        Dictionary mapping role names to their proportions (0.0-1.0)
+
+    Example:
+        >>> calculate_role_proportions(True, True, True)
+        {'civilian': 0.7, 'specialized': 0.2, 'military': 0.1}
+        >>> calculate_role_proportions(True, False, True)
+        {'civilian': 0.8, 'specialized': 0.2}
+    """
+    # No roles specified = all roles (default behavior)
+    if not (include_civilian or include_military or include_specialized):
+        return {"civilian": 0.7, "specialized": 0.2, "military": 0.1}
+
+    # All 3 roles
+    if include_civilian and include_military and include_specialized:
+        return {"civilian": 0.7, "specialized": 0.2, "military": 0.1}
+
+    # Two roles
+    if include_civilian and include_specialized:
+        return {"civilian": 0.8, "specialized": 0.2}
+    if include_civilian and include_military:
+        return {"civilian": 0.8, "military": 0.2}
+    if include_specialized and include_military:
+        return {"specialized": 0.7, "military": 0.3}
+
+    # Single role
+    if include_civilian:
+        return {"civilian": 1.0}
+    if include_specialized:
+        return {"specialized": 1.0}
+    if include_military:
+        return {"military": 1.0}
+
+    # Defensive fallback (should never reach here)
+    return {"civilian": 0.7,
+            "specialized": 0.2,
+            "military": 0.1}  # pragma: no cover
+
+
 class Simulation:
     """Main simulation controller for merchant starship operations.
 
@@ -54,6 +114,9 @@ class Simulation:
         verbose: bool = False,
         starting_year: int = 1104,
         starting_day: int = 360,
+        include_civilian: bool = False,
+        include_military: bool = False,
+        include_specialized: bool = False,
     ):
         """Initialize the simulation with environment and settings.
 
@@ -75,11 +138,17 @@ class Simulation:
                            (default: 1104)
             starting_day: Starting day of year, 1-365
                           (default: 360)
+            include_civilian: Whether civilian ships are included
+            include_military: Whether military ships are included
+            include_specialized: Whether specialized ships are included
 
         Note:
             Verbose mode generates substantial output for large
             simulations; recommended only for debugging or small
             runs (< 10 ships, < 100 days).
+
+            If no roles are specified, all roles are included with
+            default proportions: 70% civilian, 20% specialized, 10% military.
         """
         self.env = simpy.Environment()
         self.game_state = game_state
@@ -89,6 +158,9 @@ class Simulation:
         self.verbose = verbose
         self.starting_year = starting_year
         self.starting_day = starting_day
+        self.include_civilian = include_civilian
+        self.include_military = include_military
+        self.include_specialized = include_specialized
 
         self.agents: List[StarshipAgent] = []
         self.statistics: Dict[str, List[Any]] = {
@@ -129,6 +201,147 @@ class Simulation:
 
         return f"{day_int:03d}.{day_frac * 100:02.0f}-{current_year}"
 
+    def _select_ship_classes_by_role(self) -> List[Dict]:
+        """Select ship classes using role proportions and frequency weights.
+
+        Returns:
+            List of ship class dictionaries to create, one per ship
+        """
+        import random
+
+        ship_classes_data = list(self.game_state.ship_classes.values())
+
+        # Calculate role proportions
+        role_proportions = calculate_role_proportions(
+            self.include_civilian,
+            self.include_military,
+            self.include_specialized
+        )
+
+        # Group ship classes by role
+        ships_by_role: Dict[str, List[Dict]] = {}
+        for ship_data in ship_classes_data:
+            role = ship_data.get("role", "civilian")
+            if role not in ships_by_role:
+                ships_by_role[role] = []
+            ships_by_role[role].append(ship_data)
+
+        # Calculate how many ships to create per role
+        ships_per_role = self._calculate_ships_per_role(role_proportions)
+
+        # Build list using frequency-weighted selection within each role
+        ship_classes_to_create = []
+        for role, count in ships_per_role.items():
+            role_ships = ships_by_role.get(role, [])
+            if not role_ships:
+                continue
+
+            frequencies = [
+                float(ship.get("frequency", 0.0)) for ship in role_ships
+            ]
+            chosen = random.choices(role_ships, weights=frequencies, k=count)
+            ship_classes_to_create.extend(chosen)
+
+        return ship_classes_to_create
+
+    def _calculate_ships_per_role(
+        self, role_proportions: Dict[str, float]
+    ) -> Dict[str, int]:
+        """Calculate how many ships to allocate to each role.
+
+        Args:
+            role_proportions: Dictionary of role to proportion (0.0-1.0)
+
+        Returns:
+            Dictionary of role to ship count
+        """
+        ships_per_role: Dict[str, int] = {}
+        remaining_ships = self.num_ships
+        sorted_roles = sorted(role_proportions.keys())
+
+        for i, role in enumerate(sorted_roles):
+            if i == len(sorted_roles) - 1:
+                # Last role gets all remaining ships
+                ships_per_role[role] = remaining_ships
+            else:
+                count = round(self.num_ships * role_proportions[role])
+                ships_per_role[role] = count
+                remaining_ships -= count
+
+        return ships_per_role
+
+    def _find_starting_world(
+        self, ship_class: T5ShipClass, worlds: List[str]
+    ) -> tuple[str, List[str]]:
+        """Find a suitable starting world with reachable destinations.
+
+        Args:
+            ship_class: T5ShipClass for jump range calculation
+            worlds: List of available world names
+
+        Returns:
+            Tuple of (starting_world, reachable_worlds)
+        """
+        import random
+        from t5code.T5Company import T5Company
+
+        for _ in range(100):  # Try up to 100 times
+            candidate_world = random.choice(worlds)
+            temp_company = T5Company("Temp Company",
+                                     starting_capital=1_000_000)
+            temp_ship = T5Starship(
+                "temp", candidate_world, ship_class, owner=temp_company
+            )
+            reachable_worlds = temp_ship.get_worlds_in_jump_range(
+                self.game_state
+            )
+            if reachable_worlds:
+                return candidate_world, reachable_worlds
+
+        # Fallback: use any world (may happen with isolated worlds)
+        return random.choice(worlds), []
+
+    def _create_and_setup_ship(
+        self, ship_index: int, ship_class: T5ShipClass,
+        starting_world: str, reachable_worlds: List[str]
+    ) -> T5Starship:
+        """Create a ship with company, crew, and destination.
+
+        Args:
+            ship_index: Index for ship naming (0-based)
+            ship_class: T5ShipClass for ship creation
+            starting_world: Starting world name
+            reachable_worlds: List of worlds in jump range
+
+        Returns:
+            Fully configured T5Starship
+        """
+        from t5code.T5Company import T5Company
+
+        # Create company and ship
+        company = T5Company(
+            f"Trader_{ship_index + 1:03d} Inc",
+            starting_capital=self.starting_capital
+        )
+        ship = T5Starship(
+            f"Trader_{ship_index + 1:03d}", starting_world,
+            ship_class, owner=company
+        )
+
+        # Add crew
+        self._add_basic_crew(ship, ship_class)
+
+        # Set destination
+        if reachable_worlds:
+            destination = StarshipAgent.pick_destination(
+                ship, self.game_state
+            )
+            ship.set_course_for(destination)
+        else:
+            ship.set_course_for(starting_world)
+
+        return ship
+
     def setup(self):
         """Create starships and agents for simulation.
 
@@ -147,74 +360,28 @@ class Simulation:
         Note:
             Called automatically by run() if needed, but can be
             called separately for inspection before execution.
+
+            Ships are allocated by role using predefined proportions,
+            then within each role by the frequency values from the CSV.
         """
-        import random
         from t5code import T5ShipClass
 
         worlds = list(self.game_state.world_data.keys())
-        ship_classes_data = list(self.game_state.ship_classes.values())
+        ship_classes_to_create = self._select_ship_classes_by_role()
 
+        # Create ships from the selected classes
         for i in range(self.num_ships):
-            # Pick random ship class first
-            ship_class_dict = random.choice(ship_classes_data)
+            ship_class_dict = ship_classes_to_create[i]
             class_name = ship_class_dict["class_name"]
             ship_class = T5ShipClass(class_name, ship_class_dict)
 
-            # Find a starting world with valid destinations
-            # Try up to 100 times to find ideal location
-            starting_world = None
-            reachable_worlds = []
-            attempts = 100
-            for _ in range(attempts):
-                candidate_world = random.choice(worlds)
-                # Create temporary ship to check jump range
-                from t5code.T5Company import T5Company
-                temp_company = T5Company("Temp Company",
-                                         starting_capital=1_000_000)
-                temp_ship = T5Starship(
-                    "temp", candidate_world, ship_class, owner=temp_company
-                )
-                reachable_worlds = temp_ship.get_worlds_in_jump_range(
-                    self.game_state
-                )
-                if reachable_worlds:
-                    starting_world = candidate_world
-                    break
-
-            # Fallback: if no valid location found, use any world
-            # (may happen with small test maps or isolated worlds)
-            if not starting_world:
-                starting_world = random.choice(worlds)
-                # Ship will pick destination during first jump via
-                # _choose_next_destination()
-                reachable_worlds = []
-
-            # Create company for this ship
-            company = T5Company(
-                f"Trader_{i + 1:03d} Inc",
-                starting_capital=self.starting_capital
+            # Find starting world and create ship
+            starting_world, reachable_worlds = self._find_starting_world(
+                ship_class, worlds
             )
-
-            # Create actual ship with company ownership
-            ship = T5Starship(
-                f"Trader_{i + 1:03d}", starting_world, ship_class,
-                owner=company
+            ship = self._create_and_setup_ship(
+                i, ship_class, starting_world, reachable_worlds
             )
-
-            # Add basic crew (pass ship_class since
-            # ship stores class_name string)
-            self._add_basic_crew(ship, ship_class)
-
-            # Pick initial destination using StarshipAgent's logic
-            if reachable_worlds:
-                destination = StarshipAgent.pick_destination(
-                    ship, self.game_state
-                )
-                ship.set_course_for(destination)
-            else:
-                # No destinations available (isolated world or small map)
-                # Set to current location to prevent crashes
-                ship.set_course_for(starting_world)
 
             # Create agent
             agent = StarshipAgent(
@@ -223,7 +390,7 @@ class Simulation:
             )
             self.agents.append(agent)
 
-            # Print ship details including class, location, and maintenance day
+            # Print ship details
             print(
                 f"  {ship.ship_name} ({ship.ship_class}) at {ship.location}: "
                 f"Jump-{ship.jump_rating}, "
