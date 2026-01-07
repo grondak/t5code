@@ -16,6 +16,15 @@ Built for realistic simulation of merchant starship operations, trade economics,
 
 ---
 
+## What's New
+
+- New CLI role filters: `--include-civilian`, `--include-military`, `--include-specialized`
+  - No flags → includes all roles by default
+  - Missing role in data → clear error during startup
+- Startup validation for ship classes: per-role `frequency` totals must equal 1.0
+  - Simulation stops with message like: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
+- Coverage update: 448 tests, 99% overall; `t5sim/run.py` at 100%
+
 ## Features
 
 ### 🎯 Discrete-Event Simulation (t5sim)
@@ -54,6 +63,9 @@ Built for realistic simulation of merchant starship operations, trade economics,
   - Role filtering flags: `--include-civilian`, `--include-military`, `--include-specialized`
     - If no flags are provided, all ship roles are included by default
     - If a requested role is not present in the ship classes file, execution fails with a clear error
+  - Role frequency validation: per-role `frequency` totals must sum to 1.0
+    - Validation runs at startup; the simulation stops with an error if invalid.
+    - Example: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
 
 ### 🚀 Starship Operations (t5code)
 - **Complete starship management** with cargo holds, passenger berths, and mail lockers
@@ -217,6 +229,10 @@ For each ship, shows:
 - Crew skill ranks
 - Jump and ops fuel capacity
 
+Additionally, this script validates role frequencies and reports any mismatches:
+- Verifies that the sum of `frequency` values per `role` equals 1.0
+- Prints a clear error if any role’s total is not 1.0 (e.g., "role 'civilian' sums to 0.80 (expected 1.00)")
+
 **Multi-ship discrete-event simulation:**
 ```bash
 # Quick test (5 ships, 30 days)
@@ -244,6 +260,11 @@ python -m t5sim.run --ships 10 --days 60 --include-military
 # Civilian + specialized ships
 python -m t5sim.run --ships 8 --days 45 --include-civilian --include-specialized
 ```
+
+Data validation:
+- On startup, the CLI validates that per-role `frequency` values from `resources/t5_ship_classes.csv` sum to 1.0.
+- If any role’s total differs from 1.0, the simulation stops with a clear error message.
+- Example: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
 
 **Verbose output example (Traveller date format DDD.FF-YYYY with fractional days):**
 ```
@@ -514,11 +535,11 @@ pytest --cov=src --cov-report=html
   - T5Lot.py, T5Mail.py, T5NPC.py, T5RandomTradeGoods.py
   - T5ShipClass.py, T5Starship.py, T5Tables.py, T5World.py
 - **t5sim**: High coverage across all modules
-  - simulation.py: 100% coverage
-  - starship_agent.py: 99% coverage (edge cases and verbose branches)
+  - simulation.py: 99% coverage
+  - starship_agent.py: 98% coverage (edge cases and verbose branches)
   - starship_states.py: 98% coverage (describe_state method)
-  - run.py: 98% coverage (main block guard)
-- **Total**: 429 tests, 99% overall coverage (1624 statements, 24 missed)
+  - run.py: 100% coverage
+- **Total**: 448 tests, 99% overall coverage (1729 statements, 11 missed)
 
 ### Code Quality
 

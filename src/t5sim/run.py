@@ -167,6 +167,43 @@ def _filter_ships_by_role(raw_ships, include_civilian, include_military,
     return filtered
 
 
+def _validate_role_frequencies(raw_ships: dict[str, dict]) -> None:
+    """Validate that frequencies per role sum to 1.0.
+
+    Groups all ship classes by their `role` and sums the `frequency` field
+    for each role. If any role's total differs from 1.0 beyond a small
+    tolerance, raises ValueError describing the problematic roles.
+
+    Args:
+        raw_ships: Mapping of class name -> ship data dict, each containing
+                   at least `role` (str) and `frequency` (float-like)
+
+    Raises:
+        ValueError: If any role's total frequency != 1.0 within tolerance.
+    """
+    from collections import defaultdict
+
+    totals: dict[str, float] = defaultdict(float)
+    for ship in raw_ships.values():
+        role = ship.get("role", "civilian")
+        try:
+            freq = float(ship.get("frequency", 0.0))
+        except (TypeError, ValueError):
+            freq = 0.0
+        totals[role] += freq
+
+    # Allow small floating point tolerance
+    TOL = 1e-6
+    bad = [(role, total) for role, total in totals.items()
+           if abs(total - 1.0) > TOL]
+
+    if bad:
+        parts = [f"role '{role}' sums to {total:.2f} (expected 1.00)"
+                 for role, total in sorted(bad)]
+        msg = "Frequency totals invalid: " + "; ".join(parts)
+        raise ValueError(msg)
+
+
 def _print_ship_list(ships, count, label, sim):
     """Print formatted list of ships with their details.
 
@@ -206,6 +243,8 @@ def _run_with_full_simulation(args):
     game_state = GameState()
     raw_worlds = gs_module.load_and_parse_t5_map(args.map)
     raw_ships = gs_module.load_and_parse_t5_ship_classes(args.ships_file)
+    # Validate role frequencies across the entire file
+    _validate_role_frequencies(raw_ships)
 
     # Filter ships by role if requested
     filtered_ships = _filter_ships_by_role(
@@ -248,6 +287,8 @@ def _run_with_convenience_function(args):
     game_state = GameState()
     raw_worlds = gs_module.load_and_parse_t5_map(args.map)
     raw_ships = gs_module.load_and_parse_t5_ship_classes(args.ships_file)
+    # Validate role frequencies across the entire file
+    _validate_role_frequencies(raw_ships)
 
     # Filter ships by role if requested
     filtered_ships = _filter_ships_by_role(

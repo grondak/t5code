@@ -483,6 +483,56 @@ def test_main_with_multiple_role_filters(mock_run_simulation, capsys):
     assert "Ships: 10" in captured.out
 
 
+def test_validate_role_frequencies_ok():
+    """Frequencies summing to 1.0 per role should pass silently."""
+    from t5sim.run import _validate_role_frequencies
+    raw_ships = {
+        'Scout': {'role': 'civilian', 'frequency': 0.6},
+        'Free Trader': {'role': 'civilian', 'frequency': 0.4},
+        'Corsair': {'role': 'military', 'frequency': 0.7},
+        'Corvette': {'role': 'military', 'frequency': 0.3},
+    }
+    _validate_role_frequencies(raw_ships)  # no exception
+
+
+def test_validate_role_frequencies_mismatch_single_role():
+    """Mismatch in one role should raise with clear message."""
+    from t5sim.run import _validate_role_frequencies
+    raw_ships = {
+        'Scout': {'role': 'civilian', 'frequency': 0.5},
+        'Free Trader': {'role': 'civilian', 'frequency': 0.3},  # sums 0.8
+        'Corsair': {'role': 'military', 'frequency': 0.7},
+        'Corvette': {'role': 'military', 'frequency': 0.3},
+    }
+    with pytest.raises(ValueError, match=r"role 'civilian' sums to 0.80"):
+        _validate_role_frequencies(raw_ships)
+
+
+def test_main_stops_on_frequency_mismatch():
+    """main() should stop (raise) when role totals are invalid."""
+    bad_ships = {
+        'Scout': {'role': 'civilian', 'frequency': 0.2},
+        'Free Trader': {'role': 'civilian', 'frequency': 0.2},  # 0.4 total
+        'Corsair': {'role': 'military', 'frequency': 1.0},
+    }
+    with patch('t5sim.run.gs_module.load_and_parse_t5_ship_classes',
+               return_value=bad_ships), \
+         patch('sys.argv', ['run.py']):
+        with pytest.raises(ValueError, match='Frequency totals invalid'):
+            main()
+
+
+def test_validate_role_frequencies_non_numeric_frequency_treated_as_zero():
+    """Non-numeric frequency values are treated as 0.0 during validation."""
+    from t5sim.run import _validate_role_frequencies
+    raw_ships = {
+        'Scout': {'role': 'civilian', 'frequency': 'oops'},  # becomes 0.0
+        'Free Trader': {'role': 'civilian', 'frequency': 1.0},
+    }
+    # Should not raise; totals for civilian = 1.0 after coercion
+    _validate_role_frequencies(raw_ships)
+
+
 def test_print_ship_leaderboards_broke_singular(capsys):
     """Ensure singular broke ship label is printed."""
     from t5sim.run import _print_ship_leaderboards
