@@ -467,7 +467,7 @@ Broke ships (3):
   - Only displayed if ships went broke during the simulation
 - Dynamic grammar: "Top ship" vs "Top 5 ships", "Broke ship" vs "Broke ships (N)"
 - Each entry shows: ship name, ship class, final location with sector/hex, balance, voyage count
-```
+
 
 **Complete ledger output (with --ledger or --ledger-all):**
 ```
@@ -790,16 +790,7 @@ Contributions welcome! This project follows:
 - [x] Company ownership integration with double-entry accounting
 - [x] Complete financial audit trail through ledger system
 - [x] Annual maintenance scheduling with 2-week downtime periods
-- [ ] Enhanced statistics and visualization
-- [ ] Advanced pathfinding with multi-jump routes
-- [ ] Ship component wear and aging mechanics
-
-### Long Term
-- [ ] Complete subsector generation
-- [ ] Economic modeling with supply/demand
-- [ ] Piracy and conflict mechanics
-- [ ] Character generation system
-- [ ] Save/load simulation state
+ 
 
 ---
 
