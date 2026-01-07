@@ -20,6 +20,7 @@ def test_ship_data():
             "crew_positions": ["A", "B", "C"],  # Pilot, Astrogator, Engineer
             "jump_fuel_capacity": 20,
             "ops_fuel_capacity": 2,
+            "role": "civilian",
         },
         "large": {
             "class_name": "large",
@@ -32,6 +33,20 @@ def test_ship_data():
             "crew_positions": ["0", "A", "B", "B", "C", "C", "C", "D"],
             "jump_fuel_capacity": 60,
             "ops_fuel_capacity": 6,
+            "role": "military",
+        },
+        "specialized": {
+            "class_name": "specialized",
+            "ship_cost": 100.0,
+            "jump_rating": 2,
+            "maneuver_rating": 2,
+            "cargo_capacity": 50,
+            "staterooms": 5,
+            "low_berths": 0,
+            "crew_positions": ["A", "B", "C", "D"],
+            "jump_fuel_capacity": 40,
+            "ops_fuel_capacity": 4,
+            "role": "specialized",
         },
     }
 

@@ -1308,19 +1308,48 @@ class StarshipAgent:
     def _mark_ship_broke(self, reason: str):
         """Mark ship as broke and suspend operations.
 
-        Consolidates broke-ship handling for both fuel and payroll failures.
+        For military and specialized ships, receive a 1 million credit
+        bailout from patron before going broke. Civilian ships go broke.
 
         Args:
             reason: Description of why ship is broke
 
         Side Effects:
-            - Sets self.broke = True to suspend all operations
+            - For military/specialized: Credits Cr1,000,000 patron bailout,
+              resets broke flag, resumes operations
+            - For civilian: Sets self.broke = True to suspend all operations
             - Reports status in verbose mode
         """
-        self.broke = True
+        # Get ship class data to check role
+        ship_class_data = self.simulation.game_state.ship_classes.get(
+            self.ship.ship_class
+        )
 
-        if self.simulation.verbose:
-            self._report_status(f"{reason}, suspending operations")
+        ship_role = (ship_class_data.get("role",
+                                         "civilian") if ship_class_data
+                     else "civilian")
+
+        # Military and specialized ships get patron bailout
+        if ship_role in ("military", "specialized"):
+            bailout_amount = 1_000_000
+            self.ship.credit(
+                self.simulation.env.now,
+                bailout_amount,
+                f"Patron bailout ({ship_role.capitalize()} ship)"
+            )
+            self.broke = False  # Resume operations
+
+            if self.simulation.verbose:
+                self._report_status(
+                    f"received Cr{bailout_amount:,} patron bailout, "
+                    f"resuming operations"
+                )
+        else:
+            # Civilian ships go broke
+            self.broke = True
+
+            if self.simulation.verbose:
+                self._report_status(f"{reason}, suspending operations")
 
     def _load_fuel(self):
         """Refuel jump and operations tanks at Cr500 per ton.

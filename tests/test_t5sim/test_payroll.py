@@ -342,6 +342,108 @@ def test_mark_ship_broke_consolidation(simple_game_state, test_ship_with_crew):
     assert agent.broke is True
 
 
+def test_military_ship_patron_bailout(simple_game_state, test_ship_data):
+    """Test that military ships get patron bailout instead of going broke."""
+    env = simpy.Environment()
+    sim = Simulation(simple_game_state,
+                     num_ships=1,
+                     starting_day=2,
+                     verbose=False)
+
+    # Create military ship (use "large" which has role="military")
+    ship_class = T5ShipClass("large", test_ship_data["large"])
+    company = T5Company("Military Inc", starting_capital=100_000)
+    military_ship = T5Starship("Military Test", "large",
+                               ship_class, owner=company)
+
+    agent = StarshipAgent(
+        env, military_ship, sim, starting_state=StarshipState.DOCKED
+    )
+
+    initial_balance = company.balance
+    agent._mark_ship_broke("insufficient funds test")
+
+    # Military ship should NOT be broke
+    assert agent.broke is False
+
+    # Should have received 1 million credit bailout
+    assert company.balance == initial_balance + 1_000_000
+
+    # Ledger should have patron bailout entry
+    bailout_entries = [entry for entry in company.cash.ledger
+                       if "Patron bailout" in entry.memo]
+    assert len(bailout_entries) == 1
+    assert "Military" in bailout_entries[0].memo
+
+
+def test_specialized_ship_patron_bailout(simple_game_state, test_ship_data):
+    """Test that specialized ships get patron
+    bailout instead of going broke."""
+    env = simpy.Environment()
+    sim = Simulation(simple_game_state,
+                     num_ships=1,
+                     starting_day=2,
+                     verbose=False)
+
+    # Create specialized ship (use "specialized" which has role="specialized")
+    ship_class = T5ShipClass("specialized", test_ship_data["specialized"])
+    company = T5Company("Specialized Inc", starting_capital=100_000)
+    specialized_ship = T5Starship("Specialized Test", "specialized",
+                                  ship_class, owner=company)
+
+    agent = StarshipAgent(
+        env, specialized_ship, sim, starting_state=StarshipState.DOCKED
+    )
+
+    initial_balance = company.balance
+    agent._mark_ship_broke("insufficient funds test")
+
+    # Specialized ship should NOT be broke
+    assert agent.broke is False
+
+    # Should have received 1 million credit bailout
+    assert company.balance == initial_balance + 1_000_000
+
+    # Ledger should have patron bailout entry
+    bailout_entries = [entry for entry in company.cash.ledger
+                       if "Patron bailout" in entry.memo]
+    assert len(bailout_entries) == 1
+    assert "Specialized" in bailout_entries[0].memo
+
+
+def test_civilian_ship_goes_broke(simple_game_state, test_ship_data):
+    """Test that civilian ships actually go broke and don't get bailout."""
+    env = simpy.Environment()
+    sim = Simulation(simple_game_state,
+                     num_ships=1,
+                     starting_day=2,
+                     verbose=False)
+
+    # Create civilian ship (use "small" which has role="civilian")
+    ship_class = T5ShipClass("small", test_ship_data["small"])
+    company = T5Company("Civilian Inc", starting_capital=100_000)
+    civilian_ship = T5Starship("Civilian Test", "small",
+                               ship_class, owner=company)
+
+    agent = StarshipAgent(
+        env, civilian_ship, sim, starting_state=StarshipState.DOCKED
+    )
+
+    initial_balance = company.balance
+    agent._mark_ship_broke("insufficient funds test")
+
+    # Civilian ship SHOULD be broke
+    assert agent.broke is True
+
+    # Balance should NOT have changed (no bailout)
+    assert company.balance == initial_balance
+
+    # No bailout entries in ledger
+    bailout_entries = [entry for entry in company.cash.ledger
+                       if "Patron bailout" in entry.memo]
+    assert len(bailout_entries) == 0
+
+
 def test_skill_based_salary_calculation(simple_game_state, test_ship_data):
     """Test that crew salaries are calculated based on skill levels."""
     env = simpy.Environment()

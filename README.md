@@ -46,6 +46,12 @@ Built for realistic simulation of merchant starship operations, trade economics,
   - **Maintenance costs**: 1/1000th of ship cost (e.g., MCr 100 ship costs Cr 100,000)
   - Ships with insufficient funds for crew share or maintenance become "broke" and suspend operations
   - Profit, crew share, and maintenance cost displayed during maintenance
+- **Patron bailout system** - prevents military and specialized ships from going broke
+  - **Military ships**: Receive Cr1,000,000 bailout from patron when about to go broke
+  - **Specialized ships**: Receive Cr1,000,000 bailout from patron when about to go broke
+  - **Civilian ships**: Go broke normally and suspend operations
+  - Bailout recorded in ledger as "Patron bailout (Military/Specialized ship)" transaction
+  - Ships resume operations immediately after bailout
 - **Profit-aware routing** - ships evaluate destinations for cargo profitability
 - **Smart cargo purchasing** - skips lots that would result in losses
 - **Skill-based crew payroll** - monthly salaries calculated from position skill requirements
