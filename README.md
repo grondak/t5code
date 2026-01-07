@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-432%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-444%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1683%20%7C%2020%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1711%20%7C%2014%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -51,6 +51,9 @@ Built for realistic simulation of merchant starship operations, trade economics,
 - **Trade route tracking** and profit analysis
 - **Statistics collection** for voyages, sales, and balances
 - **CLI interface** for easy simulation runs
+  - Role filtering flags: `--include-civilian`, `--include-military`, `--include-specialized`
+    - If no flags are provided, all ship roles are included by default
+    - If a requested role is not present in the ship classes file, execution fails with a clear error
 
 ### 🚀 Starship Operations (t5code)
 - **Complete starship management** with cargo holds, passenger berths, and mail lockers
@@ -233,6 +236,13 @@ python -m t5sim.run --ships 5 --days 45 --ledger Trader_001
 
 # Print ledgers for all ships (verbose financial audit trail)
 python -m t5sim.run --ships 3 --days 45 --ledger-all
+
+# Role-based filtering examples
+# Only military ships
+python -m t5sim.run --ships 10 --days 60 --include-military
+
+# Civilian + specialized ships
+python -m t5sim.run --ships 8 --days 45 --include-civilian --include-specialized
 ```
 
 **Verbose output example (Traveller date format DDD.FF-YYYY with fractional days):**

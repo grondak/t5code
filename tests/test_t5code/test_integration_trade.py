@@ -3,8 +3,8 @@
 import pytest
 from t5code import (
     T5Lot, T5ShipClass, T5Starship, T5World,
-    find_best_broker, load_and_parse_t5_map, load_and_parse_t5_ship_classes
-, T5Company, T5Company)
+    find_best_broker, load_and_parse_t5_map,
+    load_and_parse_t5_ship_classes, T5Company)
 from t5code.T5Exceptions import CapacityExceededError
 
 

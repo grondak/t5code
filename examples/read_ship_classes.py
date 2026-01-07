@@ -6,12 +6,17 @@ with all field values labeled by their header names.
 
 Decodes crew position codes to readable position names.
 
+At the end, displays a summary table showing each ship class with its
+role, ships, combined frequency, and validation that frequencies sum
+to 1.0 per role.
+
 Usage:
     python examples/read_ship_classes.py
 """
 
 import csv
 from pathlib import Path
+from collections import defaultdict
 
 
 # Mapping of crew position codes to position names
@@ -70,6 +75,9 @@ def main():
     print("TRAVELLER 5 SHIP CLASSES")
     print("=" * 80)
 
+    # Track ships by role for summary
+    ships_by_role = defaultdict(list)
+
     with open(csv_file, 'r') as f:
         reader = csv.DictReader(f)
 
@@ -92,6 +100,34 @@ def main():
                     print(f"  {'':<25s}  {decoded}")
                 else:
                     print(f"  {field_name:25s}: {value}")
+
+            # Track for summary
+            role = row["role"]
+            class_name = row["class_name"]
+            frequency = float(row["frequency"])
+            ships_by_role[role].append((class_name, frequency))
+
+    # Print summary by role
+    print("\n" + "=" * 80)
+    print("SUMMARY BY ROLE")
+    print("=" * 80)
+
+    for role in sorted(ships_by_role.keys()):
+        print(f"\n{role.upper()} SHIPS:")
+        print("-" * 80)
+        ships = ships_by_role[role]
+        total_frequency = 0.0
+
+        for class_name, frequency in ships:
+            print(f"  {class_name:30s}: {frequency:6.2f}")
+            total_frequency += frequency
+
+        # Check if frequencies sum to 1.0
+        flag = ""
+        if abs(total_frequency - 1.0) > 0.001:
+            flag = " ERROR: Does not sum to 1.0!"
+        print(f"  {'-' * 30}  {'-' * 6}")
+        print(f"  {'TOTAL':30s}: {total_frequency:6.2f}{flag}")
 
     print("\n" + "=" * 80)
 

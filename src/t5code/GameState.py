@@ -147,5 +147,7 @@ def load_and_parse_t5_ship_classes_filelike(
             "crew_positions": crew_positions,
             "jump_fuel_capacity": int(row.get("jump_fuel_capacity", 0)),
             "ops_fuel_capacity": int(row.get("ops_fuel_capacity", 0)),
+            "role": row.get("role", "civilian"),
+            "frequency": float(row.get("frequency", 0.0)),
         }
     return ships

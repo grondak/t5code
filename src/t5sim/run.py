@@ -29,7 +29,7 @@ Output:
 
 import argparse
 import time
-from t5sim.simulation import run_simulation, Simulation
+from t5sim.simulation import Simulation
 from t5code.GameState import GameState
 from t5code import T5World
 from t5code import GameState as gs_module
@@ -97,7 +97,74 @@ def _create_argument_parser():
         action="store_true",
         help="Print ledgers for all ships (verbose)",
     )
+    parser.add_argument(
+        "--include-civilian",
+        action="store_true",
+        help="Include civilian ships (Scout, Free Trader, etc.)",
+    )
+    parser.add_argument(
+        "--include-military",
+        action="store_true",
+        help="Include military ships (Close Escort, Corsair, etc.)",
+    )
+    parser.add_argument(
+        "--include-specialized",
+        action="store_true",
+        help="Include specialized ships (Safari Ship, Packet, Lab Ship)",
+    )
     return parser
+
+
+def _filter_ships_by_role(raw_ships, include_civilian, include_military,
+                          include_specialized):
+    """Filter ship classes based on role selection.
+
+    Args:
+        raw_ships: Dictionary of all ship classes
+        include_civilian: Include civilian ships
+        include_military: Include military ships
+        include_specialized: Include specialized ships
+
+    Returns:
+        Dictionary of filtered ship classes
+
+    Raises:
+        ValueError: If a requested role has no ships available
+    """
+    # If no roles specified, include all ships
+    if not (include_civilian or include_military or include_specialized):
+        return raw_ships
+
+    # Build list of requested roles
+    requested_roles = []
+    if include_civilian:
+        requested_roles.append("civilian")
+    if include_military:
+        requested_roles.append("military")
+    if include_specialized:
+        requested_roles.append("specialized")
+
+    # Check that each requested role has ships
+    available_roles = {ship["role"] for ship in raw_ships.values()}
+    for role in requested_roles:
+        if role not in available_roles:
+            raise ValueError(
+                f"No ships with role '{role}' found in ship classes file"
+            )
+
+    # Filter ships by requested roles
+    filtered = {
+        name: ship_data
+        for name, ship_data in raw_ships.items()
+        if ship_data["role"] in requested_roles
+    }
+
+    if not filtered:
+        raise ValueError(
+            "No ships match the selected roles"
+            )  # pragma: no cover (defensive)
+
+    return filtered
 
 
 def _print_ship_list(ships, count, label, sim):
@@ -140,9 +207,17 @@ def _run_with_full_simulation(args):
     raw_worlds = gs_module.load_and_parse_t5_map(args.map)
     raw_ships = gs_module.load_and_parse_t5_ship_classes(args.ships_file)
 
+    # Filter ships by role if requested
+    filtered_ships = _filter_ships_by_role(
+        raw_ships,
+        args.include_civilian,
+        args.include_military,
+        args.include_specialized
+    )
+
     # Convert worlds to T5World objects
     game_state.world_data = T5World.load_all_worlds(raw_worlds)
-    game_state.ship_classes = raw_ships
+    game_state.ship_classes = filtered_ships
 
     # Create and run simulation
     start_time = time.time()
@@ -169,17 +244,36 @@ def _run_with_convenience_function(args):
     Returns:
         Tuple of (results dict, None, elapsed time)
     """
+    # Initialize game state
+    game_state = GameState()
+    raw_worlds = gs_module.load_and_parse_t5_map(args.map)
+    raw_ships = gs_module.load_and_parse_t5_ship_classes(args.ships_file)
+
+    # Filter ships by role if requested
+    filtered_ships = _filter_ships_by_role(
+        raw_ships,
+        args.include_civilian,
+        args.include_military,
+        args.include_specialized
+    )
+
+    # Convert worlds to T5World objects
+    game_state.world_data = T5World.load_all_worlds(raw_worlds)
+    game_state.ship_classes = filtered_ships
+
+    # Create and run simulation
     start_time = time.time()
-    results = run_simulation(
-        map_file=args.map,
-        ship_classes_file=args.ships_file,
+    sim = Simulation(
+        game_state,
         num_ships=args.ships,
         duration_days=args.days,
         verbose=args.verbose,
         starting_year=args.year,
         starting_day=args.day,
     )
+    results = sim.run()
     elapsed_time = time.time() - start_time
+
     return results, None, elapsed_time
 
 
@@ -303,5 +397,5 @@ def main():
                 print(f"\nError: {e}")
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__":  # pragma: no cover
+    main()  # pragma: no cover

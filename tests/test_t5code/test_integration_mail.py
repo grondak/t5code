@@ -3,8 +3,7 @@
 import pytest
 from t5code import (
     T5Mail, T5Starship, T5ShipClass, T5World,
-    load_and_parse_t5_map, load_and_parse_t5_ship_classes
-, T5Company)
+    load_and_parse_t5_map, load_and_parse_t5_ship_classes, T5Company)
 
 
 class MockGameState:
