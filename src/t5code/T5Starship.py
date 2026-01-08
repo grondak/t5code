@@ -48,7 +48,8 @@ class CrewPosition:
             position_code: Single-letter or digit code (e.g., 'A', '0')
         """
         self.position_code = position_code
-        self.position_name = POSITIONS.get(position_code, f"Unknown-{position_code}")
+        self.position_name = POSITIONS.get(position_code,
+                                           f"Unknown-{position_code}")
         self.npc: Optional[T5NPC] = None
 
     def is_filled(self) -> bool:
@@ -74,9 +75,11 @@ class CrewPosition:
     def __repr__(self) -> str:
         """String representation of crew position."""
         status = (
-            f"filled by {self.npc.character_name}" if self.is_filled() else "vacant"
+            f"filled by {self.npc.character_name}"
+            if self.is_filled() else "vacant"
         )
-        return f"CrewPosition({self.position_code}: " f"{self.position_name}, {status})"
+        return f"CrewPosition({self.position_code}: " \
+            f"{self.position_name}, {status})"
 
 
 class _BestCrewSkillDict:
@@ -110,7 +113,8 @@ class _BestCrewSkillDict:
         """
         skill_name = skill_name.lower()
         return max(
-            (member.get_skill(skill_name) for member in self.crew.values()), default=0
+            (member.get_skill(skill_name) for member in self.crew.values()),
+            default=0
         )
 
 
@@ -216,10 +220,12 @@ class T5Starship:
         # Dict[position_name, List[CrewPosition]]
         self.crew_position: Dict[str, List[CrewPosition]] = {}
         for position_code in ship_class.crew_positions:
-            position_name = POSITIONS.get(position_code, f"Unknown-{position_code}")
+            position_name = POSITIONS.get(position_code,
+                                          f"Unknown-{position_code}")
             if position_name not in self.crew_position:
                 self.crew_position[position_name] = []
-            (self.crew_position[position_name].append(CrewPosition(position_code)))
+            (self.crew_position[position_name].
+             append(CrewPosition(position_code)))
 
         self.cargo: Dict[str, List[T5Lot]] = {
             "freight": [],  # freight lots
@@ -286,7 +292,8 @@ class T5Starship:
 
         ALLOWED_PASSAGE_CLASSES = ("high", "mid", "low")
         if passage_class not in ALLOWED_PASSAGE_CLASSES:
-            raise InvalidPassageClassError(passage_class, ALLOWED_PASSAGE_CLASSES)
+            raise InvalidPassageClassError(passage_class,
+                                           ALLOWED_PASSAGE_CLASSES)
 
         if npc in self.passengers["all"]:
             raise DuplicateItemError(npc.character_name, "passenger")
@@ -330,7 +337,8 @@ class T5Starship:
         allowed_passage_classes = ("high", "mid", "low")
 
         if passage_class not in allowed_passage_classes:
-            raise InvalidPassageClassError(passage_class, allowed_passage_classes)
+            raise InvalidPassageClassError(passage_class,
+                                           allowed_passage_classes)
 
         for npc in set(self.passengers[passage_class]):
             if passage_class == "low":
@@ -345,7 +353,10 @@ class T5Starship:
 
         return offloaded_passengers
 
-    def awaken_low_passenger(self, npc: T5NPC, medic, roll_override_in: int = None):
+    def awaken_low_passenger(self,
+                             npc: T5NPC,
+                             medic,
+                             roll_override_in: int = None):
         """Awaken a low passage passenger from cold sleep.
 
         Low passage has a risk of death (5+ on 2d6 to survive). A medic's
@@ -360,7 +371,8 @@ class T5Starship:
             Calls npc.kill() if survival roll fails
         """
         medic_skills = medic.skills if medic else None
-        if check_success(roll_override=roll_override_in, skills_override=medic_skills):
+        if check_success(roll_override=roll_override_in,
+                         skills_override=medic_skills):
             return True
         else:
             npc.kill()
@@ -498,7 +510,8 @@ class T5Starship:
         if not ((lot_type == "cargo") or (lot_type == "freight")):
             raise InvalidLotTypeError(lot_type, self.ALLOWED_LOT_TYPES)
         result = next(
-            (lot for lot in self.cargo[lot_type] if lot.serial == in_serial), None
+            (lot for lot in self.cargo[lot_type]
+             if lot.serial == in_serial), None
         )
 
         if result is None:
@@ -604,7 +617,8 @@ class T5Starship:
         high_available = world.high_passenger_availability(
             self.best_crew_skill["Steward"]
         )
-        mid_available = world.mid_passenger_availability(self.best_crew_skill["Admin"])
+        mid_available = world.mid_passenger_availability(
+            self.best_crew_skill["Admin"])
         low_available = world.low_passenger_availability(
             self.best_crew_skill["Streetwise"]
         )
@@ -638,7 +652,9 @@ class T5Starship:
                 npc = T5NPC(f"Mid Passenger {i+1}")
                 self.onload_passenger(npc, "mid")
                 self.credit(
-                    time, PASSENGER_FARES["mid"], f"Mid passage fare at {self.location}"
+                    time,
+                    PASSENGER_FARES["mid"],
+                    f"Mid passage fare at {self.location}"
                 )
                 loaded["mid"] += 1
             except ValueError:
@@ -651,7 +667,9 @@ class T5Starship:
                 npc = T5NPC(f"Low Passenger {i+1}")
                 self.onload_passenger(npc, "low")
                 self.credit(
-                    time, PASSENGER_FARES["low"], f"Low passage fare at {self.location}"
+                    time,
+                    PASSENGER_FARES["low"],
+                    f"Low passage fare at {self.location}"
                 )
                 loaded["low"] += 1
             except ValueError:
@@ -660,7 +678,11 @@ class T5Starship:
         return loaded
 
     def sell_cargo_lot(
-        self, time: float, lot: "T5Lot", game_state, use_trader_skill: bool = True
+        self,
+        time: float,
+        lot: "T5Lot",
+        game_state,
+        use_trader_skill: bool = True
     ) -> dict:
         """Sell a cargo lot at the current
         world using broker and trader skills.
@@ -708,7 +730,9 @@ class T5Starship:
 
         # Get trader skill if available
         trader = self.crew.get("crew1")
-        has_trader = use_trader_skill and trader and trader.get_skill("trader") > 0
+        has_trader = (use_trader_skill
+                      and trader
+                      and trader.get_skill("trader") > 0)
         trader_skill = trader.get_skill("trader") if has_trader else 0
 
         flux_info = None
@@ -716,7 +740,9 @@ class T5Starship:
         # Get price multiplier
         if has_trader:
             # Use trader skill to predict market
-            min_mult, max_mult, flux = lot.predict_actual_value_range(broker_mod)
+            (min_mult,
+             max_mult,
+             flux) = lot.predict_actual_value_range(broker_mod)
 
             # Complete the roll
             final_flux = flux.roll_second()
@@ -744,7 +770,9 @@ class T5Starship:
         profit = final_amount - purchase_cost
 
         # Execute transaction
-        self.credit(time, final_amount, f"Cargo sale: {lot.lot_id} at {self.location}")
+        self.credit(time,
+                    final_amount,
+                    f"Cargo sale: {lot.lot_id} at {self.location}")
         self.offload_lot(lot.serial, "cargo")
 
         return {
@@ -773,7 +801,9 @@ class T5Starship:
             DuplicateItemError: If lot is already loaded
         """
         cost = lot.origin_value * lot.mass
-        self.debit(time, cost, f"Cargo purchase: {lot.lot_id} " f"at {self.location}")
+        self.debit(time,
+                   cost,
+                   f"Cargo purchase: {lot.lot_id} at {self.location}")
         try:
             self.onload_lot(lot, "cargo")
         except (CapacityExceededError, DuplicateItemError):
@@ -799,7 +829,9 @@ class T5Starship:
         self.onload_lot(lot, "freight")
         payment = FREIGHT_RATE_PER_TON * lot.mass
         self.credit(
-            time, payment, f"Freight income: {lot.mass}t " f"from {lot.origin_name}"
+            time,
+            payment,
+            f"Freight income: {lot.mass}t from {lot.origin_name}"
         )
         return payment
 
@@ -916,7 +948,8 @@ class T5Starship:
 
             # Calculate hex distance
             target_coords = world_obj.world_data["Coordinates"]
-            distance = self._calculate_hex_distance(current_coords, target_coords)
+            distance = self._calculate_hex_distance(current_coords,
+                                                    target_coords)
 
             if distance <= self.jump_rating:
                 reachable_worlds.append(world_name)
@@ -966,7 +999,8 @@ class T5Starship:
 
         return self._calculate_hex_distance(current_coords, dest_coords)
 
-    def find_profitable_destinations(self, game_state) -> List[Tuple[str, int]]:
+    def find_profitable_destinations(self,
+                                     game_state) -> List[Tuple[str, int]]:
         """Find destinations where cargo from
         current location can sell at profit.
 
@@ -1004,7 +1038,8 @@ class T5Starship:
 
         profitable_destinations = []
         for world_name in reachable_worlds:
-            sale_value = sample_lot.determine_sale_value_on(world_name, game_state)
+            sale_value = sample_lot.determine_sale_value_on(world_name,
+                                                            game_state)
             profit_per_ton = sale_value - purchase_price
 
             if profit_per_ton > 0:
