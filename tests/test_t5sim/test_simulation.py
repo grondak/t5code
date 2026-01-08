@@ -412,3 +412,158 @@ def test_weighted_ship_selection_no_roles_default(game_state):
     assert 55 <= role_counts["civilian"] <= 85  # 70 ± 15
     assert 5 <= role_counts["specialized"] <= 35  # 20 ± 15
     assert 0 <= role_counts["military"] <= 25  # 10 ± 15
+
+
+def test_print_worlds_report_includes_worlds_and_jump_space(capsys):
+    """Worlds report shows docked worlds, jump space, and inline ship names."""
+    gs = GameState()
+    raw_worlds = gs_module.load_and_parse_t5_map(
+        "tests/test_t5code/t5_test_map.txt")
+    gs.world_data = T5World.load_all_worlds(raw_worlds)
+
+    sim = Simulation(gs, num_ships=3, duration_days=0.0)
+
+    sim.record_ship_arrival("Atlas", "Rhylanor")
+    sim.record_ship_arrival("Beowulf", "Rhylanor")
+    sim.record_ship_enter_jump("Mercury", "Jae Tellona")
+
+    sim.print_worlds_report()
+    output = capsys.readouterr().out
+
+    assert "WORLDS REPORT - END OF SIMULATION" in output
+    assert "Rhylanor/Rhylanor(2716)" in output
+    assert "Atlas, Beowulf" in output
+    assert "Jae Tellona/Rhylanor(2814)" not in output  # No ships docked there
+    assert "In jump space" in output and "Mercury" in output
+    assert "Ships docked at worlds: 2" in output
+    assert "Ships in jump space: 1" in output
+    assert "Total ships in simulation: 3" in output
+
+
+def test_print_worlds_report_omits_empty_worlds_after_jump(capsys):
+    """Worlds with no ships are omitted once ships jump away."""
+    gs = GameState()
+    raw_worlds = gs_module.load_and_parse_t5_map(
+        "tests/test_t5code/t5_test_map.txt")
+    gs.world_data = T5World.load_all_worlds(raw_worlds)
+
+    sim = Simulation(gs, num_ships=1, duration_days=0.0)
+    sim.record_ship_arrival("Voyager", "Rhylanor")
+    sim.record_ship_enter_jump("Voyager", "Rhylanor")
+
+    sim.print_worlds_report()
+    output = capsys.readouterr().out
+
+    assert "Rhylanor/Rhylanor(2716)" not in output  # Ship left the world
+    assert "In jump space" in output and "Voyager" in output
+    assert "Ships docked at worlds: 0" in output
+    assert "Ships in jump space: 1" in output
+
+
+def test_record_ship_arrival_from_jump_space(game_state):
+    """Test recording ship arrival removes from jump space."""
+    sim = Simulation(game_state, num_ships=1, duration_days=0.0)
+
+    # Ship starts in jump space
+    sim.ships_in_jump_space.append("TestShip")
+    assert "TestShip" in sim.ships_in_jump_space
+
+    # Record arrival
+    sim.record_ship_arrival("TestShip", "Rhylanor")
+
+    # Should be removed from jump space and added to world
+    assert "TestShip" not in sim.ships_in_jump_space
+    assert "TestShip" in sim.ships_at_world.get("Rhylanor", [])
+
+
+def test_record_ship_arrival_duplicate_prevention(game_state):
+    """Test recording same ship arrival twice doesn't create duplicates."""
+    sim = Simulation(game_state, num_ships=1, duration_days=0.0)
+
+    sim.record_ship_arrival("TestShip", "Rhylanor")
+    sim.record_ship_arrival("TestShip", "Rhylanor")
+
+    # Should only appear once in the world's ship list
+    assert sim.ships_at_world["Rhylanor"].count("TestShip") == 1
+
+
+def test_record_ship_enter_jump_removes_from_world(game_state):
+    """Test recording ship entering jump removes it from world."""
+    sim = Simulation(game_state, num_ships=1, duration_days=0.0)
+
+    sim.record_ship_arrival("TestShip", "Rhylanor")
+    assert "TestShip" in sim.ships_at_world["Rhylanor"]
+
+    sim.record_ship_enter_jump("TestShip", "Rhylanor")
+
+    # Should be removed from world and added to jump space
+    assert "TestShip" not in sim.ships_at_world["Rhylanor"]
+    assert "TestShip" in sim.ships_in_jump_space
+
+
+def test_record_ship_exit_jump_transition(game_state):
+    """Test recording ship exiting jump space adds to world."""
+    sim = Simulation(game_state, num_ships=1, duration_days=0.0)
+
+    sim.ships_in_jump_space.append("TestShip")
+    sim.record_ship_exit_jump("TestShip", "Jae Tellona")
+
+    # Should be removed from jump space and added to world
+    assert "TestShip" not in sim.ships_in_jump_space
+    assert "TestShip" in sim.ships_at_world["Jae Tellona"]
+
+
+def test_print_worlds_report_truncates_long_ship_names(capsys):
+    """Test report truncates ship names that exceed column width."""
+    gs = GameState()
+    raw_worlds = gs_module.load_and_parse_t5_map(
+        "tests/test_t5code/t5_test_map.txt")
+    gs.world_data = T5World.load_all_worlds(raw_worlds)
+
+    sim = Simulation(gs, num_ships=10, duration_days=0.0)
+
+    # Add ships with long names
+    long_names = [f"VeryLongShipName{i}" for i in range(10)]
+    for name in long_names:
+        sim.record_ship_arrival(name, "Rhylanor")
+
+    sim.print_worlds_report()
+    output = capsys.readouterr().out
+
+    # Output should not exceed reasonable line length
+    lines = output.split('\n')
+    for line in lines:
+        # Most lines should be under 150 chars (allowing some buffer)
+        if "Rhylanor" in line or "ship" in line.lower():
+            assert len(line) < 200 or "..." in line
+
+
+def test_print_worlds_report_truncates_long_trade_classifications(capsys):
+    """Test report truncates trade classifications that exceed column width."""
+    gs = GameState()
+    raw_worlds = gs_module.load_and_parse_t5_map("resources/t5_map.txt")
+    gs.world_data = T5World.load_all_worlds(raw_worlds)
+
+    sim = Simulation(gs, num_ships=1, duration_days=0.0)
+
+    # Find a world with long trade classifications
+    world_with_long_trades = None
+    for world in gs.world_data.values():
+        trade_str = world.trade_classifications()
+        if len(trade_str) > 40:
+            world_with_long_trades = world.name
+            break
+
+    if world_with_long_trades:
+        sim.record_ship_arrival("TestShip", world_with_long_trades)
+        sim.print_worlds_report()
+        output = capsys.readouterr().out
+
+        # Should either show full trade or truncated with ...
+        assert world_with_long_trades in output
+        # Verify the truncation happens (column should not be too wide)
+        lines = output.split('\n')
+        for line in lines:
+            if world_with_long_trades in line:
+                # Account for truncation, should have reasonable width
+                assert "..." in line or len(line.split()[1]) <= 40

@@ -221,6 +221,10 @@ class StarshipAgent:
                             f"{self.ship.annual_maintenance_day}\n"
                             f"  Crew: {crew_info}")
 
+        # Track initial position as being at the starting world
+        self.simulation.record_ship_arrival(self.ship.ship_name,
+                                            self.ship.location)
+
         # Start the agent's processes
         self.process = env.process(self.run())
         self.payroll_process = env.process(self.run_payroll())
@@ -626,6 +630,21 @@ class StarshipAgent:
 
         old_state = self.state
         self.state = next_state
+
+        # Track ship location for worlds report
+        if old_state == StarshipState.JUMPING:
+            # Emerging from jump space at current location
+            self.simulation.record_ship_exit_jump(
+                self.ship.ship_name, self.ship.location)
+        elif self.state == StarshipState.JUMPING:
+            # Entering jump space from current location
+            self.simulation.record_ship_enter_jump(
+                self.ship.ship_name, self.ship.location)
+        elif old_state == StarshipState.ARRIVING:
+            # Arrival sequence completed, ensure counted at world
+            self.simulation.record_ship_arrival(
+                self.ship.ship_name, self.ship.location)
+
         self._report_transition(old_state)
         return True
 

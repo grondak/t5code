@@ -1,5 +1,7 @@
 [run]
-source = t5code
+source =
+    t5code
+    t5sim
 omit =
     tests/*
     */__init__.py

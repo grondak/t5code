@@ -112,6 +112,12 @@ def _create_argument_parser():
         action="store_true",
         help="Include specialized ships (Safari Ship, Packet, Lab Ship)",
     )
+    parser.add_argument(
+        "--worlds-report",
+        action="store_true",
+        help="Print detailed report of all worlds and ship locations "
+             "at end of simulation",
+    )
     return parser
 
 
@@ -162,7 +168,7 @@ def _filter_ships_by_role(raw_ships, include_civilian, include_military,
     if not filtered:
         raise ValueError(
             "No ships match the selected roles"
-            )  # pragma: no cover (defensive)
+        )  # pragma: no cover (defensive)
 
     return filtered
 
@@ -417,8 +423,8 @@ def main():
     print(f"Duration: {args.days} days")
     print()
 
-    # Choose execution path based on ledger requirements
-    if args.ledger or args.ledger_all:
+    # Choose execution path based on ledger or worlds report requirements
+    if args.ledger or args.ledger_all or args.worlds_report:
         results, sim, elapsed_time = _run_with_full_simulation(args)
     else:
         results, sim, elapsed_time = _run_with_convenience_function(args)
@@ -453,6 +459,10 @@ def main():
                 sim.print_ledger(args.ledger)
             except ValueError as e:
                 print(f"\nError: {e}")
+
+        # Print worlds report if requested
+        if args.worlds_report:
+            sim.print_worlds_report()
 
 
 if __name__ == "__main__":  # pragma: no cover

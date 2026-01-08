@@ -168,6 +168,10 @@ class Simulation:
             "ship_balances": [],  # Periodic balance snapshots
             "trade_routes": [],  # Route usage tracking
         }
+        # Track ships at each world (world_name -> ship_names list)
+        self.ships_at_world: Dict[str, List[str]] = {}
+        # Track ships currently in jump space (names only)
+        self.ships_in_jump_space: List[str] = []
 
     def format_traveller_date(self, sim_time: float) -> str:
         """Convert simulation time to Traveller date format (DDD.FF-YYYY).
@@ -736,6 +740,128 @@ class Simulation:
 
         for agent in self.agents:
             self.print_ledger(agent.ship.ship_name)
+
+    def record_ship_arrival(self, ship_name: str, world_name: str):
+        """Record a ship arrival at a world.
+
+        Args:
+            ship_name: Name of the arriving ship
+            world_name: Name of the destination world
+        """
+        if ship_name in self.ships_in_jump_space:
+            self.ships_in_jump_space.remove(ship_name)
+
+        if world_name not in self.ships_at_world:
+            self.ships_at_world[world_name] = []
+        if ship_name not in self.ships_at_world[world_name]:
+            self.ships_at_world[world_name].append(ship_name)
+
+    def record_ship_enter_jump(self, ship_name: str, world_name: str):
+        """Move a ship from a world into jump space."""
+        if world_name in self.ships_at_world:
+            if ship_name in self.ships_at_world[world_name]:
+                self.ships_at_world[world_name].remove(ship_name)
+
+        if ship_name not in self.ships_in_jump_space:
+            self.ships_in_jump_space.append(ship_name)
+
+    def record_ship_exit_jump(self, ship_name: str, world_name: str):
+        """Move a ship from jump space to a destination world."""
+        if ship_name in self.ships_in_jump_space:
+            self.ships_in_jump_space.remove(ship_name)
+
+        if world_name not in self.ships_at_world:
+            self.ships_at_world[world_name] = []
+        if ship_name not in self.ships_at_world[world_name]:
+            self.ships_at_world[world_name].append(ship_name)
+
+    def print_worlds_report(self):
+        """Print a detailed report of worlds with ships present.
+
+        Displays UPP, trade classifications, and current ship count
+        for each world that has ships docked or in transit to it.
+
+        Side Effects:
+            Prints formatted report to stdout
+        """
+        print(f"\n{'#'*100}")
+        print("WORLDS REPORT - END OF SIMULATION")
+        print(f"{'#'*100}\n")
+
+        # Collect all worlds from game state
+        worlds = sorted(
+            self.game_state.world_data.values(),
+            key=lambda w: (w.subsector(), w.hex_location()),
+        )
+
+        # Column widths for aligned display
+        name_w, upp_w = 36, 9
+        trade_w, count_w, ships_w = 38, 6, 60
+
+        # Header
+        print(
+            f"{'World':<{name_w}} {'UPP':<{upp_w}} "
+            f"{'Trade Classifications':<{trade_w}} {'Ships':<{count_w}} "
+            f"{'Ship Names':<{ships_w}}"
+        )
+        print("-" * (name_w + upp_w + trade_w + count_w + ships_w + 4))
+
+        total_ships_docked = 0
+        for world in worlds:
+            world_name = world.name
+
+            # Count ships at this world
+            ship_count = len(self.ships_at_world.get(world_name, []))
+
+            # Skip worlds with no ships
+            if ship_count == 0:
+                continue
+
+            sector_display = world.sector()
+            hex_num = world.hex_location()
+            if sector_display:
+                world_display = f"{world_name}/{sector_display}({hex_num})"
+            else:
+                world_display = f"{world_name}({hex_num})"
+            upp = world.uwp()
+
+            # Get trade classifications
+            trade_str = world.trade_classifications()
+            if len(trade_str) > 39:
+                trade_str = trade_str[:36] + "..."
+
+            total_ships_docked += ship_count
+
+            ship_names = (", ".join(sorted(
+                self.ships_at_world.get(world_name, []))))
+            if len(ship_names) > ships_w - 3:
+                ship_names = ship_names[: ships_w - 6] + "..."
+
+            print(
+                f"{world_display:<{name_w}} {upp:<{upp_w}} "
+                "{trade_str:<{trade_w}} {ship_count:<{count_w}} "
+                f"{ship_names:<{ships_w}}"
+            )
+
+        # Summary
+        # Add jump space as its own row to account for all ships
+        jump_count = len(self.ships_in_jump_space)
+        jump_names = ", ".join(sorted(self.ships_in_jump_space)) or "none"
+        if len(jump_names) > ships_w - 3:
+            jump_names = jump_names[: ships_w - 6] + "..."
+
+        print(
+            f"{'In jump space':<{name_w}} {'':<{upp_w}} "
+            f"{'':<{trade_w}} {jump_count:<{count_w}} "
+            f"{jump_names:<{ships_w}}"
+        )
+
+        print("-" * (name_w + upp_w + trade_w + count_w + ships_w + 4))
+        print(f"\nShips docked at worlds: {total_ships_docked}")
+        print(f"Ships in jump space: {jump_count}")
+        print(f"Total ships in simulation: {self.num_ships}")
+
+        print(f"\n{'#'*100}\n")
 
 
 def run_simulation(

@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-465%20passing-brightgreen)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-880%20%7C%200%20missed-brightgreen)](htmlcov/)
+[![Tests](https://img.shields.io/badge/tests-478%20passing-brightgreen)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1860%20%7C%2018%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -18,6 +18,17 @@ Built for realistic simulation of merchant starship operations, trade economics,
 
 ## What's New
 
+- **Worlds Report** (`--worlds-report` flag) - end-of-simulation summary of ship locations
+  - Displays all worlds with ships docked or in transit
+  - Shows planet UPP and trade classifications for each world
+  - Tracks ships in jump space separately
+  - Provides ship accounting verification (docked + in-transit = total)
+  - Useful for analyzing trade network coverage and identifying busy worlds
+- **Ship location tracking** - records arrival, departure, and jump space transitions
+  - `record_ship_arrival()`: moves ship from jump space to world
+  - `record_ship_enter_jump()`: removes ship from world into jump space
+  - `record_ship_exit_jump()`: moves ship from jump space to destination
+  - Prevents duplicate entries in location lists
 - **Leaderboard filtering by ship role** - fair ranking system for mixed-role simulations
   - Only **civilian ships** appear in Top/Bottom rankings (military and specialized excluded)
   - **Military and specialized ships** excluded from leaderboards to prevent unfair comparison
@@ -35,7 +46,7 @@ Built for realistic simulation of merchant starship operations, trade economics,
   - Simulation stops with message like: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
 - **Enhanced startup announcements**: Now display ship class, starting location, and annual maintenance day
 - **Refactored setup() method**: Reduced cognitive complexity by extracting helper methods
-- Coverage update: 465 tests, 880 statements (0 missed), 100% overall coverage
+- Coverage update: 478 tests, 99% overall coverage (t5code: 100%, t5sim: 98-99%)
 
 ## Features
 
@@ -277,6 +288,9 @@ python -m t5sim.run --ships 5 --days 45 --ledger Trader_001
 # Print ledgers for all ships (verbose financial audit trail)
 python -m t5sim.run --ships 3 --days 45 --ledger-all
 
+# Print worlds report showing all worlds with docked/in-transit ships
+python -m t5sim.run --ships 5 --days 30 --worlds-report
+
 # Role-based filtering examples
 # Only military ships
 python -m t5sim.run --ships 10 --days 60 --include-military
@@ -426,6 +440,46 @@ Trader_002: Jumped 1 hexes, fuel remaining: 50/100t
 - Financial tracking: income from freight/passengers, profit from cargo sales, monthly payroll
 - Hold and fuel percentages help assess ship readiness at a glance
 - State names match the action just completed
+
+**Worlds Report** (`--worlds-report` flag):
+
+Displays end-of-simulation summary of all worlds with docked or in-transit ships:
+
+```bash
+python -m t5sim.run --ships 3 --days 5 --worlds-report
+```
+
+Output example:
+```
+####################################################################################################
+WORLDS REPORT - END OF SIMULATION
+####################################################################################################
+
+World                                UPP       Trade Classifications              Ships Ship Names
+----------------------------------------------------------------------------------------------------------------------------------------
+Asgard/Vilis(1519)                   D434934-A  Ag In                                2   Asgard, Vega
+Frenzie/Vilis(1116)                  C000134-9  As Va                                1   Spica
+In jump space                                                                         0   none
+
+--------
+
+Ships docked at worlds: 3
+Ships in jump space: 0
+Total ships in simulation: 3
+```
+
+**Report features:**
+- **Worlds with ships only**: Empty worlds are omitted from the report
+- **Traveller-style format**: World names with sector and hex in parentheses (e.g., `Asgard/Vilis(1519)`)
+- **UPP and trade classifications**: Shows planet characteristics and trade classifications for each world
+- **Ship tracking**: Lists ship names inline for easy reference
+- **Jump space row**: Dedicated row tracks ships currently in transit between worlds
+- **Ship accounting**: Summary lines verify all ships are accounted for (docked + in transit = total)
+- **Useful for**: 
+  - Verifying ship locations at simulation end
+  - Identifying trade clusters and busy worlds
+  - Tracking ships that got stuck in jump space
+  - Validating multi-world coverage in trade networks
 
 **Aggregate statistics output:**
 ```
