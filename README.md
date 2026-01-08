@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-482%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-484%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1860%20%7C%2018%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1891%20%7C%2016%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -53,7 +53,11 @@ Built for realistic simulation of merchant starship operations, trade economics,
   - Simulation stops with message like: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
 - **Enhanced startup announcements**: Now display ship class, starting location, and annual maintenance day
 - **Refactored setup() method**: Reduced cognitive complexity by extracting helper methods
-- Coverage update: 478 tests, 99% overall coverage (t5code: 100%, t5sim: 98-99%)
+- **Fuel-aware destination selection** - ships exclude incompatible worlds from all destination decisions
+  - Ships without fuel processors cannot jump to worlds without refined fuel
+  - Applied during profitable destination finding and fallback selection
+  - Prevents stranded ships and ensures safe navigation
+- Coverage update: 484 tests, 99% overall coverage (t5code: 100%, t5sim: 98-99%)
 
 ## Features
 
@@ -116,7 +120,14 @@ Built for realistic simulation of merchant starship operations, trade economics,
   - Ships without fuel processors (`can_refine_fuel=false`) require refined fuel from A/B starports
   - Ships with fuel processors (`can_refine_fuel=true`) can refine unrefined fuel and spawn anywhere
   - Startup validation ensures ships only spawn at compatible starports
+- **Fuel-aware destination selection** - ships never jump to worlds where they cannot refuel
+  - Ships without fuel processors are excluded from both profitable and fallback destinations if world lacks refined fuel
+  - Prevents stranded ships at incompatible starports
+  - Applied at Priority 1 (profitable cargo routes) and Priority 2 (fallback reachable worlds)
 - **Profitable destination finding** - evaluate all reachable worlds for trade opportunities
+  - Priority 1: Worlds with positive cargo profit (randomly selected among them)
+  - Priority 2: Any reachable world with fuel compatibility (if no profitable destinations)
+  - Priority 3: Stay at current location (if no worlds in range)
 - **Crew skill system** with position-based skill checks (Pilot, Engineer, Steward, Admin, etc.)
 - **Skill-based crew salaries** - 100 Cr per skill level, with Chief Engineer bonus
 - **Property-based API** for clean, intuitive access to ship state
@@ -441,6 +452,7 @@ Trader_002: Jumped 1 hexes, fuel remaining: 50/100t
 - **Destination selection reasoning**: Shows why each destination was picked:
   - `picked destination 'WorldName' because it showed cargo profit of +CrX/ton`
   - `picked destination 'WorldName' randomly because no in-range system could buy cargo`
+  - Ships without fuel processors automatically exclude worlds without refined fuel from all destination options
 - **Freight loading progress**: Shows captain's departure threshold and attempt counter
   - Displays captain's cargo_departure_threshold (e.g., "need 80%" or "need 85%")
   - `attempt 0.0` when freight obtained (hope mechanism active)

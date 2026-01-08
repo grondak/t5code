@@ -11,7 +11,7 @@ from t5code.T5Basics import check_success
 from t5code.T5Lot import T5Lot
 from t5code.T5NPC import T5NPC
 from t5code.T5ShipClass import T5ShipClass
-from t5code.T5Tables import POSITIONS
+from t5code.T5Tables import POSITIONS, STARPORT_TYPES
 
 if TYPE_CHECKING:
     from t5code.T5Company import T5Company
@@ -197,6 +197,7 @@ class T5Starship:
         self.owner: "T5Company" = owner
         self.hold_size: int = ship_class.cargo_capacity
         self.jump_rating: int = ship_class.jump_rating
+        self.can_refine_fuel: bool = ship_class.can_refine_fuel
 
         # Passenger capacity (high and mid use staterooms, low uses low berths)
         self.staterooms: int = ship_class.staterooms
@@ -1006,7 +1007,11 @@ class T5Starship:
 
         Creates a sample cargo lot from the current world and evaluates
         potential profit at each reachable destination. Only returns
-        destinations where profit is positive.
+        destinations where profit is positive and fuel compatibility is met.
+
+        Fuel compatibility: Ships without fuel refinement capability
+        (can_refine_fuel=False) will not be sent to worlds without
+        refined fuel availability.
 
         Args:
             game_state: GameState instance with world_data
@@ -1038,6 +1043,16 @@ class T5Starship:
 
         profitable_destinations = []
         for world_name in reachable_worlds:
+            # Check fuel compatibility
+            if not self.can_refine_fuel:
+                dest_world = game_state.world_data.get(world_name)
+                if dest_world:
+                    starport_type = dest_world.get_starport()
+                    starport_info = STARPORT_TYPES.get(starport_type, {})
+                    if not starport_info.get("RefinedFuel", False):
+                        # Ship cannot refuel at this destination
+                        continue
+
             sale_value = sample_lot.determine_sale_value_on(world_name,
                                                             game_state)
             profit_per_ton = sale_value - purchase_price

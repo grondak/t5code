@@ -29,6 +29,7 @@ from t5code import (
     CapacityExceededError,
     WorldNotFoundError
 )
+from t5code.T5Tables import STARPORT_TYPES
 from t5code.T5Basics import TravellerCalendar
 from t5sim.starship_states import (
     StarshipState,
@@ -1504,6 +1505,7 @@ class StarshipAgent:
         1. Find worlds in jump range with profitable cargo sales
         2. If profitable destinations exist, randomly choose one
         3. If none profitable, randomly choose any reachable world
+           (excluding worlds where ship cannot refuel if needed)
         4. If no worlds in range, stay at current location
 
         Args:
@@ -1518,6 +1520,9 @@ class StarshipAgent:
         Note:
             Enhanced destination selection could weight choices by
             expected profit amount rather than uniform random.
+
+            Ships without fuel refinement capability are prevented from
+            jumping to worlds without refined fuel availability.
         """
         import random
 
@@ -1535,7 +1540,20 @@ class StarshipAgent:
             return next_dest
 
         # No profitable destinations - fall back to any reachable world
+        # Filter for fuel compatibility if needed
         reachable = ship.get_worlds_in_jump_range(game_state)
+
+        if not ship.can_refine_fuel:
+            # Filter out worlds without refined fuel
+            fuel_compatible = []
+            for world_name in reachable:
+                dest_world = game_state.world_data.get(world_name)
+                if dest_world:
+                    starport_type = dest_world.get_starport()
+                    starport_info = STARPORT_TYPES.get(starport_type, {})
+                    if starport_info.get("RefinedFuel", False):
+                        fuel_compatible.append(world_name)
+            reachable = fuel_compatible
 
         if reachable:
             next_dest = random.choice(reachable)
