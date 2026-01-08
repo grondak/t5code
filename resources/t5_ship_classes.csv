@@ -1,16 +1,17 @@
-class_name,ship_cost,jump_rating,maneuver_rating,powerplant_rating,cargo_capacity,staterooms,low_berths,crew_positions,crew_ranks,jump_fuel_capacity,ops_fuel_capacity,role,frequency
-Scout,70.3,2,2,2,10,0,0,0BCG,0123,20,2,civilian,0.15
-Free Trader,61.1,1,1,1,82,9,20,0BCDF,01234,20,2,civilian,0.30
-Far Trader,44.1,1,2,2,50,10,10,0BCDE,01234,40,4,civilian,0.22
-Fat Trader,55.1,1,1,1,200,8,9,0BCDE,01234,40,4,civilian,0.18
-Close Escort,116,4,4,5,6,0,0,0AABBCCDGTTT,012344444444,155,32,military,0.20
-Gunned Escort,128,4,4,5,0,0,0,0AABBCCDGTTT,012344444444,150,16,military,0.15
-Liner,104.1,1,2,2,120,20,20,0ABBBCCCCDEFNNN,012221222333444,180,18,civilian,0.15
-Safari Ship,62,2,1,2,0,0,0,0BCE,0123,40,8,specialized,0.25
-SDB,130,0,6,6,0,0,0,0BCT,0123,0,24,military,0.15
-Packet,160,2,4,4,0,0,0,0BCEF,012344,100,24,specialized,0.50
-Mercenary Cruiser,435,3,3,3,0,0,0,0AABBCCDDGGNNTTTYZ,013234444444444444,240,24,military,0.12
-Lab Ship,188,2,1,2,0,0,0,0BCCDN,012344,80,16,specialized,0.25
-Corsair,239,3,3,3,0,0,0,0ABBCCDT,01233444,120,24,military,0.10
-Corvette,134,4,3,4,0,0,0,0ABBCCDT,01233444,120,32,military,0.13
-Frigate,228.7,3,3,3,0,0,0,0BCCCDG,0122234,108,10,military,0.15
+class_name,ship_cost,jump_rating,maneuver_rating,powerplant_rating,cargo_capacity,staterooms,low_berths,crew_positions,crew_ranks,jump_fuel_capacity,ops_fuel_capacity,can_refine_fuel,role,frequency
+Scout,70.3,2,2,2,10,0,0,0BCG,0123,20,2,true,civilian,0.14
+Scout (No Fuel Processors),70.3,2,2,2,10,0,0,0BCG,0123,20,2,false,civilian,0.01
+Free Trader,61.1,1,1,1,82,9,20,0BCDF,01234,20,2,true,civilian,0.30
+Far Trader,44.1,1,2,2,50,10,10,0BCDE,01234,40,4,true,civilian,0.22
+Fat Trader,55.1,1,1,1,200,8,9,0BCDE,01234,40,4,true,civilian,0.18
+Close Escort,116,4,4,5,6,0,0,0AABBCCDGTTT,012344444444,155,32,true,military,0.20
+Gunned Escort,128,4,4,5,0,0,0,0AABBCCDGTTT,012344444444,150,16,true,military,0.15
+Liner,104.1,1,2,2,120,20,20,0ABBBCCCCDEFNNN,012221222333444,180,18,true,civilian,0.15
+Safari Ship,62,2,1,2,0,0,0,0BCE,0123,40,8,true,specialized,0.25
+SDB,130,0,6,6,0,0,0,0BCT,0123,0,24,true,military,0.15
+Packet,160,2,4,4,0,0,0,0BCEF,012344,100,24,true,specialized,0.50
+Mercenary Cruiser,435,3,3,3,0,0,0,0AABBCCDDGGNNTTTYZ,013234444444444444,240,24,true,military,0.12
+Lab Ship,188,2,1,2,0,0,0,0BCCDN,012344,80,16,true,specialized,0.25
+Corsair,239,3,3,3,0,0,0,0ABBCCDT,01233444,120,24,true,military,0.10
+Corvette,134,4,3,4,0,0,0,0ABBCCDT,01233444,120,32,true,military,0.13
+Frigate,228.7,3,3,3,0,0,0,0BCCCDG,0122234,108,10,true,military,0.15

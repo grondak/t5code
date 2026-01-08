@@ -224,3 +224,20 @@ def test_world_and_ship_data_files_exist():
     # Test files
     test_map = Path("tests/test_t5code/t5_test_map.txt")
     assert test_map.exists(), "tests/test_t5code/t5_test_map.txt is missing"
+
+
+def test_ship_classes_include_can_refine_fuel():
+    """Ship classes CSV exposes can_refine_fuel and class objects carry it."""
+    ships = load_and_parse_t5_ship_classes("resources/t5_ship_classes.csv")
+
+    # Ensure the parsed dicts include the field (default False if absent)
+    assert len(ships) > 0
+    any_key = next(iter(ships))
+    assert "can_refine_fuel" in ships[any_key]
+    assert isinstance(ships[any_key]["can_refine_fuel"], bool)
+
+    # Ensure T5ShipClass instances expose can_refine_fuel attribute
+    ship_objs = T5ShipClass.load_all_ship_classes(ships)
+    any_obj = next(iter(ship_objs.values()))
+    assert hasattr(any_obj, "can_refine_fuel")
+    assert isinstance(any_obj.can_refine_fuel, bool)

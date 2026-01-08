@@ -18,6 +18,7 @@ from typing import List, Dict, Any
 import simpy
 from t5code import T5NPC, T5ShipClass
 from t5code.T5NPC import generate_captain_risk_profile
+from t5code.T5Tables import STARPORT_TYPES
 from t5code.GameState import GameState
 from t5code.T5Starship import T5Starship
 from t5sim.starship_agent import StarshipAgent
@@ -291,6 +292,18 @@ class Simulation:
 
         for _ in range(100):  # Try up to 100 times
             candidate_world = random.choice(worlds)
+
+            # Check fuel compatibility
+            world_obj = self.game_state.world_data[candidate_world]
+            starport_type = world_obj.get_starport()
+            starport_info = STARPORT_TYPES.get(starport_type, {})
+
+            # If ship can't refine fuel, it needs a starport with refined fuel
+            if not ship_class.can_refine_fuel:
+                has_refined = starport_info.get("RefinedFuel", False)
+                if not has_refined:
+                    continue  # Skip this world, try another
+
             temp_company = T5Company("Temp Company",
                                      starting_capital=1_000_000)
             temp_ship = T5Starship(

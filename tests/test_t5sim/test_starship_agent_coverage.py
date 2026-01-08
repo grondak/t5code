@@ -337,6 +337,74 @@ class TestStarshipAgentCoverage(unittest.TestCase):
         self.assertIn("skipped 5 unprofitable", msg)
         self.assertNotIn("loaded", msg)
 
+    def test_crew_profit_share_insufficient_funds(self):
+        """Test crew profit share when ship can't afford it."""
+        sim = Simulation(
+            self.game_state,
+            num_ships=1,
+            duration_days=100.0,
+            verbose=True,
+            starting_capital=10_000  # Very low capital
+        )
+        sim.setup()
+
+        agent = sim.agents[0]
+
+        # Drain most funds using ship.debit
+        agent.ship.debit(
+            time=0,
+            amount=9_500,
+            memo="Drain funds"
+        )
+
+        # Set up maintenance scenario with high profit
+        agent.ship.last_balance_at_maintenance = 100
+        # Current balance is 500, so annual profit = 400
+        # Crew share = 40 (10% of 400)
+        # But let's drain even more so we can't afford it
+        agent.ship.debit(
+            time=0,
+            amount=490,
+            memo="Drain more funds"
+        )
+        # Now balance is 10, can't afford crew share of 40
+
+        # Mock the environment time
+        with patch.object(agent, 'env') as mock_env:
+            mock_env.now = 0
+
+            # Call _perform_maintenance which should trigger the broke path
+            agent._perform_maintenance()
+
+            # Ship should be marked as broke
+            self.assertTrue(agent.broke)
+
+    def test_verbose_payroll_reporting(self):
+        """Test verbose mode payroll reporting."""
+        sim = Simulation(
+            self.game_state,
+            num_ships=1,
+            duration_days=30.0,
+            verbose=True  # Enable verbose mode
+        )
+        sim.setup()
+
+        agent = sim.agents[0]
+
+        # Mock environment and calendar
+        with patch.object(agent, 'env') as mock_env:
+            mock_env.now = 2  # Day 2 (first month)
+
+            # Call _process_monthly_payroll (correct method name)
+            # This should trigger the verbose reporting path
+            agent._process_monthly_payroll()
+
+            # Verify payroll was processed (balance should decrease)
+            self.assertLess(
+                agent.ship.owner.balance,
+                sim.starting_capital
+            )
+
 
 if __name__ == '__main__':
     unittest.main()

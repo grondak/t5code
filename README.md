@@ -1,6 +1,6 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-478%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-482%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
 [![Statements](https://img.shields.io/badge/statements-1860%20%7C%2018%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
@@ -24,6 +24,13 @@ Built for realistic simulation of merchant starship operations, trade economics,
   - Tracks ships in jump space separately
   - Provides ship accounting verification (docked + in-transit = total)
   - Useful for analyzing trade network coverage and identifying busy worlds
+- **Fuel compatibility spawn logic** - ships spawn at starports matching their fuel requirements
+  - Ships **without fuel processors** (`can_refine_fuel=false`) only spawn at **A/B starports** (refined fuel available)
+  - Ships **with fuel processors** (`can_refine_fuel=true`) can spawn at any starport
+  - Prevents ships from starting at incompatible starports where they cannot refuel
+  - CSV column: `can_refine_fuel` (accepts "1", "true", "yes", "y", "t" as true, defaults to false)
+  - Example: "Scout (No Fuel Processors)" requires A/B starports, while regular "Scout" spawns anywhere
+  - Validation during spawn: checks starport type against STARPORT_TYPES table for fuel availability
 - **Ship location tracking** - records arrival, departure, and jump space transitions
   - `record_ship_arrival()`: moves ship from jump space to world
   - `record_ship_enter_jump()`: removes ship from world into jump space
@@ -105,6 +112,10 @@ Built for realistic simulation of merchant starship operations, trade economics,
 ### 🚀 Starship Operations (t5code)
 - **Complete starship management** with cargo holds, passenger berths, and mail lockers
 - **Jump range calculation** based on ship drive capability and hex distance
+- **Fuel compatibility system** - ships spawn at starports matching their fuel requirements
+  - Ships without fuel processors (`can_refine_fuel=false`) require refined fuel from A/B starports
+  - Ships with fuel processors (`can_refine_fuel=true`) can refine unrefined fuel and spawn anywhere
+  - Startup validation ensures ships only spawn at compatible starports
 - **Profitable destination finding** - evaluate all reachable worlds for trade opportunities
 - **Crew skill system** with position-based skill checks (Pilot, Engineer, Steward, Admin, etc.)
 - **Skill-based crew salaries** - 100 Cr per skill level, with Chief Engineer bonus

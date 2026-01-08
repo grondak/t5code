@@ -134,6 +134,10 @@ def load_and_parse_t5_ship_classes_filelike(
         crew_positions_str = row.get("crew_positions", "")
         crew_positions = list(crew_positions_str) if crew_positions_str else []
 
+        # Parse can_refine_fuel as boolean if present
+        raw_refine = (row.get("can_refine_fuel", "") or "").strip().lower()
+        can_refine_fuel = raw_refine in ("1", "true", "yes", "y", "t")
+
         ships[row["class_name"]] = {
             "class_name": row["class_name"],
             "ship_cost": float(row.get("ship_cost", 0.0)),
@@ -149,5 +153,6 @@ def load_and_parse_t5_ship_classes_filelike(
             "ops_fuel_capacity": int(row.get("ops_fuel_capacity", 0)),
             "role": row.get("role", "civilian"),
             "frequency": float(row.get("frequency", 0.0)),
+            "can_refine_fuel": can_refine_fuel,
         }
     return ships

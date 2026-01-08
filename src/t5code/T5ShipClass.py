@@ -57,6 +57,8 @@ class T5ShipClass:
         self.ops_fuel_capacity: int = ship_data.get("ops_fuel_capacity", 0)
         self.role: str = ship_data.get("role", "civilian")
         self.frequency: float = ship_data.get("frequency", 0.0)
+        self.can_refine_fuel: bool = bool(ship_data.get("can_refine_fuel",
+                                                        False))
 
     def usp(self) -> str:
         """Generate Universal Ship Profile string.
