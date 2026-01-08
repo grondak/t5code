@@ -839,7 +839,7 @@ class Simulation:
 
             print(
                 f"{world_display:<{name_w}} {upp:<{upp_w}} "
-                "{trade_str:<{trade_w}} {ship_count:<{count_w}} "
+                f"{trade_str:<{trade_w}} {ship_count:<{count_w}} "
                 f"{ship_names:<{ships_w}}"
             )
 

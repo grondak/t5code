@@ -455,22 +455,20 @@ Output example:
 WORLDS REPORT - END OF SIMULATION
 ####################################################################################################
 
-World                                UPP       Trade Classifications              Ships Ship Names
-----------------------------------------------------------------------------------------------------------------------------------------
-Asgard/Vilis(1519)                   D434934-A  Ag In                                2   Asgard, Vega
-Frenzie/Vilis(1116)                  C000134-9  As Va                                1   Spica
-In jump space                                                                         0   none
+World                                UPP       Trade Classifications                  Ships  Ship Names
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+Caladbolg/Sword Worlds(1329)         B565776-A Ag Ri                                  1      Trader_002
+In jump space                                                                         2      Trader_001, Trader_003
+---------------------------------------------------------------------------------------------------------------------------------------------------------
 
---------
-
-Ships docked at worlds: 3
-Ships in jump space: 0
+Ships docked at worlds: 1
+Ships in jump space: 2
 Total ships in simulation: 3
 ```
 
 **Report features:**
 - **Worlds with ships only**: Empty worlds are omitted from the report
-- **Traveller-style format**: World names with sector and hex in parentheses (e.g., `Asgard/Vilis(1519)`)
+- **Traveller-style format**: World names with sector and hex in parentheses (e.g., `Caladbolg/Sword Worlds(1329)`)
 - **UPP and trade classifications**: Shows planet characteristics and trade classifications for each world
 - **Ship tracking**: Lists ship names inline for easy reference
 - **Jump space row**: Dedicated row tracks ships currently in transit between worlds
