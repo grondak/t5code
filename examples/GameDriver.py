@@ -6,6 +6,7 @@ class-used-as-namespace.
 """
 
 from t5code import (
+    T5Company,
     T5Lot,
     T5Mail,
     T5NPC,
@@ -35,6 +36,9 @@ class GameDriver:
 
 def setup_departure(origin: str, gd: GameDriver) -> T5Starship:
     """Load ship with crew, passengers, lots, and mail at origin."""
+    # Create a company to own the ship
+    company = T5Company("Example Trading Company", starting_capital=5000000)
+
     freight_lot = T5Lot(origin, gd)
     freight_lot.mass = 10
     cargo_lot = T5Lot(origin, gd)
@@ -63,9 +67,11 @@ def setup_departure(origin: str, gd: GameDriver) -> T5Starship:
     liaison = T5NPC("Liaison Lee")
     liaison.set_skill("Liaison", 2)
 
-    ship_class = gd.ship_data.get("Freighter") or next(
-        iter(gd.ship_data.values()))
-    ship = T5Starship("Paprika", origin, ship_class)
+    ship_class = (gd.ship_data.get("Far Trader")
+                  or gd.ship_data.get("Freighter")
+                  or next(
+        iter(gd.ship_data.values())))
+    ship = T5Starship("Paprika", origin, ship_class, owner=company)
     ship.hire_crew("medic", medic)
     ship.hire_crew("crew1", trader)
     ship.hire_crew("crew2", steward)
@@ -210,7 +216,10 @@ def sell_cargo(ship: T5Starship, gd: GameDriver) -> None:
 
     for lot in cargo_lots:
         # Use the ship's sell_cargo_lot method - pass gd which has world_data
-        result = ship.sell_cargo_lot(lot, gd, use_trader_skill=has_trader)
+        result = ship.sell_cargo_lot(time=0,
+                                     lot=lot,
+                                     game_state=gd,
+                                     use_trader_skill=has_trader)
 
         # Extract results
         flux_info = result['flux_info']
@@ -244,7 +253,7 @@ def _try_onload_freight_lot(ship: T5Starship, lot: T5Lot) -> bool:
     """Attempt to load a freight lot.
     Return False if hold is too small (stop searching)."""
     try:
-        ship.load_freight_lot(lot)
+        ship.load_freight_lot(time=0, lot=lot)
         return True
     except ValueError as e:
         if "Lot will not fit" in str(e):
@@ -322,7 +331,7 @@ def search_and_load_cargo(ship: T5Starship, gd: GameDriver) -> None:
     print(f"Searching for cargo at {ship.location} to fill hold:")
     for lot in available_lots:
         try:
-            ship.buy_cargo_lot(lot)
+            ship.buy_cargo_lot(time=0, lot=lot)
             print(
                 f"\tLoaded cargo lot {lot.serial} of {lot.mass} tons, "
                 f"lot id: {lot.lot_id}.")
@@ -353,7 +362,7 @@ def search_and_load_mail(ship: T5Starship, gd: GameDriver) -> None:
 
     print(f"Searching for mail at {ship.location} to load onto ship:")
     try:
-        mail_lot = ship.load_mail(gd, ship.destination)
+        mail_lot = ship.load_mail(game_state=gd, destination=ship.destination)
         print(f"\tLoaded mail bundle {mail_lot.serial}.")
     except ValueError as e:
         print(f"\tCould not load mail bundle: {e}")
@@ -392,7 +401,7 @@ def search_and_load_passengers(ship: T5Starship, gd: GameDriver) -> None:
           f"Streetwise: {streetwise_skill}")
 
     # Use the T5Starship method to load passengers
-    loaded = ship.load_passengers(world)
+    loaded = ship.load_passengers(time=0, world=world)
 
     print(f"\n  Loaded: {loaded['high']} high, {loaded['mid']} mid, "
           f"{loaded['low']} low passengers")

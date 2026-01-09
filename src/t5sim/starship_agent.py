@@ -22,6 +22,7 @@ Trading Strategy:
 
 from typing import TYPE_CHECKING
 import simpy
+import random
 from t5code import (
     T5Starship,
     T5NPC,
@@ -55,6 +56,19 @@ class StarshipAgent:
         voyage_count: Number of completed voyages
         verbose: Whether to print detailed status updates
     """
+
+    def _roll_dice(self, num_dice: int) -> int:
+        """Roll nD6 dice and return the sum.
+
+        Args:
+            num_dice: Number of D6 (six-sided) dice to roll
+
+        Returns:
+            Sum of the dice rolls (minimum num_dice, maximum num_dice * 6)
+        """
+        if num_dice <= 0:
+            return 0
+        return sum(random.randint(1, 6) for _ in range(num_dice))
 
     def _report_status(self,
                        message: str = "",
@@ -194,6 +208,9 @@ class StarshipAgent:
         self.calendar = TravellerCalendar()
         # Track balance for annual profit calculation
         self.last_year_balance = 1_000_000
+        # Refueling duration override (calculated in _load_fuel based on
+        # starport RefuelRate: nD6 hours where n is the RefuelRate)
+        self.refueling_duration_days = None
 
         # Report initial status with destination and crew
         dest_display = self._get_world_display_name(self.ship.destination)
@@ -702,7 +719,13 @@ class StarshipAgent:
             yield self.env.timeout(1000)  # Sleep for 1000 days
             return
 
-        duration = get_state_duration(self.state)
+        # Check for refueling duration override (set in _load_fuel)
+        if (self.state == StarshipState.LOADING_FUEL
+           and self.refueling_duration_days is not None):
+            duration = self.refueling_duration_days
+            self.refueling_duration_days = None  # Reset for next refuel
+        else:
+            duration = get_state_duration(self.state)
 
         # State-specific logic
         if self.state == StarshipState.OFFLOADING:
@@ -1379,9 +1402,19 @@ class StarshipAgent:
         the minimum of needed and affordable. Fuel is distributed
         proportionally between jump and ops tanks based on their needs.
 
+        Refueling Duration:
+            Refueling time is calculated as nD6 hours where n is the
+            starport's RefuelRate from STARPORT_TYPES. The duration is
+            converted to days and stored in self.refueling_duration_days
+            for use during the state timeout.
+            - Starport A/B: 2D6 hours
+            - Starport C/D: 4D6 hours
+            - Starport E/X: 0 hours (no fuel available)
+
         Side Effects:
             - Debits ship account for fuel purchase (Cr500 per ton)
             - Updates ship.jump_fuel and ship.ops_fuel levels
+            - Calculates and stores refueling duration based on starport
             - Prints refueling summary in verbose mode
 
         Exceptions:
@@ -1391,8 +1424,18 @@ class StarshipAgent:
             - If ship has zero balance, no fuel is purchased
             - If tanks are full, no fuel is purchased
             - Fuel is split between jump/ops tanks proportionally
+            - Refueling can start immediately upon docking
+            - Refueling must complete before undocking
         """
         try:
+            # Get starport information for refueling duration
+            # First get the world object from the game state
+            world = (self.simulation.game_state.world_data.get(
+                self.ship.location))
+            starport_type = world.get_starport() if world else "X"
+            starport_info = STARPORT_TYPES.get(starport_type, {})
+            refuel_rate = starport_info.get("RefuelRate", 0)
+
             (needed_jump,
              needed_ops,
              needed_total) = self._calculate_fuel_needed()
@@ -1401,6 +1444,10 @@ class StarshipAgent:
             if needed_total == 0:
                 if self.simulation.verbose:
                     self._report_status("tanks already full, no refuel needed")
+                # Even with full tanks, set duration based on starport
+                if refuel_rate > 0:
+                    refuel_hours = self._roll_dice(refuel_rate)
+                    self.refueling_duration_days = refuel_hours / 24.0
                 return
 
             # Calculate how much we can afford (Cr500/ton)
@@ -1409,6 +1456,10 @@ class StarshipAgent:
 
             if to_purchase == 0:
                 self._report_insufficient_funds(needed_total)
+                # Still set refueling duration even if no fuel purchased
+                if refuel_rate > 0:
+                    refuel_hours = self._roll_dice(refuel_rate)
+                    self.refueling_duration_days = refuel_hours / 24.0
                 return
 
             # Purchase and distribute fuel
@@ -1419,6 +1470,16 @@ class StarshipAgent:
                 to_purchase, needed_jump, needed_ops)
 
             self._report_refuel_success(jump_added, ops_added, cost)
+
+            # Calculate refueling duration based on starport RefuelRate
+            if refuel_rate > 0:
+                refuel_hours = self._roll_dice(refuel_rate)
+                self.refueling_duration_days = refuel_hours / 24.0
+                if self.simulation.verbose:
+                    self._report_status(
+                        f"refueling duration: {refuel_hours} hours "
+                        f"({refuel_rate}D6)"
+                    )
 
         except Exception as e:
             print(f"{self.ship.ship_name}: Fuel loading error: {e}")

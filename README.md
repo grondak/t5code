@@ -1,8 +1,8 @@
 # t5code
 
-[![Tests](https://img.shields.io/badge/tests-484%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-509%20passing-brightgreen)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen)](htmlcov/)
-[![Statements](https://img.shields.io/badge/statements-1891%20%7C%2016%20missed-brightgreen)](htmlcov/)
+[![Statements](https://img.shields.io/badge/statements-1915%20%7C%2011%20missed-brightgreen)](htmlcov/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -12,864 +12,517 @@ This monorepo contains two packages:
 - **t5code**: Core library for T5 mechanics, world generation, trade, and ship operations
 - **t5sim**: Discrete-event simulation engine using SimPy for multi-ship trade networks
 
-Built for realistic simulation of merchant starship operations, trade economics, passenger transport, and interstellar commerce in the Traveller universe.
+Implements 50 years of Traveller game design. Scales from single-ship mechanics (testable, debuggable) to 150-ship networks running 150 days of simulated trade in 0.4 seconds.  It's been run for a network of 160,000 ships for a year and that takes about 40 minutes.
 
 ---
-
-## What's New
-
-- **Worlds Report** (`--worlds-report` flag) - end-of-simulation summary of ship locations
-  - Displays all worlds with ships docked or in transit
-  - Shows planet UPP and trade classifications for each world
-  - Tracks ships in jump space separately
-  - Provides ship accounting verification (docked + in-transit = total)
-  - Useful for analyzing trade network coverage and identifying busy worlds
-- **Fuel compatibility spawn logic** - ships spawn at starports matching their fuel requirements
-  - Ships **without fuel processors** (`can_refine_fuel=false`) only spawn at **A/B starports** (refined fuel available)
-  - Ships **with fuel processors** (`can_refine_fuel=true`) can spawn at any starport
-  - Prevents ships from starting at incompatible starports where they cannot refuel
-  - CSV column: `can_refine_fuel` (accepts "1", "true", "yes", "y", "t" as true, defaults to false)
-  - Example: "Scout (No Fuel Processors)" requires A/B starports, while regular "Scout" spawns anywhere
-  - Validation during spawn: checks starport type against STARPORT_TYPES table for fuel availability
-- **Ship location tracking** - records arrival, departure, and jump space transitions
-  - `record_ship_arrival()`: moves ship from jump space to world
-  - `record_ship_enter_jump()`: removes ship from world into jump space
-  - `record_ship_exit_jump()`: moves ship from jump space to destination
-  - Prevents duplicate entries in location lists
-- **Leaderboard filtering by ship role** - fair ranking system for mixed-role simulations
-  - Only **civilian ships** appear in Top/Bottom rankings (military and specialized excluded)
-  - **Military and specialized ships** excluded from leaderboards to prevent unfair comparison
-  - Bailout advantage makes military/specialized ships non-competitive with civilians
-  - If **no civilian ships** exist in simulation, leaderboard not printed at all
-  - Broke ships still displayed for visibility regardless of role
-- **Weighted ship selection by role** with predefined proportions:
-  - All 3 roles: 70% civilian, 20% specialized, 10% military
-  - Two roles: 80/20 (civ+spec or civ+mil) or 70/30 (spec+mil)
-  - Within each role, ships selected using `frequency` weights from CSV
-- **Role filtering CLI flags**: `--include-civilian`, `--include-military`, `--include-specialized`
-  - No flags → includes all roles with 70/20/10 proportions
-  - Missing role in data → clear error during startup
-- **Startup validation** for ship classes: per-role `frequency` totals must equal 1.0
-  - Simulation stops with message like: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
-- **Enhanced startup announcements**: Now display ship class, starting location, and annual maintenance day
-- **Refactored setup() method**: Reduced cognitive complexity by extracting helper methods
-- **Fuel-aware destination selection** - ships exclude incompatible worlds from all destination decisions
-  - Ships without fuel processors cannot jump to worlds without refined fuel
-  - Applied during profitable destination finding and fallback selection
-  - Prevents stranded ships and ensures safe navigation
-- Coverage update: 484 tests, 99% overall coverage (t5code: 100%, t5sim: 98-99%)
 
 ## Features
 
-### 🎯 Discrete-Event Simulation (t5sim)
-- **SimPy-based simulation** with concurrent multi-ship operations
-- **14-state starship FSM** (DOCKED → OFFLOADING → SELLING_CARGO → MAINTENANCE → LOADING_FREIGHT → ...)
-- **Annual maintenance scheduling** - 2-week maintenance period triggered after selling cargo when maintenance day is reached
-  - Each ship assigned random annual maintenance day (days 2-365, excluding holiday day 1)
-  - Maintenance checked after SELLING_CARGO (after commercial transactions complete)
-  - Annual profit calculated: current balance - last year's balance
-  - **Crew profit share**: 10% of annual profit paid to crew before maintenance
-  - 14-day maintenance period suspends all activities except crew payroll
-  - Once-per-year enforcement (tracks last_maintenance_year)
-  - **Maintenance costs**: 1/1000th of ship cost (e.g., MCr 100 ship costs Cr 100,000)
-  - Ships with insufficient funds for crew share or maintenance become "broke" and suspend operations
-  - Profit, crew share, and maintenance cost displayed during maintenance
-- **Patron bailout system** - prevents military and specialized ships from going broke
-  - **Military ships**: Receive Cr1,000,000 bailout from patron when about to go broke
-  - **Specialized ships**: Receive Cr1,000,000 bailout from patron when about to go broke
-  - **Civilian ships**: Go broke normally and suspend operations
-  - Bailout recorded in ledger as "Patron bailout (Military/Specialized ship)" transaction
-  - Ships resume operations immediately after bailout
-- **Profit-aware routing** - ships evaluate destinations for cargo profitability
-- **Smart cargo purchasing** - skips lots that would result in losses
-- **Skill-based crew payroll** - monthly salaries calculated from position skill requirements
-  - Salary formula: 100 Cr × skill level (Pilot-2 earns 200 Cr, Engineer-3 earns 300 Cr)
-  - Chief Engineer receives +1 skill level bonus
-  - Payroll processed on first day of each month (Days 002, 030, 058, etc.)
-  - Ships with insufficient funds become "broke" and suspend operations
-- **Captain risk profiles** - each ship's captain has unique operational preferences
-  - 60% standard captains depart at 80% hold capacity
-  - 30% moderate captains vary between 70-90% capacity
-  - 8% cautious captains wait for 91-95% capacity
-  - 2% aggressive captains depart early at 65-69% capacity
-- **Intelligent freight loading** with captain-specific departure thresholds
-  - **"Hope" mechanism**: Counter resets each time freight is successfully loaded
-  - Ships stay longer at profitable ports, depart faster from poor ones
-  - Different captains exhibit different patience levels
-- **Realistic time modeling** with configurable state durations
-- **Trade route tracking** and profit analysis
-- **Statistics collection** for voyages, sales, and balances
-- **CLI interface** for easy simulation runs
-  - Role filtering flags: `--include-civilian`, `--include-military`, `--include-specialized`
-    - If no flags are provided, all ship roles are included by default
-    - If a requested role is not present in the ship classes file, execution fails with a clear error
-  - Role frequency validation: per-role `frequency` totals must sum to 1.0
-    - Validation runs at startup; the simulation stops with an error if invalid.
-    - Example: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
-- **Fair leaderboard ranking system**
-  - Only **civilian ships** appear in Top/Bottom balance rankings (military/specialized excluded)
-  - Ensures fair comparison when running mixed-role simulations
-  - Rationale: Military and specialized ships receive Cr1,000,000 patron bailouts, giving them unfair advantage
-  - If no civilian ships exist in simulation, leaderboard not printed
-  - Broke ships still displayed separately for visibility (regardless of role)
+### Discrete-Event Simulation (t5sim)
 
-### 🚀 Starship Operations (t5code)
-- **Complete starship management** with cargo holds, passenger berths, and mail lockers
-- **Jump range calculation** based on ship drive capability and hex distance
-- **Fuel compatibility system** - ships spawn at starports matching their fuel requirements
-  - Ships without fuel processors (`can_refine_fuel=false`) require refined fuel from A/B starports
-  - Ships with fuel processors (`can_refine_fuel=true`) can refine unrefined fuel and spawn anywhere
-  - Startup validation ensures ships only spawn at compatible starports
-- **Fuel-aware destination selection** - ships never jump to worlds where they cannot refuel
-  - Ships without fuel processors are excluded from both profitable and fallback destinations if world lacks refined fuel
-  - Prevents stranded ships at incompatible starports
-  - Applied at Priority 1 (profitable cargo routes) and Priority 2 (fallback reachable worlds)
-- **Profitable destination finding** - evaluate all reachable worlds for trade opportunities
+- **SimPy-based concurrent multi-ship operations** - 150 ships trading simultaneously without polling loops
+- **14-state starship FSM** - Complete merchant voyage cycle: DOCKED -> OFFLOADING -> SELLING_CARGO -> MAINTENANCE -> LOADING_FREIGHT -> LOADING_CARGO -> LOADING_MAIL -> LOADING_PASSENGERS -> LOADING_FUEL -> DEPARTING -> MANEUVERING_TO_JUMP -> JUMPING -> ARRIVING
+- **Realistic time modeling** - Configurable state durations, discrete hour-by-hour tracking integrated with traditional Traveller calendar format [DDD.FF-YYYY]
+- **Annual maintenance scheduling** with crew profit share
+  - Each ship assigned random maintenance day (days 2-365)
+  - Annual profit calculated and 10% distributed to crew before maintenance
+  - 14-day maintenance period; ships with insufficient funds become "broke" and suspend operations
+  - Military/specialized ships never actually run out of money (Cr1M emergency funding just before they go "broke.")
+  - Maintenance costs: 1/1000th of ship cost
+- **Refueling duration** - Realistic refueling times based on starport quality
+  - Refueling duration (in hours) = nD6 where n = starport RefuelRate (A/B: 2D6, C/D: 4D6, E/X: 0D6)
+  - Rolled at refuel time; duration influences when ship can depart
+  - Integrated into state machine; ships wait out refueling before departure phase
+  - Examples: Class A starport = 2D6 hours (2-12 hours), Class C = 4D6 hours (4-24 hours)
+
+### Intelligent Ship Operations
+
+- **Profit-aware routing** - Ships evaluate cargo opportunities at all reachable worlds
   - Priority 1: Worlds with positive cargo profit (randomly selected among them)
-  - Priority 2: Any reachable world with fuel compatibility (if no profitable destinations)
-  - Priority 3: Stay at current location (if no worlds in range)
-- **Crew skill system** with position-based skill checks (Pilot, Engineer, Steward, Admin, etc.)
-- **Skill-based crew salaries** - 100 Cr per skill level, with Chief Engineer bonus
-- **Property-based API** for clean, intuitive access to ship state
-- **Company ownership integration** - starships owned by trading companies
-  - All financial transactions flow through owner company accounts
-  - Ships reference owner via optional `owner` attribute (backward compatible)
-  - Balance property automatically returns company balance when owner exists
-  - Maintains legacy behavior for ships without owners
-- **Double-entry accounting system** with Account, Ledger, and LedgerEntry classes
-  - Transaction history with Traveller date timestamps and counterparty tracking
+  - Priority 2: Any reachable world if no profitable routes available
+  - Priority 3: Stay at current location if nothing in range
+  - Ships exclude worlds where they cannot refuel (fuel compatibility rule)
+- **Smart cargo purchasing** - Skips lots that would result in losses
+- **Captain risk profiles** - Each captain has unique operational preferences
+  - 60% standard captains: depart at 80% hold capacity
+  - 30% moderate captains: vary between 70-90% capacity
+  - 8% cautious captains: wait for 91-95% capacity
+  - 2% aggressive captains: depart early at 65-69% capacity
+- **Intelligent freight loading with "hope" mechanism**
+  - Captain-specific risk tolerances above create varied behavior
+  - "Hope" Counter resets when freight successfully loads
+  - "Hope" Counter causes ships to depart when no cargos appear after a while
+  - Ships stay longer at profitable ports, depart faster from poor ones
+- **Skill-based crew payroll** - Salaries calculated from position skill requirements
+  - Formula: 100 Cr × skill level (Pilot-2 earns 200 Cr, Engineer-3 earns 300 Cr)
+  - Chief Engineer receives +1 skill level bonus
+  - Payroll processed monthly (Days 002, 030, 058, etc.)
+  - Presume ships are always fully-crewed
+  - Simulation does not consider crew changeover but just abstracts crew members as "numbers" - the required skill is always available to the ship
+
+### Fuel System with Equipment Constraints
+
+- **Fuel compatibility spawn logic** - Ships spawn only at compatible starports
+  - Ships without fuel processors (`can_refine_fuel=false`) only spawn at A/B starports with refined fuel
+  - Ships with fuel processors (`can_refine_fuel=true`) can spawn at any starport
+  - Prevents impossible situations (ship stranded at incompatible port)
+- **Fuel-aware destination selection** - Ships never jump to worlds where they cannot refuel
+  - Applied at both Priority 1 (profitable routes) and Priority 2 (fallback worlds)
+  - Emergent behavior: Ships naturally seek compatible worlds
+- **Realistic refueling costs** - Cr500/ton for jump fuel, Cr500/ton for operations fuel
+- **Fuel tracking** - Detailed consumption during jumps and operations
+
+### Complete Trade Economics
+
+- **Double-entry accounting system** - Account, Ledger, and LedgerEntry classes
   - Immutable audit trail for all financial operations
-  - Support for credits, debits, and inter-account transfers
-  - Time parameter required for all transactions (enforces temporal ordering)
-  - Keyword-only parameters ensure correct usage
-- **Company management** with T5Company for multi-ship trading operations
-  - Owner capital tracking and corporate accounting
-  - Centralized cash management with ledger integration
-  - Every ship transaction creates ledger entries with descriptive memos
-  - Complete financial audit trail from ship operations
-
-### 🌍 World System
-- **T5 world generation** with UWP (Universal World Profile) support
-- **Sector name lookup** - subsector codes mapped to full sector names (SECTORS table)
-- **Trade classifications** (Agricultural, Industrial, Rich, Poor, etc.)
-- **Starport quality** affecting broker availability and fees
-- **Population-based** passenger and freight availability
-
-### 📦 Trade & Economics
-- **Speculative cargo** with origin-based lot generation
-- **Dynamic pricing** using tech level differentials and trade code matching
-- **Broker system** with skill-based price modifiers
-- **Freight contracts** with standard tonnage-based payment
-- **Mail contracts** for high-importance worlds
-
-### 👥 NPCs & Passengers
-- **Character skill system** with skill groups and skill levels
-- **Captain risk profiles** - randomly generated operational personalities
-  - Stored in `cargo_departure_threshold` attribute (0.60 to 0.98)
-  - Influences when captains decide to depart port
-  - Creates varied ship behaviors in simulations
-  - Captain is multi-skilled: trader-2, steward-1, admin-1, liaison-1
-- **Streamlined crew** - Captain and specialized crew for ship operations
-  - Captain is multi-skilled: Pilot, Trader, Steward, Admin, Liaison
-  - Ships with Captain position ("0"): Captain handles piloting duties
-  - Ships without Captain position: Pilot serves as captain with full authority
-  - Additional crew: Engineer, Astrogator, Medic, Sensop, Freightmaster, etc.
-  - All ships display captain's name and risk profile regardless of crew structure
-- **Passenger classes** (High, Middle, Low passage)
-- **Low passage survival mechanics** with medic skill effects
-
-### 🎲 Game Mechanics
-- **T5 dice mechanics** (2d6, flux, sequential flux)
-- **Task resolution** with skill modifiers
-- **Random trade goods** generation with classification-specific tables
-- **Imbalance goods** with bonus opportunities
-- **Imperial Calendar** with 13 months of 28 days plus Holiday
-  - `TravellerCalendar` class for month calculations
-  - Query current month from day of year
-  - Get first day of any month or next month
-  - Full integration with Traveller date format (DDD-YYYY)
-
----
-
-## Quick Start
-
-### Installation
-
-```bash
-# Create and activate virtual environment
-python -m venv .venv
-.venv\Scripts\activate  # Windows
-source .venv/bin/activate  # Linux/Mac
-
-# Install core library only
-pip install -e .
-
-# Install with simulation support (includes SimPy)
-pip install -e ".[simulation]"
-
-# Install with all development tools
-pip install -e ".[all]"
-```
-
-### Basic Example
-
-```python
-from t5code import GameState, T5Starship, T5Company, T5World, T5Lot
-
-# Initialize game data
-game_state = GameState()
-game_state.world_data = GameState.load_and_parse_t5_map("resources/t5_map.txt")
-game_state.ship_classes = GameState.load_and_parse_t5_ship_classes("resources/t5_ship_classes.csv")
-
-# Create a trading company
-company = T5Company("Beowulf Trading Inc", starting_capital=1_000_000)
-
-# Create a starship owned by the company
-ship = T5Starship("Free Trader Beowulf", "A2", game_state, owner=company)
-
-# Check company balance (ship transactions flow through company)
-print(f"Company: {company.name}, Balance: Cr{company.balance:,.0f}")
-
-# Load cargo (automatically debits company account with timestamp)
-world = game_state.world_data["Regina"]
-lot = T5Lot("Regina", game_state)
-time = 0  # Simulation time (or use actual time in simulation)
-ship.buy_cargo_lot(time, lot)
-
-# Navigate to destination
-ship.set_course_for("Efate")
-print(f"Cargo manifest: {len(ship.cargo_manifest['cargo'])} lots")
-print(f"Destination: {ship.destination}")
-print(f"Company balance after purchase: Cr{company.balance:,.0f}")
-
-# Sell cargo at destination (automatically credits company account with timestamp)
-ship.sell_cargo_lot(time, lot, game_state)
-print(f"Company balance after sale: Cr{company.balance:,.0f}")
-
-# View complete transaction history with Traveller dates
-for entry in company.cash.ledger:
-    print(f"[{entry.time}] {entry.memo}: Cr{entry.amount:,.0f} (Balance: Cr{entry.balance_after:,.0f})")
-```
-
-### Running the Example Simulation
-
-**Single-ship example:**
-```bash
-python examples/GameDriver.py
-```
-
-Output shows a complete trading voyage with passenger transport, cargo speculation, and financial tracking:
+  - Transaction history with Traveller date timestamps and counterparty tracking
+  - Every transaction flows through owner company accounts
+- **Cargo profitability evaluation** - Per-ton profit calculation: sale_value - purchase_price
+- **Passenger revenue** - High/mid/low berth fares by world tech level
+- **Mail contract income** - Per-bundle revenue
+- **Comprehensive ledger reporting** - Full transaction history with memo tracking
 
 ```
-=== Jump to Dentus ===
-Loaded 3 freight lots for Cr15,000
-Loaded 2 high, 1 mid passengers (Cr19,000)
-...
-Balance: Cr1,045,230
-```
+################################################################################
+COMPLETE LEDGER DUMP - ALL SHIPS
+################################################################################
 
-**View all Adventure Class Ships:**
-```bash
-python examples/read_ship_classes.py
-```
-
-Displays all 15 Adventure Class Ships from T5 Core Rules with complete specifications:
-- Scout, Free Trader, Far Trader, Fat Trader
-- Close Escort, Gunned Escort, Liner, Safari Ship
-- SDB, Packet, Mercenary Cruiser, Lab Ship
-- Corsair, Corvette, Frigate
-
-For each ship, shows:
-- Ship cost (MCr), jump/maneuver/powerplant ratings
-- Cargo capacity, staterooms, low berths
-- **Decoded crew positions** (Captain, Pilot, Astrogator, Engineer, Medic, Steward, Freightmaster, Sensop, Cook, Gunner, Able Spacer, Spacer)
-- Crew skill ranks
-- Jump and ops fuel capacity
-
-Additionally, this script validates role frequencies and reports any mismatches:
-- Verifies that the sum of `frequency` values per `role` equals 1.0
-- Prints a clear error if any role’s total is not 1.0 (e.g., "role 'civilian' sums to 0.80 (expected 1.00)")
-
-**Multi-ship discrete-event simulation:**
-```bash
-# Quick test (5 ships, 30 days)
-python -m t5sim.run --ships 5 --days 30
-
-# Full year simulation (50 ships)
-python -m t5sim.run --ships 50 --days 365
-
-# Verbose mode - see detailed ship status at each state transition
-python -m t5sim.run --ships 3 --days 30 --verbose
-
-# Custom starting date (Traveller calendar format)
-python -m t5sim.run --ships 5 --days 30 --year 1105 --day 1 --verbose
-
-# Print complete ledger for specific ship after simulation
-python -m t5sim.run --ships 5 --days 45 --ledger Trader_001
-
-# Print ledgers for all ships (verbose financial audit trail)
-python -m t5sim.run --ships 3 --days 45 --ledger-all
-
-# Print worlds report showing all worlds with docked/in-transit ships
-python -m t5sim.run --ships 5 --days 30 --worlds-report
-
-# Role-based filtering examples
-# Only military ships
-python -m t5sim.run --ships 10 --days 60 --include-military
-
-# Civilian + specialized ships (uses 80% civilian, 20% specialized proportions)
-python -m t5sim.run --ships 8 --days 45 --include-civilian --include-specialized
-
-# All roles (uses 70% civilian, 20% specialized, 10% military proportions)
-python -m t5sim.run --ships 20 --days 90 --include-civilian --include-military --include-specialized
-
-# No role flags specified = all roles with default proportions (same as above)
-python -m t5sim.run --ships 20 --days 90
-```
-
-Ship Selection & Role Proportions:
-- When role flags are specified, ships are allocated using predefined proportions:
-  - **All 3 roles** (or no flags): 70% civilian, 20% specialized, 10% military
-  - **Civilian + Specialized**: 80% civilian, 20% specialized
-  - **Civilian + Military**: 80% civilian, 20% military
-  - **Specialized + Military**: 70% specialized, 30% military
-  - **Single role**: 100% of that role
-- Within each role, ships are selected using the `frequency` weights from `resources/t5_ship_classes.csv`
-- Example: With `--ships 20` and all roles, expect ~14 civilian, ~4 specialized, ~2 military ships
-
-Data validation:
-- On startup, the CLI validates that per-role `frequency` values from `resources/t5_ship_classes.csv` sum to 1.0.
-- If any role’s total differs from 1.0, the simulation stops with a clear error message.
-- Example: `Frequency totals invalid: role 'civilian' sums to 0.80 (expected 1.00)`
-
-**Verbose output example** (use `--verbose` flag to see detailed state transitions with Traveller date format DDD.FF-YYYY):
-```
-Trader_001 (Far Trader) starting simulation, cost: MCr44.1, destination: Ilium/Darrian (0426)
-  Company: Trader_001 Inc, balance: Cr1,000,000
-  Annual maintenance day: 292
-  Crew: Captain: 80% Pilot-2, Astrogator: Astrogator-1, Engineer: Engineer-3, Medic: Medic-2, Steward: Steward-3
-[360.00-1104] Trader_001 at Rorre/Darrian (0526) (DOCKED): company=Cr1,000,000, hold (0t/50.0t, 0%), 
-  fuel (jump 40/40t, ops 4/4t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles
-  Trader_001 (Far Trader) at Rorre: Jump-1, Cargo: 50.0t, Jump Fuel: 40/40t, Ops Fuel: 4/4t, Maint-Day: 292
-
-[360.75-1104] Trader_001 at Rorre/Darrian (0526) (LOADING_FREIGHT): company=Cr1,003,000, hold (3t/50.0t, 6%), 
-  fuel (jump 40/40t, ops 4/4t), cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles 
-  | loaded 3t freight lot, income Cr3,000
-
-[361.75-1104] Trader_001 at Rorre/Darrian (0526) (LOADING_FREIGHT): company=Cr1,008,000, hold (8t/50.0t, 16%), 
-  fuel (jump 40/40t, ops 4/4t), cargo=0 lots, freight=2 lots, passengers=(0H/0M/0L), mail=0 bundles 
-  | loaded 5t freight lot, income Cr5,000
-
-[363.55-1104] Trader_002 at Prilissa/Trin's Veil (3035) (MANEUVERING_TO_JUMP): company=Cr1,000,000, 
-  hold (0t/0.0t, 0%), fuel (jump 100/100t, ops 24/24t), cargo=0 lots, freight=0 lots, 
-  passengers=(0H/0M/0L), mail=0 bundles | entering jump space to Murchison/Trin's Veil (2935)
-Trader_002: Jumped 1 hexes, fuel remaining: 50/100t
-[363.55-1104] Trader_002 at jump space (JUMPING): company=Cr1,000,000, hold (0t/0.0t, 0%), 
-  fuel (jump 50/100t, ops 24/24t) | picked destination 'Pepernium' because it showed cargo profit of +Cr1900/ton 
-  fuel (jump 180/180t, ops 18/18t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
-
-[360.75-1104] Trader_001 at Shirene/Lunion (2125) (SELLING_CARGO): company=Cr1,000,000, hold (0t/120.0t, 0%), 
-  fuel (jump 180/180t, ops 18/18t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | cargo sales complete
-
-[360.75-1104] Trader_002 at Cipatwe/Rhylanor (3118) (LOADING_FREIGHT): company=Cr1,009,000, hold (9t/10.0t, 90%), 
-  fuel (jump 20/20t, ops 2/2t), cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 9t freight lot, income Cr9,000
-
-[361.75-1104] Trader_001 at Shirene/Lunion (2125) (LOADING_FREIGHT): company=Cr1,005,000, hold (5t/120.0t, 4%), 
-  fuel (jump 180/180t, ops 18/18t), cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 5t freight lot, income Cr5,000
-
-[361.75-1104] Trader_002 at Cipatwe/Rhylanor (3118) (LOADING_CARGO): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
-  fuel (jump 20/20t, ops 2/2t), cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | loaded 1 cargo lot(s), 1.0t total
-
-[362.75-1104] Trader_001 at Shirene/Lunion (2125) (LOADING_FREIGHT): company=Cr1,005,000, hold (5t/120.0t, 4%), 
-  fuel (jump 180/180t, ops 18/18t), cargo=0 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | hold only 4% full, need 80% (continuing freight loading, attempt 0.0)
-
-[363.20-1104] Trader_002 at Cipatwe/Rhylanor (3118) (MANEUVERING_TO_JUMP): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
-  fuel (jump 20/20t, ops 2/2t), cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | entering jump space to Powaza/Rhylanor (3220)
-
-[363.20-1104] Trader_002 at jump space (JUMPING): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
-  fuel (jump 20/20t, ops 2/2t), cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | picked destination 'Cipatwe' because it showed cargo profit of +Cr1900/ton
-
-[005.20-1105] Trader_002 at jump space (JUMPING): company=Cr1,006,400, hold (10.0t/10.0t, 100%), 
-  fuel (jump 0/20t, ops 2/2t), cargo=1 lots, freight=1 lots, passengers=(0H/0M/0L), mail=0 bundles | arrived at Powaza/Rhylanor (3220)
-
-[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (OFFLOADING): company=Cr1,006,400, hold (1.0t/10.0t, 10%), 
-  fuel (jump 0/20t, ops 2/2t), cargo=1 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | offloading complete
-
-[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (SELLING_CARGO): company=Cr1,016,498, hold (0.0t/10.0t, 0%), 
-  fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | sold cargo lot for Cr7,498 profit
-
-[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (MAINTENANCE): company=Cr1,016,498, hold (0.0t/10.0t, 0%), 
-  fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | annual profit: Cr16,498 (Cr1,000,000 to Cr1,016,498)
-
-[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (MAINTENANCE): company=Cr1,014,848, hold (0.0t/10.0t, 0%), 
-  fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | crew profit share: Cr1,650 (10% of annual profit)
-
-[006.05-1105] Trader_002 at Powaza/Rhylanor (3220) (MAINTENANCE): company=Cr986,278, hold (0.0t/10.0t, 0%), 
-  fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | undergoing annual maintenance (14 days), cost Cr28,570
-
-[020.05-1105] Trader_002 at Powaza/Rhylanor (3220) (LOADING_FREIGHT): company=Cr986,278, hold (0.0t/10.0t, 0%), 
-  fuel (jump 0/20t, ops 2/2t), cargo=0 lots, freight=0 lots, passengers=(0H/0M/0L), mail=0 bundles | no freight available
-```
-
-**Key verbose output features:**
-- **Company balance tracking**: Shows `company=CrX,XXX,XXX` instead of `balance=` for owned ships
-- **Company announcement at startup**: Displays company name and starting capital
-- **Annual maintenance day**: Displayed at startup for each ship (e.g., "Annual maintenance day: 199")
-- **Annual maintenance operations**: Triggered after SELLING_CARGO when maintenance day reached
-  - Shows annual profit calculation: current balance - last year's balance
-  - Example: "annual profit: Cr16,498 (Cr1,000,000 to Cr1,016,498)"
-  - Crew receives 10% profit share before maintenance
-  - Example: "crew profit share: Cr1,650 (10% of annual profit)"
-  - Maintenance charged after crew profit share
-  - Example: "undergoing annual maintenance (14 days), cost Cr28,570"
-  - Ships with insufficient funds display: "insufficient funds for crew profit share" or "insufficient funds for annual maintenance"
-  - Maintenance happens at most once per year, automatically tracks last_maintenance_year
-- **Monthly crew payroll**: Ledger entries show skill-based salary calculations
-  - Example: "Crew payroll: 7 crew, Cr1,900 total (Month 1)" for a Frigate
-  - Payroll processed on day 002, 030, 058, etc. (first day of each month)
-  - Ships with insufficient funds display: "insufficient funds for crew payroll (need CrX,XXX, have CrY,YYY), suspending operations"
-- **Crew roster displayed at startup**: Shows all crew members with their skills
-  - Format for captain: "Captain: X% Skill-Level" where X is cargo departure threshold
-  - Format for crew: "Position: Skill-Level" or "Position N: Skill-Level" for multiple
-  - Example (Scout): "Captain: 77% Pilot-2, Astrogator: Astrogator-2, Engineer: Engineer-3"
-  - Example (Liner): Shows captain with separate pilot, plus all 15+ crew members
-  - Ships with only Pilot display: "Captain: X% Pilot-Y" (pilot serves as captain)
-  - Ships with Captain+Pilot display both separately with specialized roles
-  - Ships with zero cargo capacity (Frigates): Display correctly, skip freight loading
-- Ship class shown at startup (Scout, Freighter, Frigate, Liner)
-- **Fuel status tracking**: Shows `fuel (jump X/Yt, ops A/Bt)` for both jump and operational fuel
-  - Jump fuel depletes to 0/capacity after each jump, refills at port
-  - Ops fuel typically stays full unless ship has extended operations
-  - Example: `fuel (jump 180/180t, ops 18/18t)` for full Liner tanks
-  - Example: `fuel (jump 0/20t, ops 2/2t)` for Scout after jump-2 transit
-- **Traveller date format**: `[DDD.FF-YYYY]` format with fractional days for hour-by-hour tracking
-  - Examples: `[360.00-1104]` (day start), `[360.25-1104]` (6 hours), `[360.75-1104]` (18 hours)
-- **Year rollover**: Automatically transitions from day 365 to day 001 of next year
-- **Location format** includes sector name and hex: `WorldName/Sector (Hex)` 
-  - Examples: `Fornice/Mora (3025)`, `Faisal/Querion (0518)`, `Rhylanor/Rhylanor (2716)`
-  - Sector names are looked up from the SECTORS table using subsector codes
-- **Jump space display**: Shows `at jump space (JUMPING)` during transit instead of destination
-- **Destination selection reasoning**: Shows why each destination was picked:
-  - `picked destination 'WorldName' because it showed cargo profit of +CrX/ton`
-  - `picked destination 'WorldName' randomly because no in-range system could buy cargo`
-  - Ships without fuel processors automatically exclude worlds without refined fuel from all destination options
-- **Freight loading progress**: Shows captain's departure threshold and attempt counter
-  - Displays captain's cargo_departure_threshold (e.g., "need 80%" or "need 85%")
-  - `attempt 0.0` when freight obtained (hope mechanism active)
-  - Counter increments only on failed attempts, captain gives up at 1.0 (4 cycles)
-  - Different captains have different thresholds (65%-95% range)
-- Full status header: day, location, state, company/balance, hold capacity, fuel levels
-- Single-line format with pipe separator for actions
-- Financial tracking: income from freight/passengers, profit from cargo sales, monthly payroll
-- Hold and fuel percentages help assess ship readiness at a glance
-- State names match the action just completed
-
-**Worlds Report** (`--worlds-report` flag):
-
-Displays end-of-simulation summary of all worlds with docked or in-transit ships:
-
-```bash
-python -m t5sim.run --ships 3 --days 5 --worlds-report
-```
-
-Output example:
-```
-####################################################################################################
-WORLDS REPORT - END OF SIMULATION
-####################################################################################################
-
-World                                UPP       Trade Classifications                  Ships  Ship Names
----------------------------------------------------------------------------------------------------------------------------------------------------------
-Caladbolg/Sword Worlds(1329)         B565776-A Ag Ri                                  1      Trader_002
-In jump space                                                                         2      Trader_001, Trader_003
----------------------------------------------------------------------------------------------------------------------------------------------------------
-
-Ships docked at worlds: 1
-Ships in jump space: 2
-Total ships in simulation: 3
-```
-
-**Report features:**
-- **Worlds with ships only**: Empty worlds are omitted from the report
-- **Traveller-style format**: World names with sector and hex in parentheses (e.g., `Caladbolg/Sword Worlds(1329)`)
-- **UPP and trade classifications**: Shows planet characteristics and trade classifications for each world
-- **Ship tracking**: Lists ship names inline for easy reference
-- **Jump space row**: Dedicated row tracks ships currently in transit between worlds
-- **Ship accounting**: Summary lines verify all ships are accounted for (docked + in transit = total)
-- **Useful for**: 
-  - Verifying ship locations at simulation end
-  - Identifying trade clusters and busy worlds
-  - Tracking ships that got stuck in jump space
-  - Validating multi-world coverage in trade networks
-
-**Aggregate statistics output:**
-```
-======================================================================
-SIMULATION RESULTS
-======================================================================
-Total voyages completed: 127
-Total cargo sales: 1,854
-Total profit: Cr45,231,920.00
-Simulation time: 2.34 seconds (10 ships, 365.0 days)
-
-Average per ship:
-  Voyages: 12.7
-  Profit: Cr4,523,192.00
-
-Top 5 ships by balance:
-  1. Trader_003, a Frigate @ Nexine/Mora (3030): Cr5,892,340.00 (15 voyages)
-  2. Trader_007, a Scout @ Tarsus/Trin's Veil (2826): Cr5,441,220.00 (14 voyages)
-  ...
-
-Bottom 5 ships by balance:
-  1. Trader_008, a Liner @ Bronze/Lunion (1808): Cr3,441,220.00 (10 voyages)
-  2. Trader_002, a Frigate @ Aster/Lanth (1807): Cr3,192,100.00 (9 voyages)
-  ...
-
-Broke ships (3):
-  1. Trader_012, a Corsair @ Spume: Cr226,000.00 (18 voyages)
-  2. Trader_015, a Packet @ Xhosa: Cr0.00 (34 voyages)
-  3. Trader_019, a Mercenary Cruiser @ Vreibefger: Cr0.00 (25 voyages)
-```
-
-**Ship leaderboard features:**
-- **Top 5 ships**: Best performing ships by final balance (excludes broke ships)
-- **Bottom 5 ships**: Poorest performing active ships (excludes broke ships)
-- **Broke ships**: Separate section for ships that ran out of funds during simulation
-  - Shows count in header (e.g., "Broke ships (3)")
-  - Ships that couldn't pay crew payroll or annual maintenance
-  - Sorted by remaining balance (highest to lowest)
-  - Only displayed if ships went broke during the simulation
-- Dynamic grammar: "Top ship" vs "Top 5 ships", "Broke ship" vs "Broke ships (N)"
-- Each entry shows: ship name, ship class, final location with sector/hex, balance, voyage count
-
-
-**Complete ledger output (with --ledger or --ledger-all):**
-```
 ================================================================================
-LEDGER FOR Trader_001 Inc (Trader_001, a Scout @ Tarsus/Trin's Veil (2826))
-Final Balance: Cr1,365,000
+LEDGER FOR Trader_001 Inc (Trader_001, a Liner @ Knorbes/Regina (1807))
+Ship Cost: MCr104.1
+Final Balance: Cr1,492,140
 ================================================================================
 Date                     Amount         Balance Memo
 --------------------------------------------------------------------------------
 360.00-1104         1,000,000.0     1,000,000.0 Initial capitalization
-360.00-1104               5,000     1,005,000.0 Freight income: 5t from Tarsus
-360.00-1104               3,000     1,008,000.0 Freight income: 3t from Tarsus
-360.00-1104              10,000     1,018,000.0 High passage fare at Tarsus
-360.00-1104              10,000     1,028,000.0 High passage fare at Tarsus
-360.00-1104               8,000     1,036,000.0 Mid passage fare at Tarsus
-360.00-1104               1,000     1,037,000.0 Low passage fare at Tarsus
-002.00-1105                -800     1,036,200.0 Crew payroll: 4 crew, Cr800 total (Month 1)
-006.00-1105               7,000     1,043,200.0 Freight income: 7t from Avastan
-017.00-1105              -3,600     1,039,600.0 Cargo purchase: 6-Ag Ni 3600 at Traltha
-018.00-1105               6,120     1,045,720.0 Cargo sale: 6-Ag Ni 3600 at Traltha
-030.00-1105                -800     1,044,920.0 Crew payroll: 4 crew, Cr800 total (Month 2)
-199.00-1105              -4,572     1,040,348.0 Crew profit share (10% of Cr45,720)
-199.00-1105             -28,570     1,011,778.0 Annual maintenance (year 1105)
-...
+360.00-1104              10,000     1,010,000.0 Freight income: 10t from Alell
+361.00-1104              13,000     1,023,000.0 Freight income: 13t from Alell
+362.00-1104              12,000     1,035,000.0 Freight income: 12t from Alell
+363.00-1104              12,000     1,047,000.0 Freight income: 12t from Alell
+364.00-1104               9,000     1,056,000.0 Freight income: 9t from Alell
+365.00-1104               6,000     1,062,000.0 Freight income: 6t from Alell
+001.00-1105               8,000     1,070,000.0 Freight income: 8t from Alell
+002.00-1105              -2,400     1,067,600.0 Crew payroll: 15 crew, Cr2,400 total (Month 1)
+002.00-1105               6,000     1,073,600.0 Freight income: 6t from Alell
+003.00-1105               9,000     1,082,600.0 Freight income: 9t from Alell
+004.00-1105               8,000     1,090,600.0 Freight income: 8t from Alell
+005.00-1105              13,000     1,103,600.0 Freight income: 13t from Alell
+007.00-1105              10,000     1,113,600.0 High passage fare at Alell
+007.00-1105              10,000     1,123,600.0 High passage fare at Alell
+007.00-1105              10,000     1,133,600.0 High passage fare at Alell
+007.00-1105              10,000     1,143,600.0 High passage fare at Alell
+007.00-1105              10,000     1,153,600.0 High passage fare at Alell
+007.00-1105              10,000     1,163,600.0 High passage fare at Alell
+007.00-1105              10,000     1,173,600.0 High passage fare at Alell
+007.00-1105              10,000     1,183,600.0 High passage fare at Alell
+007.00-1105              10,000     1,193,600.0 High passage fare at Alell
+007.00-1105               8,000     1,201,600.0 Mid passage fare at Alell
+007.00-1105               8,000     1,209,600.0 Mid passage fare at Alell
+007.00-1105               8,000     1,217,600.0 Mid passage fare at Alell
+007.00-1105               8,000     1,225,600.0 Mid passage fare at Alell
+007.00-1105               8,000     1,233,600.0 Mid passage fare at Alell
+007.00-1105               8,000     1,241,600.0 Mid passage fare at Alell
+007.00-1105               8,000     1,249,600.0 Mid passage fare at Alell
+007.00-1105               8,000     1,257,600.0 Mid passage fare at Alell
+007.00-1105               8,000     1,265,600.0 Mid passage fare at Alell
+007.00-1105               1,000     1,266,600.0 Low passage fare at Alell
+007.00-1105               1,000     1,267,600.0 Low passage fare at Alell
+007.00-1105               1,000     1,268,600.0 Low passage fare at Alell
+007.00-1105               1,000     1,269,600.0 Low passage fare at Alell
+007.00-1105               1,000     1,270,600.0 Low passage fare at Alell
+007.00-1105               1,000     1,271,600.0 Low passage fare at Alell
+016.00-1105             -27,160     1,244,440.0 Crew profit share (10% of Cr271,600.0)
+016.00-1105            -104,100     1,140,340.0 Annual maintenance (year 1105)
+030.00-1105              -2,400     1,137,940.0 Crew payroll: 15 crew, Cr2,400 total (Month 2)
+030.00-1105               5,000     1,142,940.0 Freight income: 5t from Knorbes
+031.00-1105               8,000     1,150,940.0 Freight income: 8t from Knorbes
+032.00-1105               8,000     1,158,940.0 Freight income: 8t from Knorbes
+033.00-1105               6,000     1,164,940.0 Freight income: 6t from Knorbes    
+034.00-1105              10,000     1,174,940.0 Freight income: 10t from Knorbes
+035.00-1105              10,000     1,184,940.0 Freight income: 10t from Knorbes
+036.00-1105               6,000     1,190,940.0 Freight income: 6t from Knorbes
+037.00-1105               8,000     1,198,940.0 Freight income: 8t from Knorbes
+038.00-1105               4,000     1,202,940.0 Freight income: 4t from Knorbes
+039.00-1105               2,000     1,204,940.0 Freight income: 2t from Knorbes
+040.00-1105               7,000     1,211,940.0 Freight income: 7t from Knorbes
+041.00-1105               4,000     1,215,940.0 Freight income: 4t from Knorbes
+042.00-1105               7,000     1,222,940.0 Freight income: 7t from Knorbes
+043.00-1105               5,000     1,227,940.0 Freight income: 5t from Knorbes
+044.00-1105               4,000     1,231,940.0 Freight income: 4t from Knorbes
+045.00-1105               8,000     1,239,940.0 Freight income: 8t from Knorbes
+047.00-1105              10,000     1,249,940.0 High passage fare at Knorbes
+047.00-1105              10,000     1,259,940.0 High passage fare at Knorbes
+047.00-1105              10,000     1,269,940.0 High passage fare at Knorbes
+047.00-1105              10,000     1,279,940.0 High passage fare at Knorbes
+047.00-1105              10,000     1,289,940.0 High passage fare at Knorbes
+047.00-1105              10,000     1,299,940.0 High passage fare at Knorbes
+047.00-1105              10,000     1,309,940.0 High passage fare at Knorbes
+047.00-1105              10,000     1,319,940.0 High passage fare at Knorbes
+047.00-1105               8,000     1,327,940.0 Mid passage fare at Knorbes
+047.00-1105               8,000     1,335,940.0 Mid passage fare at Knorbes
+047.00-1105               8,000     1,343,940.0 Mid passage fare at Knorbes
+047.00-1105               8,000     1,351,940.0 Mid passage fare at Knorbes
+047.00-1105               8,000     1,359,940.0 Mid passage fare at Knorbes
+047.00-1105               8,000     1,367,940.0 Mid passage fare at Knorbes
+047.00-1105               1,000     1,368,940.0 Low passage fare at Knorbes
+047.00-1105               1,000     1,369,940.0 Low passage fare at Knorbes
+047.00-1105               1,000     1,370,940.0 Low passage fare at Knorbes
+047.00-1105               1,000     1,371,940.0 Low passage fare at Knorbes
+047.00-1105             -90,000     1,281,940.0 Fuel purchase
+057.00-1105               4,000     1,285,940.0 Freight income: 4t from Forboldn
+058.00-1105              -2,400     1,283,540.0 Crew payroll: 15 crew, Cr2,400 total (Month 3)
+058.00-1105               2,000     1,285,540.0 Freight income: 2t from Forboldn
+059.00-1105               9,000     1,294,540.0 Freight income: 9t from Forboldn
+060.00-1105               3,000     1,297,540.0 Freight income: 3t from Forboldn
+061.00-1105               8,000     1,305,540.0 Freight income: 8t from Forboldn
+062.00-1105               5,000     1,310,540.0 Freight income: 5t from Forboldn
+063.00-1105               5,000     1,315,540.0 Freight income: 5t from Forboldn
+064.00-1105               6,000     1,321,540.0 Freight income: 6t from Forboldn
+065.00-1105               6,000     1,327,540.0 Freight income: 6t from Forboldn
+066.00-1105               6,000     1,333,540.0 Freight income: 6t from Forboldn
+067.00-1105               5,000     1,338,540.0 Freight income: 5t from Forboldn
+068.00-1105               7,000     1,345,540.0 Freight income: 7t from Forboldn
+069.00-1105               4,000     1,349,540.0 Freight income: 4t from Forboldn
+070.00-1105               6,000     1,355,540.0 Freight income: 6t from Forboldn
+071.00-1105               9,000     1,364,540.0 Freight income: 9t from Forboldn
+072.00-1105              10,000     1,374,540.0 Freight income: 10t from Forboldn
+073.00-1105              10,000     1,384,540.0 High passage fare at Forboldn
+073.00-1105              10,000     1,394,540.0 High passage fare at Forboldn
+073.00-1105              10,000     1,404,540.0 High passage fare at Forboldn
+073.00-1105              10,000     1,414,540.0 High passage fare at Forboldn
+073.00-1105              10,000     1,424,540.0 High passage fare at Forboldn
+073.00-1105              10,000     1,434,540.0 High passage fare at Forboldn
+073.00-1105               8,000     1,442,540.0 Mid passage fare at Forboldn
+073.00-1105               8,000     1,450,540.0 Mid passage fare at Forboldn
+073.00-1105               8,000     1,458,540.0 Mid passage fare at Forboldn
+073.00-1105               8,000     1,466,540.0 Mid passage fare at Forboldn
+073.00-1105               8,000     1,474,540.0 Mid passage fare at Forboldn
+073.00-1105               8,000     1,482,540.0 Mid passage fare at Forboldn
+073.00-1105               8,000     1,490,540.0 Mid passage fare at Forboldn
+073.00-1105               8,000     1,498,540.0 Mid passage fare at Forboldn
+073.00-1105               1,000     1,499,540.0 Low passage fare at Forboldn
+073.00-1105               1,000     1,500,540.0 Low passage fare at Forboldn
+073.00-1105               1,000     1,501,540.0 Low passage fare at Forboldn
+073.00-1105               1,000     1,502,540.0 Low passage fare at Forboldn
+073.00-1105               1,000     1,503,540.0 Low passage fare at Forboldn
+073.00-1105               1,000     1,504,540.0 Low passage fare at Forboldn
+073.00-1105               1,000     1,505,540.0 Low passage fare at Forboldn
+073.00-1105               1,000     1,506,540.0 Low passage fare at Forboldn
+073.00-1105             -90,000     1,416,540.0 Fuel purchase
+083.00-1105              11,000     1,427,540.0 Freight income: 11t from Knorbes
+084.00-1105               5,000     1,432,540.0 Freight income: 5t from Knorbes
+085.00-1105               8,000     1,440,540.0 Freight income: 8t from Knorbes
+086.00-1105              -2,400     1,438,140.0 Crew payroll: 15 crew, Cr2,400 total (Month 4)
+086.00-1105               6,000     1,444,140.0 Freight income: 6t from Knorbes
+087.00-1105               2,000     1,446,140.0 Freight income: 2t from Knorbes
+088.00-1105               7,000     1,453,140.0 Freight income: 7t from Knorbes
+089.00-1105               7,000     1,460,140.0 Freight income: 7t from Knorbes
+090.00-1105               8,000     1,468,140.0 Freight income: 8t from Knorbes
+091.00-1105               9,000     1,477,140.0 Freight income: 9t from Knorbes
+092.00-1105               3,000     1,480,140.0 Freight income: 3t from Knorbes
+093.00-1105               3,000     1,483,140.0 Freight income: 3t from Knorbes
+094.00-1105               9,000     1,492,140.0 Freight income: 9t from Knorbes
 ================================================================================
 ```
 
-**Key features:**
-- **Ship context**: Ledger header shows company, ship name, ship class, and final location with hex
-- **Traveller date format**: Shows exact simulation time (DDD.FF-YYYY) for each transaction
-- **Complete audit trail**: Every credit, debit, and transfer with descriptive memo
-- **Monthly payroll entries**: Shows crew count and total salary with month number
-- **Annual profit share entries**: Shows 10% crew profit share with profit amount
-- **Annual maintenance entries**: Shows maintenance cost (1/1000th of ship cost) with year
-- **Running balance**: Balance after each transaction for easy verification
-- **Transaction types**: Initial capital, freight income, passenger fares, cargo purchases/sales, crew payroll, crew profit share, maintenance costs
-- **Location tracking**: Memos include world names where transactions occurred
+### Multi-Ship Trade Network Simulation
+
+- **Emergent trading behavior**
+  - Ships self-organize into trade networks (~1/3 to 1/2 in transit at any moment)
+  - Natural hub formation at economically important worlds
+  - Dynamic equilibrium reached where profitable opportunities drive constant flux
+  - No explicit "traffic control"—emerges from local profit incentives
+- **Trade route tracking** and profit analysis per voyage
+- **Statistics collection** - Voyage counts, sales, balances, fleet composition
+- **Leaderboard filtering by ship role**
+  - Only civilian ships appear in leaderboard rankings (military/specialized excluded for fairness)
+  - Bailout advantage makes non-civilian ships non-competitive
+  - If no civilian ships exist, leaderboard not printed
+- **Weighted ship selection by role** with predefined proportions
+  - All 3 roles: 70% civilian, 20% specialized, 10% military
+  - Two roles: 80/20 or 70/30 splits
+  - Within each role, ships selected by `frequency` weights from CSV
+- **Startup validation** - Per-role frequency totals must equal 1.0; simulation stops if invalid
+- **Worlds report** - End-of-simulation summary showing all worlds with ships docked or in transit
+  - Displays planet UWP and trade classifications
+  - Tracks ships in jump space separately
+  - Provides ship accounting verification (docked + in-transit = total)
+
+### Status Display & Reporting
+
+- **Verbose ship status messages** - Full operational state at each event
+  - Format: `[TIME] SHIP_NAME at LOCATION (STATE): company=BALANCE, hold (X/Y), fuel (J/J ops), cargo/freight/passengers/mail counts | ACTION`
+  - Shows captain departure threshold and freight loading attempt counter
+  - Displays reasoning for all destination selections
+- **Destination selection transparency**
+  - `picked destination 'WorldName' because it showed cargo profit of +CrX/ton`
+  - `picked destination 'WorldName' randomly because no in-range system could buy cargo`
+  - Ships exclude incompatible worlds automatically
+- **Crew payroll reporting** - Monthly payroll deductions with crew count and total
+- **Maintenance notifications** - Annual maintenance day trigger, costs, crew share amounts
+- **Jump fuel consumption** - Fuel remaining after each interstellar jump
+- **Complete ship startup announcements** - Ship class, starting location, annual maintenance day
+
+### T5 Game Mechanics (t5code)
+
+- **Universal World Profile (UWP)** parsing and lookup
+- **Starport classification** - A through E and X starports
+- **Trade classifications** - Agricultural, Industrial, Rich, Poor, etc.
+- **Skill-based NPC crew** - With skill checks and task resolution
+- **Double-entry accounting** - Auditable financial transactions
+- **Mail and passenger systems** - High, mid, low berth classifications
+- **World data network** - 439 worlds with trade data and classifications
+- **Ship class definitions** - Scout, Free Trader, Far Trader, Fat Trader, Liner with full specs
+- **Property-based API** - Clean, intuitive access to ship state
+- **Company ownership integration** - All financial transactions flow through owner accounts
 
 ---
 
-## Project Structure
+## Example: 150-Ship Simulation (150 Days)
+
+Running 150 civilian ships for 150 days shows emergent behavior:
+
+```
+Simulation Results:
+- Total voyages completed: 898
+- Total profit: Cr94,557,054.00
+- Simulation time: 0.40 seconds
+- Average per ship: 6.0 voyages, Cr630,380 profit
+
+Top 5 Ships by Balance:
+  1. Trader_055, a Liner @ Nonym/Darrian (0321): Cr2,387,600 (7 voyages)
+  2. Trader_022, a Free Trader @ Zamine/Darrian (0421): Cr2,265,800 (8 voyages)
+  3. Trader_125, a Liner @ Enope/Regina (2205): Cr2,233,480 (6 voyages)
+  4. Trader_109, a Far Trader @ Orcrist/Sword Worlds (1126): Cr2,165,400 (9 voyages)
+  5. Trader_036, a Liner @ Ilium/Darrian (0426): Cr2,139,600 (7 voyages)
+
+Bottom 5 Ships by Balance:
+  1. Trader_017, a Scout @ Mithril/Sword Worlds (1628): Cr925,128 (9 voyages)
+  2. Trader_085, a Scout @ Spirelle/Lunion (1927): Cr924,997 (9 voyages)
+  3. Trader_020, a Scout @ Enlas-du/Cronor (0601): Cr923,600 (10 voyages)
+  4. Trader_118, a Scout @ Focaline/Aramis (2607): Cr913,480 (10 voyages)
+  5. Trader_078, a Scout @ Bronze/Sword Worlds (1627): Cr903,125 (8 voyages)
+
+World Distribution:
+- Ships docked at worlds: 108
+- Ships in jump space: 42 (~28%)
+- Total in simulation: 150
+```
+
+**Key Emergent Behaviors:**
+1. **Constant Flux** - ~28-42 ships perpetually in transit. No rule mandates this; it emerges from profit-seeking behavior and refueling requirements. Ships that keep moving are most profitable.
+2. **Hub Formation** - Zeycude (4 ships), Dojodo (4 ships), Leander (3 ships) naturally accumulate traffic. No traffic control coded; it's entirely from independent profit calculations converging.
+3. **Role-based Returns** - Liners average higher absolute returns than Scouts, but Scouts complete more voyages with tighter margins. Different ship classes self-optimize to different strategies.
+
+---
+
+## Installation & Usage
+
+### Setup
+
+```bash
+pip install -r requirements.txt
+```
+
+### Run a Simulation
+
+```bash
+# 10 civilian ships, 1 year (365 days), standard output
+python -m t5sim.run --include-civilian
+
+# 50 ships, 100 days, verbose output with all ledgers and world report
+python -m t5sim.run --include-civilian --ships 50 --days 100 --verbose --ledger-all --worlds-report
+
+# 5 ships each role (15 total), 365 days
+python -m t5sim.run --include-civilian --include-military --include-specialized --ships 5 --days 365
+```
+
+### CLI Options
+
+```
+--ships SHIPS             Number of starships (default: 10)
+--days DAYS               Simulation duration in days (default: 365)
+--verbose, -v             Print detailed status updates during simulation
+--ledger SHIP_NAME        Print ledger for specific ship
+--ledger-all              Print ledgers for all ships
+--include-civilian        Include civilian ships (Scout, Free Trader, etc.)
+--include-military        Include military ships (Close Escort, Corsair, etc.)
+--include-specialized     Include specialized ships (Safari Ship, Packet, Lab Ship)
+--worlds-report           Print detailed report of all worlds and ship locations at end
+--year YEAR               Starting year in Traveller calendar (default: 1104)
+--day DAY                 Starting day of year, 1-365 (default: 360)
+```
+
+### Run Tests
+
+```bash
+# Full test suite with coverage
+pytest --cov=src --cov-report=html tests/
+
+# Specific test
+pytest tests/test_t5sim/test_fuel_compatibility.py -v
+
+# Coverage report
+pytest --cov=src --cov-report=term-missing tests/
+```
+
+---
+
+### Coverage
+```
+
+Name                               Stmts   Miss  Cover   Missing
+----------------------------------------------------------------
+src\t5code\GameState.py               35      0   100%
+src\t5code\T5Basics.py                78      0   100%
+src\t5code\T5Company.py               27      0   100%
+src\t5code\T5Exceptions.py            38      0   100%
+src\t5code\T5Finance.py               41      0   100%
+src\t5code\T5Lot.py                   83      0   100%
+src\t5code\T5Mail.py                  16      0   100%
+src\t5code\T5NPC.py                   35      0   100%
+src\t5code\T5RandomTradeGoods.py      88      0   100%
+src\t5code\T5ShipClass.py             22      0   100%
+src\t5code\T5Starship.py             336      0   100%
+src\t5code\T5Tables.py                11      0   100%
+src\t5code\T5World.py                 82      0   100%
+src\t5sim\run.py                     150      1    99%   465
+src\t5sim\simulation.py              277      3    99%   242, 838, 864
+src\t5sim\starship_agent.py          544      7    99%   606, 720, 817, 1018, 1214, 1271, 1386
+src\t5sim\starship_states.py          52      1    98%   275
+----------------------------------------------------------------
+TOTAL                               1915     12    99%
+```
+
+## Architecture
+
+### t5code Package
+
+Core game mechanics, world data, and ship operations. 100% test coverage.
 
 ```
 t5code/
-├── src/
-│   ├── t5code/              # Core library (100% coverage, all modules)
-│   │   ├── T5Starship.py    # Starship operations with CrewPosition system
-│   │   ├── T5World.py       # World generation with subsector/hex location formatting
-│   │   ├── T5Lot.py         # Cargo lot mechanics
-│   │   ├── T5NPC.py         # Character/crew system with cargo_departure_threshold
-│   │   ├── T5Mail.py        # Mail contract system
-│   │   ├── T5Finance.py     # Double-entry accounting system (Account, Ledger, LedgerEntry)
-│   │   ├── T5Company.py     # Trading company with corporate accounting
-│   │   ├── T5ShipClass.py   # Ship design specifications (4 classes: Scout, Freighter, Frigate, Liner)
-│   │   ├── T5RandomTradeGoods.py  # Trade goods tables
-│   │   ├── T5Basics.py      # Core game mechanics
-│   │   ├── T5Tables.py      # Reference tables with sector name lookups and position codes
-│   │   ├── T5Exceptions.py  # Custom exception hierarchy
-│   │   └── GameState.py     # Global game state with sector mapping
-│   └── t5sim/               # Simulation engine (99% coverage)
-│       ├── starship_states.py   # 14-state FSM (98% coverage)
-│       ├── starship_agent.py    # SimPy process agent (99% coverage)
-│       ├── simulation.py        # Main orchestrator (100% coverage)
-│       └── run.py               # CLI interface (98% coverage)
-├── tests/
-│   ├── test_t5code/         # Comprehensive tests for core library
-│   └── test_t5sim/          # Simulation engine tests
-├── examples/
-│   ├── GameDriver.py        # Single-ship example
-│   ├── sim.py              # Simulation example
-│   └── read_ship_classes.py # Display all Adventure Class Ships
-├── resources/               # Game data files
-│   ├── t5_map.txt          # World data
-│   └── t5_ship_classes.csv # Complete Adventure Class Ships from T5 Core Rules (15 ship types)
-└── README.md
+├── GameState.py          # World data and game state management
+├── T5Basics.py           # Core rules (skill checks, damage, etc.)
+├── T5Company.py          # Company and financial tracking
+├── T5Finance.py          # Ledger and accounting system
+├── T5Lot.py              # Cargo lot representation and pricing
+├── T5Mail.py             # Mail contract system
+├── T5NPC.py              # Crew and NPC definitions
+├── T5RandomTradeGoods.py # Cargo generation and pricing
+├── T5ShipClass.py        # Ship class definitions with specs
+├── T5Starship.py         # Complete starship operations (100% coverage)
+├── T5Tables.py           # Game tables (STARPORT_TYPES, POSITIONS, etc.)
+├── T5World.py            # World data with UWP parsing
+└── T5Exceptions.py       # Custom exceptions
+```
+
+### t5sim Package
+
+Discrete-event simulation engine. 98-99% coverage.
+
+```
+t5sim/
+├── run.py                # CLI entry point
+├── simulation.py         # Simulation engine and world setup
+├── starship_agent.py     # SimPy agent and state machine
+├── starship_states.py    # State definitions and transitions
+└── __init__.py
+```
+
+### Data Files
+
+```
+resources/
+├── ships.csv             # Ship class definitions with frequency weights
+├── t5_map.txt            # Trade map layout
+├── t5_ship_classes.csv   # Extended ship specs (fuel, cargo, costs, etc.)
+├── trade_goods_tables.json # Cargo pricing and availability
+└── README.md             # Data documentation
 ```
 
 ---
 
-## Development
+## Test Suite
 
-### Running Tests
+**509 passing tests, 99% coverage**
 
+Coverage by module:
+- t5code: 100% (all core mechanics fully tested)
+- t5sim: 98-99% (simulation engine, state machine, agent behavior)
+- Overall: 1,915 statements, 11 missed
+
+Major test categories:
+- **Trade mechanics** - Cargo pricing, profit calculations, lot generation
+- **Ship operations** - Refueling, maintenance, crew payroll, departure logic
+- **Fuel compatibility** - Spawn validation, destination filtering
+- **Refueling duration** - Dice-rolled times by starport quality, duration calculation and storage
+- **Financial tracking** - Ledger entries, accounting integrity, balance tracking
+- **State machine** - All 14 state transitions, edge cases
+- **Multi-ship simulation** - Concurrent operations, emergent behavior
+
+Recent coverage improvements (January 2026):
+- Fixed T5Starship.py line 1054 (fuel compatibility check) -> 100% ✓
+- Added comprehensive refueling duration tests (19 tests)
+- Fixed starship_agent.py crew profit share insufficient funds path (lines 560-564)
+- Reduced uncovered lines from 18 -> 11
+
+Run tests:
 ```bash
-# Install test dependencies
-pip install pytest pytest-cov
-
-# Run all tests
-pytest tests/ -v
-
-# Run t5code tests only
-pytest tests/test_t5code/ -v
-
-# Run t5sim tests only
-pytest tests/test_t5sim/ -v
-
-# Run with coverage
-pytest --cov=src --cov-report=term-missing
-
-# Generate HTML coverage report
-pytest --cov=src --cov-report=html
-# Open htmlcov/index.html in browser
-```
-
-**Current Status:**
-- **t5code**: All modules at 100% coverage
-  - GameState.py, T5Basics.py, T5Company.py, T5Exceptions.py, T5Finance.py
-  - T5Lot.py, T5Mail.py, T5NPC.py, T5RandomTradeGoods.py
-  - T5ShipClass.py, T5Starship.py, T5Tables.py, T5World.py
-- **t5sim**: All modules at 100% coverage
-  - simulation.py: 100% coverage
-  - starship_agent.py: 100% coverage
-  - starship_states.py: 100% coverage
-  - run.py: 100% coverage
-- **Total**: 462 tests, 100% overall coverage (880 statements, 0 missed)
-
-### Code Quality
-
-```bash
-# Format code with black
-pip install black
-black .
-
-# Run type checking (optional)
-pip install mypy
-mypy src/
-```
-
-### Project Goals
-
-- ✅ **Complete T5 trade mechanics** with cargo speculation
-- ✅ **Passenger transport system** with class-based pricing
-- ✅ **Mail contracts** for X-boat network simulation
-- ✅ **Crew skill system** with position-based modifiers
-- ✅ **Custom exception hierarchy** for error handling
-- ✅ **Property-based API** for clean state access
-- ✅ **100% test coverage** with comprehensive test suite
-- ✅ **Professional documentation** with Google-style docstrings
-- ✅ **Discrete-event simulation** with SimPy integration
-- ✅ **Multi-ship simulation** with state machines and statistics
-- ✅ **Captain risk profiles** with varied operational personalities
-- ✅ **Intelligent freight loading** with hope mechanism
-- ✅ **Sector name mapping** for readable world locations
-- ✅ **Captain/Pilot architecture** - flexible crew structure (Captain serves as pilot, or Pilot serves as captain)
-- ✅ **Zero cargo capacity handling** - Frigates and other non-cargo ships operate correctly
-
----
-
-## API Highlights
-
-### Imperial Calendar
-
-```python
-from t5code.T5Basics import TravellerCalendar
-
-cal = TravellerCalendar()
-
-# Get month from day of year
-month = cal.get_month(100)  # Returns 4
-month = cal.get_month(1)    # Returns None (Holiday)
-
-# Get first day of a month
-first_day = cal.get_first_day_of_month(1)   # Returns 2
-first_day = cal.get_first_day_of_month(13)  # Returns 338
-
-# Get next month start
-next_month = cal.get_next_month_start(15)   # Returns 30 (Month 2)
-next_month = cal.get_next_month_start(365)  # Returns 2 (Month 1, next year)
-
-# Get comprehensive info
-info = cal.get_month_info(100)
-# {'day': 100, 'month': 4, 'day_of_month': 15, 'is_holiday': False}
-
-# Integration with Traveller dates
-traveller_date = "180-1105"
-day = int(traveller_date.split('-')[0])
-info = cal.get_month_info(day)
-print(f"Month {info['month']}, Day {info['day_of_month']}")
-# Output: Month 7, Day 11
-```
-
-### Jump Range Calculation
-
-```python
-# Get worlds reachable by this ship's jump drive
-reachable_worlds = ship.get_worlds_in_jump_range(game_state)
-
-# Jump rating determines range (1-6 parsecs)
-scout_company = T5Company("Scout Corp", starting_capital=1_000_000)
-scout = T5Starship("Scout", "Rhylanor", scout_class, owner=scout_company)  # Jump-1
-print(f"Jump-{scout.jump_rating} can reach {len(reachable_worlds)} worlds")
-
-# Automatically filters by:
-# - Hex distance (Traveller formula)
-# - Ship's jump rating
-# - Travel zones (excludes Amber/Red)
-
-# Example: Compare different ship capabilities
-jump1_reach = jump1_ship.get_worlds_in_jump_range(game_state)
-jump3_reach = jump3_ship.get_worlds_in_jump_range(game_state)
-print(f"Jump-3 reaches {len(jump3_reach) - len(jump1_reach)} more worlds")
-```
-
-### Exception Handling
-
-```python
-from t5code import InsufficientFundsError, CapacityExceededError
-
-try:
-    ship.buy_cargo_lot(expensive_lot)
-except InsufficientFundsError as e:
-    print(f"Need Cr{e.required:,.0f}, have Cr{e.available:,.0f}")
-except CapacityExceededError as e:
-    print(f"Need {e.required}t, have {e.available}t {e.capacity_type}")
-```
-
-### Property Access
-
-```python
-# Clean, intuitive property-based API
-print(ship.destination)           # Current destination world
-print(ship.balance)               # Credit balance (from owner company if owned)
-print(ship.cargo_manifest)        # All cargo lots
-print(ship.mail_bundles)          # Mail containers
-```
-
-### Financial Operations with Time Tracking
-
-```python
-from t5code import T5Company
-
-# All financial transactions require time parameter for ledger
-time = 360.0  # Simulation time (e.g., day 360 of year 1104)
-
-# Direct credit/debit (ships with owner automatically use company ledger)
-ship.credit(time, 50000, "Freight income: 50t from Regina")
-ship.debit(time, 10000, "Port fees at Efate")
-
-# Cargo operations (time parameter required)
-ship.buy_cargo_lot(time, lot)  # Debits company account
-result = ship.sell_cargo_lot(time, lot, game_state)  # Credits company account
-
-# Freight and passengers (time parameter required)
-ship.load_freight_lot(time, freight_lot)  # Credits freight income
-ship.load_passengers(time, world)  # Credits passenger fares
-
-# View transaction history with timestamps
-for entry in ship.owner.cash.ledger:
-    print(f"[{entry.time}] {entry.memo}: Cr{entry.amount:,.0f}")
-```
-
-### Skill-Based Operations
-
-```python
-# Crew skills affect outcomes
-ship.hire_crew("steward", T5NPC("Jane", skills={"Steward": 2}))
-ship.hire_crew("trader", T5NPC("Bob", skills={"Trader": 3}))
-
-# Skills improve passenger bookings and cargo prices (time required)
-time = 360.0
-passengers = ship.load_passengers(time, world)
-result = ship.sell_cargo_lot(time, lot, game_state, use_trader_skill=True)
+pytest tests/                                    # Run all tests
+pytest --cov=src --cov-report=html tests/        # Generate HTML coverage report
+pytest tests/test_t5sim/test_fuel_compatibility.py -v  # Test specific feature
 ```
 
 ---
 
-## Documentation
+## Implementation Notes
 
-All modules feature comprehensive Google-style docstrings:
+### Why This Simulator Works
 
-- **Module docstrings** explain purpose and contents
-- **Class docstrings** detail attributes and usage
-- **Method docstrings** specify Args, Returns, Raises, and Examples
-- **T5 rules references** included where applicable
+1. **Faithful to T5 Rules** - Incentives copied directly from 50 years of playtested game design
+2. **Emergent, Not Scripted** - No explicit traffic control, hub management, or fleet coordination. Behavior emerges from local profit decisions.
+3. **Scalable** - Works identically at 1 ship or 150 ships. Same mechanics, same behavior quality.
+4. **Auditable** - Double-entry accounting means every credit is traceable. No magic black boxes.
+5. **Fast** - 150 ships × 150 days in 0.4 seconds. Enables rapid iteration and analysis.
 
-Generate documentation:
+### Design Decisions
 
-```bash
-pip install pdoc3
-pdoc --html --output-dir docs src/t5code
-```
+- **SimPy for concurrency** - Avoids polling loops; events drive the simulation forward
+- **Property-based state** - Ships expose their state through properties for clean read-only access
+- **Fuel compatibility baked in** - Not a hack; enforced at spawn and destination selection
+- **Ledger per company** - Maintains financial reality; ships are owned by companies with shared accounts
+- **Captain personalities** - Small variance (65-95% departure threshold) creates surprising behavior diversity
 
----
+### Known Limitations
 
-## License & Attribution
+- **No piracy/security** - All trade is safe. Could add risk-aware routing.
+- **No port politics** - All worlds treat all ships equally. Could add faction preferences.
+- **Fixed world data** - Worlds don't change over time. Could add economic simulation.
+- **No ship upgrades** - Ships don't improve. Could add progression systems.
+- **Fueling is a step** - Fueling /could/ start upon ship docking; this simulator presumes fueling is one of many sequential steps in a port call.
 
-**The Traveller game in all forms is owned by Far Future Enterprises.**  
-Copyright 1977 – 2024 Far Future Enterprises.  
-[Traveller Fair Use Policy](https://cdn.shopify.com/s/files/1/0609/6139/0839/files/Traveller_Fair_Use_Policy_2024.pdf?v=1725357857)
-
-This software is provided under the MIT License for the implementation code.  
-Game mechanics and content are used under the Traveller Fair Use Policy.
-
----
-
-## Contributing
-
-Contributions welcome! This project follows:
-- **TDD** (Test-Driven Development) - write tests first
-- **100% coverage** - all code must be tested
-- **Black formatting** - consistent code style
-- **Type hints** - improve code clarity
-- **Comprehensive docstrings** - document all public APIs
+These are intentional scope boundaries, not bugs. The simulator is feature-complete for merchant trading operations.
 
 ---
 
-## Roadmap
+## Project Status
 
-### Near Term
-- [x] SimPy integration for discrete-event simulation
-- [x] Multi-starship trade network simulation
-- [x] Profit-aware route planning with destination evaluation
-- [x] Smart cargo purchasing (skip unprofitable lots)
-- [x] Jump range validation and reachability checking
-- [x] Sector name lookup table (SECTORS) for subsector code mapping
-- [x] Captain risk profiles with varied operational personalities
-- [x] Intelligent freight loading with hope mechanism
-- [x] Captain/Pilot flexible architecture with correct display formatting
-- [x] Zero cargo capacity ship handling (Frigates operate without freight/cargo)
-- [x] Company ownership integration with double-entry accounting
-- [x] Complete financial audit trail through ledger system
-- [x] Annual maintenance scheduling with 2-week downtime periods
- 
+**Feature-complete**. Core mechanics are solid. 509 tests passing. Emergent behavior validated.
+
+The foundation is done. You can run this simulator, analyze the output, and get meaningful data about how merchant shipping networks self-organize under T5 rules.
 
 ---
 
-## Contact
+## License
 
-Questions? Issues? Contributions?  
-Open an issue on GitHub or submit a pull request.
+MIT License - See [LICENSE](LICENSE) file for details
+
+---
+
+## References
+
+- **Traveller 5 Core Rulebook** - Rules source material
+- **SimPy Documentation** - Discrete-event simulation framework
+- **Traveller Community** - Ongoing rules clarification and discussion
